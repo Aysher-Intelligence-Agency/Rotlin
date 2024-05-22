@@ -5,28 +5,42 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.types.Variance
 
-public interface KtCallableReceiverRenderer {
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    public fun renderReceiver(symbol: KtReceiverParameterSymbol, printer: PrettyPrinter)
+public interface KaCallableReceiverRenderer {
+    public fun renderReceiver(
+        analysisSession: KaSession,
+        symbol: KaReceiverParameterSymbol,
+        declarationRenderer: KaDeclarationRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object AS_TYPE_WITH_IN_APPROXIMATION : KtCallableReceiverRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderReceiver(symbol: KtReceiverParameterSymbol, printer: PrettyPrinter): Unit = printer {
-            " ".separated(
-                {
-                    annotationRenderer.renderAnnotations(symbol, printer)
-                },
-                {
-                    val receiverType = declarationTypeApproximator.approximateType(symbol.type, Variance.IN_VARIANCE)
-                    typeRenderer.renderType(receiverType, printer)
-                },
-            )
+    public object AS_TYPE_WITH_IN_APPROXIMATION : KaCallableReceiverRenderer {
+        override fun renderReceiver(
+            analysisSession: KaSession,
+            symbol: KaReceiverParameterSymbol,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                " ".separated(
+                    {
+                        declarationRenderer.annotationRenderer.renderAnnotations(analysisSession, symbol, printer)
+                    },
+                    {
+                        val receiverType = declarationRenderer.declarationTypeApproximator
+                            .approximateType(analysisSession, symbol.type, Variance.IN_VARIANCE)
+
+                        declarationRenderer.typeRenderer.renderType(analysisSession, receiverType, printer)
+                    },
+                )
+            }
         }
     }
 }
+
+public typealias KtCallableReceiverRenderer = KaCallableReceiverRenderer

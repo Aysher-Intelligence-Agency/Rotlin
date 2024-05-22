@@ -192,7 +192,7 @@ fun checkUpperBoundViolated(
         val argumentTypeRef = sourceAttribute?.typeRef
         val argumentSource = sourceAttribute?.source
 
-        if (argumentType != null && argumentSource != null) {
+        if (argumentType != null && isExplicitTypeArgumentSource(argumentSource)) {
             if (!isIgnoreTypeParameters || (argumentType.typeArguments.isEmpty() && argumentType !is ConeTypeParameterType)) {
                 val intersection =
                     typeSystemContext.intersectTypes(typeParameters[index].resolvedBounds.map { it.coneType })
@@ -209,7 +209,7 @@ fun checkUpperBoundViolated(
                             argumentSource, FirErrors.UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION, upperBound, argumentType.type, context
                         )
                     } else {
-                        val extraMessage = if(upperBound is ConeCapturedType) "Consider removing the explicit type arguments" else ""
+                        val extraMessage = if (upperBound.lowerBoundIfFlexible().originalIfDefinitelyNotNullable() is ConeCapturedType) "Consider removing the explicit type arguments" else ""
                         reporter.reportOn(
                             argumentSource, FirErrors.UPPER_BOUND_VIOLATED,
                             upperBound, argumentType.type, extraMessage, context

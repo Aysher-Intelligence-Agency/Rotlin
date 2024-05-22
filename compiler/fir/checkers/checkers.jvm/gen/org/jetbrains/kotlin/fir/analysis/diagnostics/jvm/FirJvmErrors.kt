@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.diagnostics.rendering.RootDiagnosticRendererFactory
 import org.jetbrains.kotlin.fir.analysis.diagnostics.*
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -57,6 +58,7 @@ object FirJvmErrors {
     val JAVA_TYPE_MISMATCH: KtDiagnosticFactory2<ConeKotlinType, ConeKotlinType> by error2<KtExpression, ConeKotlinType, ConeKotlinType>()
     val RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS: KtDiagnosticFactory3<ConeKotlinType, ConeKotlinType, String> by warning3<PsiElement, ConeKotlinType, ConeKotlinType, String>()
     val NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS: KtDiagnosticFactory3<ConeKotlinType, ConeKotlinType, String> by warning3<PsiElement, ConeKotlinType, ConeKotlinType, String>()
+    val TYPE_MISMATCH_WHEN_FLEXIBILITY_CHANGES: KtDiagnosticFactory2<ConeKotlinType, ConeKotlinType> by warning2<PsiElement, ConeKotlinType, ConeKotlinType>()
 
     // Type parameters
     val UPPER_BOUND_CANNOT_BE_ARRAY: KtDiagnosticFactory0 by error0<PsiElement>()
@@ -127,6 +129,9 @@ object FirJvmErrors {
     // Suspension Point
     val SUSPENSION_POINT_INSIDE_CRITICAL_SECTION: KtDiagnosticFactory1<FirCallableSymbol<*>> by error1<PsiElement, FirCallableSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
 
+    // Inline
+    val INLINE_FROM_HIGHER_PLATFORM: KtDiagnosticFactory2<String, String> by error2<PsiElement, String, String>()
+
     // Misc
     val INAPPLICABLE_JVM_FIELD: KtDiagnosticFactory1<String> by error1<KtAnnotationEntry, String>()
     val INAPPLICABLE_JVM_FIELD_WARNING: KtDiagnosticFactory1<String> by warning1<KtAnnotationEntry, String>()
@@ -137,6 +142,7 @@ object FirJvmErrors {
     val JAVA_SAM_INTERFACE_CONSTRUCTOR_REFERENCE: KtDiagnosticFactory0 by error0<PsiElement>()
     val NO_REFLECTION_IN_CLASS_PATH: KtDiagnosticFactory0 by warning0<PsiElement>()
     val SYNTHETIC_PROPERTY_WITHOUT_JAVA_ORIGIN: KtDiagnosticFactory2<FirNamedFunctionSymbol, Name> by warning2<PsiElement, FirNamedFunctionSymbol, Name>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val JAVA_FIELD_SHADOWED_BY_KOTLIN_PROPERTY: KtDiagnosticFactory1<FirPropertySymbol> by error1<PsiElement, FirPropertySymbol>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
 
     init {
         RootDiagnosticRendererFactory.registerFactory(FirJvmErrorsDefaultMessages)

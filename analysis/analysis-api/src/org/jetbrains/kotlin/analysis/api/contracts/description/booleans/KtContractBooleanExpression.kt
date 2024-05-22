@@ -1,47 +1,57 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.analysis.api.contracts.description.booleans
 
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.symbols.KtParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaParameterSymbol
 
 /**
  * Represents `booleanExpression` argument of [kotlin.contracts.SimpleEffect.implies].
  *
  * `booleanExpression` forms a boolean condition for
- * [org.jetbrains.kotlin.analysis.api.contracts.description.KtContractConditionalContractEffectDeclaration]. See
- * [org.jetbrains.kotlin.analysis.api.contracts.description.KtContractConditionalContractEffectDeclaration.condition]
+ * [org.jetbrains.kotlin.analysis.api.contracts.description.KaContractConditionalContractEffectDeclaration]. See
+ * [org.jetbrains.kotlin.analysis.api.contracts.description.KaContractConditionalContractEffectDeclaration.condition]
  */
-public sealed interface KtContractBooleanExpression : KtLifetimeOwner
+public sealed interface KaContractBooleanExpression : KaLifetimeOwner
+
+public typealias KtContractBooleanExpression = KaContractBooleanExpression
 
 /**
  * Represents boolean parameter reference passed to `booleanExpression` argument of [kotlin.contracts.SimpleEffect.implies].
  */
-public class KtContractBooleanValueParameterExpression(
-    private val _parameterSymbol: KtParameterSymbol
-) : KtContractBooleanExpression {
-    override val token: KtLifetimeToken get() = _parameterSymbol.token
-    public val parameterSymbol: KtParameterSymbol get() = withValidityAssertion { _parameterSymbol }
-    override fun hashCode(): Int = _parameterSymbol.hashCode()
-    override fun equals(other: Any?): Boolean =
-        other is KtContractBooleanValueParameterExpression && other._parameterSymbol == _parameterSymbol
+public class KaContractBooleanValueParameterExpression(
+    private val backingParameterSymbol: KaParameterSymbol
+) : KaContractBooleanExpression {
+    override val token: KaLifetimeToken get() = backingParameterSymbol.token
+    public val parameterSymbol: KaParameterSymbol get() = withValidityAssertion { backingParameterSymbol }
+    override fun hashCode(): Int = backingParameterSymbol.hashCode()
+    override fun equals(other: Any?): Boolean {
+        return this === other || other is KaContractBooleanValueParameterExpression && other.backingParameterSymbol == backingParameterSymbol
+    }
 }
+
+public typealias KtContractBooleanValueParameterExpression = KaContractBooleanValueParameterExpression
 
 /**
  * Represents boolean constant reference. The boolean constant can be passed to `booleanExpression` argument of
  * [kotlin.contracts.SimpleEffect.implies].
  */
-public class KtContractBooleanConstantExpression(
-    private val _booleanConstant: Boolean,
-    override val token: KtLifetimeToken
-) : KtContractBooleanExpression {
-    public val booleanConstant: Boolean get() = withValidityAssertion { _booleanConstant }
+public class KaContractBooleanConstantExpression(
+    private val backingBooleanConstant: Boolean,
+    override val token: KaLifetimeToken
+) : KaContractBooleanExpression {
+    public val booleanConstant: Boolean get() = withValidityAssertion { backingBooleanConstant }
 
-    override fun equals(other: Any?): Boolean = other is KtContractBooleanConstantExpression && other._booleanConstant == _booleanConstant
-    override fun hashCode(): Int = _booleanConstant.hashCode()
+    override fun equals(other: Any?): Boolean {
+        return this === other || other is KaContractBooleanConstantExpression && other.backingBooleanConstant == backingBooleanConstant
+    }
+
+    override fun hashCode(): Int = backingBooleanConstant.hashCode()
 }
+
+public typealias KtContractBooleanConstantExpression = KaContractBooleanConstantExpression

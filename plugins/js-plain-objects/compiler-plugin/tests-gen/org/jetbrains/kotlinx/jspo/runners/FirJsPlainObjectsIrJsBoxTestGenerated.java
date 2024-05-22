@@ -9,7 +9,6 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -29,6 +28,12 @@ public class FirJsPlainObjectsIrJsBoxTestGenerated extends AbstractFirJsPlainObj
   @TestMetadata("copy.kt")
   public void testCopy() {
     runTest("plugins/js-plain-objects/compiler-plugin/testData/box/copy.kt");
+  }
+
+  @Test
+  @TestMetadata("multiple-module.kt")
+  public void testMultiple_module() {
+    runTest("plugins/js-plain-objects/compiler-plugin/testData/box/multiple-module.kt");
   }
 
   @Test

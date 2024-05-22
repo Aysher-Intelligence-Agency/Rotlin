@@ -59,8 +59,17 @@ object LanguageSettingsDirectives : SimpleDirectivesContainer() {
         additionalParser = ExplicitApiMode.Companion::fromString
     )
 
+    val EXPLICIT_RETURN_TYPES_MODE by enumDirective(
+        "Configures explicit API mode (AnalysisFlags.explicitReturnTypes)",
+        additionalParser = ExplicitApiMode.Companion::fromString
+    )
+
     val ALLOW_KOTLIN_PACKAGE by directive(
         description = "Allow compiling code in package 'kotlin' and allow not requiring kotlin.stdlib in module-info (AnalysisFlags.allowKotlinPackage)"
+    )
+
+    val STDLIB_COMPILATION by directive(
+        description = "Enables corresponding analysis flag (AnalysisFlags.stdlibCompilation)"
     )
 
     // It's inverted because otherwise we would have warnings in almost all KMP tests
@@ -100,6 +109,7 @@ object LanguageSettingsDirectives : SimpleDirectivesContainer() {
     val OLD_INNER_CLASSES_LOGIC by directive("Use old logic for generation of InnerClasses attributes")
     val LINK_VIA_SIGNATURES_K1 by directive("Use linkage via signatures instead of descriptors on the K1 frontend")
     val ENABLE_JVM_IR_INLINER by directive("Enable inlining on IR, instead of inlining on bytecode")
+    val USE_INLINE_SCOPES_NUMBERS by directive("Use inline scopes numbers for inline marker variables")
     val GENERATE_PROPERTY_ANNOTATIONS_METHODS by directive(
         description = "Enables corresponding analysis flag (JvmAnalysisFlags.generatePropertyAnnotationsMethods)"
     )

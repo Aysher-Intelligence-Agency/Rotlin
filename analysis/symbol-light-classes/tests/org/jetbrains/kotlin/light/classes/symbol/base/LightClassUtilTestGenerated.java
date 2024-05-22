@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.light.classes.symbol.base;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -34,6 +33,12 @@ public class LightClassUtilTestGenerated extends AbstractLightClassUtilTest {
   @TestMetadata("mangledNameWithAnnotations.kt")
   public void testMangledNameWithAnnotations() {
     runTest("analysis/symbol-light-classes/testData/lightElements/mangledNameWithAnnotations.kt");
+  }
+
+  @Test
+  @TestMetadata("primaryConstructorWithDefaultParameter.kt")
+  public void testPrimaryConstructorWithDefaultParameter() {
+    runTest("analysis/symbol-light-classes/testData/lightElements/primaryConstructorWithDefaultParameter.kt");
   }
 
   @Test

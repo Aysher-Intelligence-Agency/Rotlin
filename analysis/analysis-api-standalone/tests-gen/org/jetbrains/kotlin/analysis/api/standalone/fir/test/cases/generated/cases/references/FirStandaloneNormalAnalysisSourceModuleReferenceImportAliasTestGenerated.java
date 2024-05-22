@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisS
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiMode;
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.references.AbstractReferenceImportAliasTest;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -50,6 +49,12 @@ public class FirStandaloneNormalAnalysisSourceModuleReferenceImportAliasTestGene
   @TestMetadata("classAlias.kt")
   public void testClassAlias() {
     runTest("analysis/analysis-api/testData/imports/importAliases/classAlias.kt");
+  }
+
+  @Test
+  @TestMetadata("classAliasWithCompanionObject.kt")
+  public void testClassAliasWithCompanionObject() {
+    runTest("analysis/analysis-api/testData/imports/importAliases/classAliasWithCompanionObject.kt");
   }
 
   @Test

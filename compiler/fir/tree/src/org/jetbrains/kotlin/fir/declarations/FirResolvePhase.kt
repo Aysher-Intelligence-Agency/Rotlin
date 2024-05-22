@@ -46,6 +46,7 @@ package org.jetbrains.kotlin.fir.declarations
  * 2. The compiler **must not request and cannot rely on any information from the higher phases**.
  *   For example, during the [STATUS] phase, we cannot access information regarding implicit types
  *   as they will only be calculated during the [IMPLICIT_TYPES_BODY_RESOLVE] phase.
+ *   See [isItAllowedToCallLazyResolveTo] as a reference.
  *
  * 3. The compiler **can request and rely on the information from the current phase only during *jumping phases***.
  *   For example, during the [TYPES] phase,
@@ -172,11 +173,24 @@ enum class FirResolvePhase(val noProcessor: Boolean = false) {
      * val baz get() = foo() // implicit type is Int
      * ```
      *
+     * Also resolve initializers of const properties.
+     *
      * This is a [*jumping phase*][FirResolvePhase].
      *
      * @see TYPES
      */
     IMPLICIT_TYPES_BODY_RESOLVE,
+
+    /**
+     * The compiler evaluates expressions that are used as initializers for const properties and defaults of annotation's constructor.
+     *
+     * This phase has two reasons to exist as a separate phase:
+     * 1. It is a synchronization point.
+     * Compiler visits this phase only when all const properties are resolved.
+     * This is especially useful when evaluating const properties from the Java world.
+     * 2. The Analysis API can get results of constant evaluation before [BODY_RESOLVE] phase.
+     */
+    CONSTANT_EVALUATION,
 
     /**
      * The compiler resolves arguments of annotations in declaration headers.
@@ -203,8 +217,8 @@ enum class FirResolvePhase(val noProcessor: Boolean = false) {
 
     companion object {
         // Short-cut
-        val DECLARATIONS = STATUS
-        val ANALYZED_DEPENDENCIES = BODY_RESOLVE
+        val DECLARATIONS: FirResolvePhase = STATUS
+        val ANALYZED_DEPENDENCIES: FirResolvePhase = BODY_RESOLVE
     }
 }
 
@@ -212,5 +226,46 @@ val FirResolvePhase.isBodyResolve: Boolean
     get() = when (this) {
         FirResolvePhase.BODY_RESOLVE,
         FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE -> true
+        else -> false
+    }
+
+/**
+ * See [FirResolvePhase] KDoc for more details about resolution contacts.
+ *
+ * @param this The current phase
+ * @param requestedPhase The requested phase
+ *
+ * @see FirResolvePhase
+ * @see org.jetbrains.kotlin.fir.symbols.FirLazyDeclarationResolver
+ * @see org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
+ * @see isItAllowedToCallLazyResolveToTheSamePhase
+ */
+fun FirResolvePhase.isItAllowedToCallLazyResolveTo(requestedPhase: FirResolvePhase): Boolean = when {
+    // It is fine to call lazy resolution for all phases less than our
+    this > requestedPhase -> true
+
+    // It is legal only in specific cases
+    this == requestedPhase -> isItAllowedToCallLazyResolveToTheSamePhase
+
+    else -> false
+}
+
+/**
+ * Note: not all ***jumping phases*** can be [isItAllowedToCallLazyResolveToTheSamePhase],
+ * but all [isItAllowedToCallLazyResolveToTheSamePhase] phases are ***jumping phases***
+ * due to the implementation details.
+ *
+ * @return **true** if it is allowed to call [lazyResolveToPhase][org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase]
+ * into the same phase
+ *
+ * @see org.jetbrains.kotlin.fir.symbols.FirLazyDeclarationResolver
+ * @see org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
+ */
+val FirResolvePhase.isItAllowedToCallLazyResolveToTheSamePhase: Boolean
+    get() = when (this) {
+        // The resolver can jump into Java initializer during this phase,
+        // which can jump into the Kotlin world again, and we cannot provide the initial context
+        FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE -> true
+
         else -> false
     }

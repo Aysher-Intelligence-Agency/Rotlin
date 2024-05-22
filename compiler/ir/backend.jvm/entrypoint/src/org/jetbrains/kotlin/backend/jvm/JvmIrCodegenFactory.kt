@@ -128,7 +128,7 @@ open class JvmIrCodegenFactory(
         val extensions: JvmGeneratorExtensions,
         val backendExtension: JvmBackendExtension,
         val pluginContext: IrPluginContext?,
-        val notifyCodegenStart: () -> Unit
+        val notifyCodegenStart: () -> Unit,
     ) : CodegenFactory.BackendInput
 
     private data class JvmIrCodegenInput(
@@ -317,11 +317,11 @@ open class JvmIrCodegenFactory(
 
         val moduleChunk = sourceFiles.toSet()
         val wholeModule = wholeBackendInput.irModuleFragment
-        return wholeBackendInput.copy(
-            IrModuleFragmentImpl(wholeModule.descriptor, wholeModule.irBuiltins, wholeModule.files.filter { file ->
-                file.getKtFile() in moduleChunk
-            })
-        )
+        val moduleCopy = IrModuleFragmentImpl(wholeModule.descriptor, wholeModule.irBuiltins)
+        wholeModule.files.filterTo(moduleCopy.files) { file ->
+            file.getKtFile() in moduleChunk
+        }
+        return wholeBackendInput.copy(moduleCopy)
     }
 
     override fun invokeLowerings(state: GenerationState, input: CodegenFactory.BackendInput): CodegenFactory.CodegenInput {
@@ -332,14 +332,13 @@ open class JvmIrCodegenFactory(
         )
             JvmIrSerializerImpl(state.configuration)
         else null
-        val phases = if (evaluatorFragmentInfoForPsi2Ir != null) jvmFragmentLoweringPhases else jvmLoweringPhases
-        val phaseConfig = customPhaseConfig ?: PhaseConfig(phases)
+        val phaseConfig = customPhaseConfig ?: PhaseConfig(jvmLoweringPhases)
         val context = JvmBackendContext(
             state, irModuleFragment.irBuiltins, symbolTable, phaseConfig, extensions,
             backendExtension, irSerializer, JvmIrDeserializerImpl(), irProviders, irPluginContext
         )
         if (evaluatorFragmentInfoForPsi2Ir != null) {
-            context.localDeclarationsLoweringData = mutableMapOf()
+            context.evaluatorData = JvmEvaluatorData(mutableMapOf())
         }
         val generationExtensions = IrGenerationExtension.getInstances(state.project)
             .mapNotNull { it.getPlatformIntrinsicExtension(context) as? JvmIrIntrinsicExtension }
@@ -355,7 +354,7 @@ open class JvmIrCodegenFactory(
 
         context.state.factory.registerSourceFiles(irModuleFragment.files.map(IrFile::getIoFile))
 
-        phases.invokeToplevel(phaseConfig, context, irModuleFragment)
+        jvmLoweringPhases.invokeToplevel(phaseConfig, context, irModuleFragment)
 
         return JvmIrCodegenInput(state, context, irModuleFragment, notifyCodegenStart)
     }
@@ -428,7 +427,7 @@ open class JvmIrCodegenFactory(
         extensions: JvmGeneratorExtensions,
         backendExtension: JvmBackendExtension,
         irPluginContext: IrPluginContext,
-        notifyCodegenStart: () -> Unit = {}
+        notifyCodegenStart: () -> Unit = {},
     ) {
         generateModule(
             state,

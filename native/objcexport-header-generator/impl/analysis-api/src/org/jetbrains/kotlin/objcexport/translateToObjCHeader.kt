@@ -7,20 +7,21 @@ package org.jetbrains.kotlin.objcexport
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
 import org.jetbrains.kotlin.backend.konan.objcexport.*
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.objcexport.KtObjCExportHeaderGenerator.QueueElement
 import org.jetbrains.kotlin.objcexport.analysisApiUtils.*
 import org.jetbrains.kotlin.objcexport.extras.originClassId
 import org.jetbrains.kotlin.objcexport.extras.requiresForwardDeclaration
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.objcexport.extras.throwsAnnotationClassIds
 
 
 context(KtAnalysisSession, KtObjCExportSession)
-fun translateToObjCHeader(files: List<KtFile>): ObjCHeader {
-    val generator = KtObjCExportHeaderGenerator()
-    generator.translateAll(files.sortedWith(StableFileOrder).map { QueueElement.File(it) })
+fun translateToObjCHeader(
+    files: List<KtObjCExportFile>,
+    withObjCBaseDeclarations: Boolean = true,
+): ObjCHeader {
+    val generator = KtObjCExportHeaderGenerator(withObjCBaseDeclarations)
+    generator.translateAll(files.sortedWith(StableFileOrder))
     return generator.buildObjCHeader()
 }
 
@@ -31,16 +32,17 @@ fun translateToObjCHeader(files: List<KtFile>): ObjCHeader {
  *
  * can be made.
  *
- * Functions inside this class will have side effects such as mutating the [symbolDeque] or adding results to the [objCStubs]
+ * Functions inside this class will have side effects such as mutating the [classDeque] or adding results to the [objCStubs]
  */
-private class KtObjCExportHeaderGenerator {
+private class KtObjCExportHeaderGenerator(
+    private val withObjCBaseDeclarations: Boolean,
+) {
     /**
-     * Represents all elements that still have to be processed and translated.
-     * So far this only includes references to top level entities (such as files or classes):
-     * Note: Top level functions and properties will be translated as part of the file.
-     * See [translateToObjCTopLevelInterfaceFileFacades]
+     * Represents a queue containing pointers to all classes that are 'to be translated later'.
+     * This happens, e.g., when a class is referenced inside a callable signature. Such 'dependency types' are to be
+     * translated
      */
-    private val symbolDeque = ArrayDeque<QueueElement>()
+    private val classDeque = ArrayDeque<ClassId>()
 
     /**
      * The mutable aggregate of the already translated elements
@@ -67,55 +69,57 @@ private class KtObjCExportHeaderGenerator {
      */
     private val objCClassForwardDeclarations = mutableSetOf<String>()
 
-    /**
-     * See [symbolDeque]:
-     * All top level 'to do' elements will be represented as [QueueElement] and later handled by the [translateAll] function.
-     */
-    sealed class QueueElement {
-        class File(val psi: KtFile) : QueueElement()
-        class Class(val classId: ClassId) : QueueElement()
-    }
-
     context(KtAnalysisSession, KtObjCExportSession)
-    fun translateAll(symbolProviders: List<QueueElement>) {
-        symbolDeque.addAll(symbolProviders)
+    fun translateAll(files: List<KtObjCExportFile>) {
+        /**
+         * Step 1: Translate classifiers (class, interface, object, ...)
+         */
+        files.forEach { file ->
+            translateFileClassifiers(file)
+        }
 
+        /**
+         * Step 2: Translate file facades (see [translateToTopLevelFileFacade], [translateToExtensionFacade])
+         * This step has to be done after all classifiers were translated to match the translation order of K1
+         */
+        files.forEach { file ->
+            translateFileFacades(file)
+        }
+
+        /**
+         * Step 3: Translate dependency classes referenced by Step 1 and Step 2
+         * Note: Transitive dependencies will still add to this queue and will be processed until we're finished
+         */
         while (true) {
-            val symbolProvider = symbolDeque.removeFirstOrNull() ?: break
-            translateElement(symbolProvider)
+            translateClass(classDeque.removeFirstOrNull() ?: break)
         }
     }
 
     context(KtAnalysisSession, KtObjCExportSession)
-    private fun translateElement(element: QueueElement) = when (element) {
-        is QueueElement.Class -> translateClassElement(element)
-        is QueueElement.File -> translateFileElement(element)
-    }
-
-    context(KtAnalysisSession, KtObjCExportSession)
-    private fun translateClassElement(element: QueueElement.Class) {
-        val classOrObjectSymbol = getClassOrObjectSymbolByClassId(element.classId) ?: return
+    private fun translateClass(classId: ClassId) {
+        val classOrObjectSymbol = getClassOrObjectSymbolByClassId(classId) ?: return
         translateClassOrObjectSymbol(classOrObjectSymbol)
     }
 
     context(KtAnalysisSession, KtObjCExportSession)
-    private fun translateFileElement(element: QueueElement.File) {
-        val fileSymbol = element.psi.getFileSymbol()
-        fileSymbol.getAllClassOrObjectSymbols().sortedWith(StableClassifierOrder).forEach { classOrObjectSymbol ->
+    private fun translateFileClassifiers(file: KtObjCExportFile) {
+        val resolvedFile = file.resolve()
+        resolvedFile.classifierSymbols.sortedWith(StableClassifierOrder).forEach { classOrObjectSymbol ->
             translateClassOrObjectSymbol(classOrObjectSymbol)
         }
-        translateFileSymbol(fileSymbol)
     }
 
     context(KtAnalysisSession, KtObjCExportSession)
-    private fun translateFileSymbol(symbol: KtFileSymbol) {
-        symbol.getExtensionsFacade()?.let { extensionFacade ->
-            objCStubs += extensionFacade
-            enqueueDependencyClasses(extensionFacade)
-            objCClassForwardDeclarations += extensionFacade.name
+    private fun translateFileFacades(file: KtObjCExportFile) {
+        val resolvedFile = file.resolve()
+
+        resolvedFile.translateToObjCExtensionFacades().forEach { facade ->
+            objCStubs += facade
+            enqueueDependencyClasses(facade)
+            objCClassForwardDeclarations += facade.name
         }
 
-        symbol.getTopLevelFacade()?.let { topLevelFacade ->
+        resolvedFile.translateToObjCTopLevelFacade()?.let { topLevelFacade ->
             objCStubs += topLevelFacade
             enqueueDependencyClasses(topLevelFacade)
         }
@@ -143,13 +147,13 @@ private class KtObjCExportHeaderGenerator {
         2) Super interface / superclass symbol export stubs (result of translation) have to be present in the stubs list before the
         original stub
          */
-        symbol.getDeclaredSuperInterfaceSymbols().forEach { superInterfaceSymbol ->
+        symbol.getDeclaredSuperInterfaceSymbols().filter { it.isVisibleInObjC() }.forEach { superInterfaceSymbol ->
             translateClassOrObjectSymbol(superInterfaceSymbol)?.let {
                 objCProtocolForwardDeclarations += it.name
             }
         }
 
-        symbol.getSuperClassSymbolNotAny()?.let { superClassSymbol ->
+        symbol.getSuperClassSymbolNotAny()?.takeIf { it.isVisibleInObjC() }?.let { superClassSymbol ->
             translateClassOrObjectSymbol(superClassSymbol)?.let {
                 objCClassForwardDeclarations += it.name
             }
@@ -177,7 +181,10 @@ private class KtObjCExportHeaderGenerator {
      * and `Array` has to be registered as forward declaration.
      */
     private fun enqueueDependencyClasses(stub: ObjCExportStub) {
-        symbolDeque += stub.closureSequence()
+        classDeque += stub.closureSequence()
+            .flatMap { child -> child.throwsAnnotationClassIds.orEmpty() }
+
+        classDeque += stub.closureSequence()
             .mapNotNull { child ->
                 when (child) {
                     is ObjCMethod -> child.returnType
@@ -193,11 +200,11 @@ private class KtObjCExportHeaderGenerator {
             .filterIsInstance<ObjCReferenceType>()
             .onEach { type ->
                 if (!type.requiresForwardDeclaration) return@onEach
-                if (type is ObjCClassType) objCClassForwardDeclarations += type.className
-                if (type is ObjCProtocolType) objCProtocolForwardDeclarations += type.protocolName
+                val nonNullType = if (type is ObjCNullableReferenceType) type.nonNullType else type
+                if (nonNullType is ObjCClassType) objCClassForwardDeclarations += nonNullType.className
+                if (nonNullType is ObjCProtocolType) objCProtocolForwardDeclarations += nonNullType.protocolName
             }
             .mapNotNull { it.originClassId }
-            .map(QueueElement::Class).toList()
     }
 
     /**
@@ -216,7 +223,6 @@ private class KtObjCExportHeaderGenerator {
         return ObjCClassForwardDeclaration(className)
     }
 
-
     context(KtAnalysisSession, KtObjCExportSession)
     fun buildObjCHeader(): ObjCHeader {
         val hasErrorTypes = objCStubs.hasErrorTypes()
@@ -227,7 +233,7 @@ private class KtObjCExportHeaderGenerator {
             .map { className -> resolveObjCClassForwardDeclaration(className) }
             .toSet()
 
-        val stubs = (if (configuration.generateBaseDeclarationStubs) objCBaseDeclarations() else emptyList()).plus(objCStubs)
+        val stubs = (if (withObjCBaseDeclarations) objCBaseDeclarations() else emptyList()).plus(objCStubs)
             .plus(listOfNotNull(errorInterface.takeIf { hasErrorTypes }))
 
         return ObjCHeader(

@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.analysis.decompiler.stub.files;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -58,6 +57,12 @@ public class AdditionalStubInfoTestGenerated extends AbstractAdditionalStubInfoT
   @TestMetadata("PropertyInitializer")
   public void testPropertyInitializer() {
     runTest("analysis/decompiled/decompiler-to-file-stubs/testData/additionalClsStubInfo/PropertyInitializer/");
+  }
+
+  @Test
+  @TestMetadata("TypeAliasExpansion")
+  public void testTypeAliasExpansion() {
+    runTest("analysis/decompiled/decompiler-to-file-stubs/testData/additionalClsStubInfo/TypeAliasExpansion/");
   }
 
   @Test

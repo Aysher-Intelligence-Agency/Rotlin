@@ -139,14 +139,6 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElement(elementWithResolveState)
     }
 
-    final override fun visitFileAnnotationsContainer(fileAnnotationsContainer: FirFileAnnotationsContainer, data: Nothing?) {
-        visitFileAnnotationsContainer(fileAnnotationsContainer)
-    }
-
-    open fun visitFileAnnotationsContainer(fileAnnotationsContainer: FirFileAnnotationsContainer) {
-        visitElement(fileAnnotationsContainer)
-    }
-
     final override fun visitDeclaration(declaration: FirDeclaration, data: Nothing?) {
         visitDeclaration(declaration)
     }
@@ -555,11 +547,11 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElement(tryExpression)
     }
 
-    final override fun <T> visitLiteralExpression(literalExpression: FirLiteralExpression<T>, data: Nothing?) {
+    final override fun visitLiteralExpression(literalExpression: FirLiteralExpression, data: Nothing?) {
         visitLiteralExpression(literalExpression)
     }
 
-    open fun <T> visitLiteralExpression(literalExpression: FirLiteralExpression<T>) {
+    open fun visitLiteralExpression(literalExpression: FirLiteralExpression) {
         visitElement(literalExpression)
     }
 
@@ -659,12 +651,12 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElement(typeOperatorCall)
     }
 
-    final override fun visitAssignmentOperatorStatement(assignmentOperatorStatement: FirAssignmentOperatorStatement, data: Nothing?) {
-        visitAssignmentOperatorStatement(assignmentOperatorStatement)
+    final override fun visitAugmentedAssignment(augmentedAssignment: FirAugmentedAssignment, data: Nothing?) {
+        visitAugmentedAssignment(augmentedAssignment)
     }
 
-    open fun visitAssignmentOperatorStatement(assignmentOperatorStatement: FirAssignmentOperatorStatement) {
-        visitElement(assignmentOperatorStatement)
+    open fun visitAugmentedAssignment(augmentedAssignment: FirAugmentedAssignment) {
+        visitElement(augmentedAssignment)
     }
 
     final override fun visitIncrementDecrementExpression(incrementDecrementExpression: FirIncrementDecrementExpression, data: Nothing?) {
@@ -731,12 +723,12 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElement(arrayLiteral)
     }
 
-    final override fun visitAugmentedArraySetCall(augmentedArraySetCall: FirAugmentedArraySetCall, data: Nothing?) {
-        visitAugmentedArraySetCall(augmentedArraySetCall)
+    final override fun visitIndexedAccessAugmentedAssignment(indexedAccessAugmentedAssignment: FirIndexedAccessAugmentedAssignment, data: Nothing?) {
+        visitIndexedAccessAugmentedAssignment(indexedAccessAugmentedAssignment)
     }
 
-    open fun visitAugmentedArraySetCall(augmentedArraySetCall: FirAugmentedArraySetCall) {
-        visitElement(augmentedArraySetCall)
+    open fun visitIndexedAccessAugmentedAssignment(indexedAccessAugmentedAssignment: FirIndexedAccessAugmentedAssignment) {
+        visitElement(indexedAccessAugmentedAssignment)
     }
 
     final override fun visitClassReferenceExpression(classReferenceExpression: FirClassReferenceExpression, data: Nothing?) {
@@ -931,14 +923,6 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElement(wrappedArgumentExpression)
     }
 
-    final override fun visitLambdaArgumentExpression(lambdaArgumentExpression: FirLambdaArgumentExpression, data: Nothing?) {
-        visitLambdaArgumentExpression(lambdaArgumentExpression)
-    }
-
-    open fun visitLambdaArgumentExpression(lambdaArgumentExpression: FirLambdaArgumentExpression) {
-        visitElement(lambdaArgumentExpression)
-    }
-
     final override fun visitSpreadArgumentExpression(spreadArgumentExpression: FirSpreadArgumentExpression, data: Nothing?) {
         visitSpreadArgumentExpression(spreadArgumentExpression)
     }
@@ -1081,14 +1065,6 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     open fun visitErrorNamedReference(errorNamedReference: FirErrorNamedReference) {
         visitElement(errorNamedReference)
-    }
-
-    final override fun visitFromMissingDependenciesNamedReference(fromMissingDependenciesNamedReference: FirFromMissingDependenciesNamedReference, data: Nothing?) {
-        visitFromMissingDependenciesNamedReference(fromMissingDependenciesNamedReference)
-    }
-
-    open fun visitFromMissingDependenciesNamedReference(fromMissingDependenciesNamedReference: FirFromMissingDependenciesNamedReference) {
-        visitElement(fromMissingDependenciesNamedReference)
     }
 
     final override fun visitSuperReference(superReference: FirSuperReference, data: Nothing?) {

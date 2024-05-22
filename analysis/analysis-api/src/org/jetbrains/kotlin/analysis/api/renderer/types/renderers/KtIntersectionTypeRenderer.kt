@@ -5,23 +5,33 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.types.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
-import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
+public interface KaIntersectionTypeRenderer {
+    public fun renderType(
+        analysisSession: KaSession,
+        type: KaIntersectionType,
+        typeRenderer: KaTypeRenderer,
+        printer: PrettyPrinter,
+    )
 
-public interface KtIntersectionTypeRenderer {
-    context(KtAnalysisSession, KtTypeRenderer)
-    public fun renderType(type: KtIntersectionType, printer: PrettyPrinter)
-
-    public object AS_INTERSECTION : KtIntersectionTypeRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderType(type: KtIntersectionType, printer: PrettyPrinter): Unit = printer {
-            printCollection(type.conjuncts, separator = " & ") {
-                renderType(it, printer)
+    public object AS_INTERSECTION : KaIntersectionTypeRenderer {
+        override fun renderType(
+            analysisSession: KaSession,
+            type: KaIntersectionType,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                printCollection(type.conjuncts, separator = " & ") {
+                    typeRenderer.renderType(analysisSession, it, printer)
+                }
             }
         }
     }
-
 }
+
+public typealias KtIntersectionTypeRenderer = KaIntersectionTypeRenderer

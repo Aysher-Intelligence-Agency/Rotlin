@@ -11,13 +11,18 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 import org.gradle.work.DisableCachingByDefault
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.SerializationTools
 import org.jetbrains.kotlin.gradle.utils.appendLine
 import org.jetbrains.kotlin.gradle.utils.getFile
 import org.jetbrains.kotlin.incremental.createDirectory
 import org.jetbrains.kotlin.incremental.deleteRecursivelyOrThrow
+import java.io.File
 
 @DisableCachingByDefault(because = "Swift Export is experimental, so no caching for now")
-abstract class GenerateSPMPackageFromSwiftExport : DefaultTask() {
+internal abstract class GenerateSPMPackageFromSwiftExport : DefaultTask() {
+    companion object {
+        private const val KOTLIN_RUNTIME = "KotlinRuntime"
+    }
 
     @get:Input
     abstract val swiftApiModuleName: Property<String>
@@ -31,13 +36,13 @@ abstract class GenerateSPMPackageFromSwiftExport : DefaultTask() {
     @get:Input
     abstract val kotlinLibraryName: Property<String>
 
-    @get:InputFile
+    @get:InputDirectory
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val swiftApiPath: RegularFileProperty
+    abstract val kotlinRuntime: DirectoryProperty
 
     @get:InputFile
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val headerBridgePath: RegularFileProperty
+    abstract val swiftModulesFile: RegularFileProperty
 
     @get:InputFile
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -49,6 +54,9 @@ abstract class GenerateSPMPackageFromSwiftExport : DefaultTask() {
     @get:Internal
     val headerBridgeIncludePath get() = headerBridgeModulePath.resolve("include")
 
+    @get:Internal
+    val kotlinRuntimeIncludePath get() = kotlinRuntimeModulePath.resolve("include")
+
     private val swiftApiModule get() = swiftApiModuleName.get()
     private val headerBridgeModule get() = headerBridgeModuleName.get()
     private val spmPackageRootPath get() = packagePath.getFile()
@@ -56,13 +64,26 @@ abstract class GenerateSPMPackageFromSwiftExport : DefaultTask() {
     private val sourcesPath get() = spmPackageRootPath.resolve("Sources")
     private val swiftApiModulePath get() = sourcesPath.resolve(swiftApiModule)
     private val headerBridgeModulePath get() = sourcesPath.resolve(headerBridgeModule)
+    private val kotlinRuntimeModulePath get() = sourcesPath.resolve(KOTLIN_RUNTIME)
 
     @TaskAction
     fun generate() {
         preparePackageDirectory()
-        createHeaderTarget()
-        createSwiftTarget()
+
+        val swiftModule = deserializeSwiftModules()
+        createHeaderTarget(swiftModule.files.cHeaderBridges)
+        createSwiftTarget(swiftModule.files.swiftApi)
+
         createPackageManifest()
+        createKotlinRuntimeTarget()
+    }
+
+    private fun deserializeSwiftModules(): SwiftModule {
+        val modulesFile = swiftModulesFile.getFile().canonicalPath
+        val swiftModules = SerializationTools.readFromJson<List<SwiftModule>>(modulesFile)
+
+        //TODO: Handle multiple modules, not just one
+        return swiftModules.first()
     }
 
     private fun preparePackageDirectory() {
@@ -71,10 +92,11 @@ abstract class GenerateSPMPackageFromSwiftExport : DefaultTask() {
         }
         swiftApiModulePath.createDirectory()
         headerBridgeIncludePath.createDirectory()
+        kotlinRuntimeIncludePath.createDirectory()
     }
 
-    private fun createHeaderTarget() {
-        headerBridgePath.get().asFile.copyTo(
+    private fun createHeaderTarget(headerBridge: File) {
+        headerBridge.copyTo(
             headerBridgeIncludePath.resolve("Kotlin.h")
         )
         headerBridgeIncludePath.resolve("module.modulemap").writeText(
@@ -91,9 +113,18 @@ abstract class GenerateSPMPackageFromSwiftExport : DefaultTask() {
         headerBridgeModulePath.resolve("linkingStub.c").writeText("\n")
     }
 
-    private fun createSwiftTarget() {
+    private fun createKotlinRuntimeTarget() {
+        kotlinRuntime.asFileTree.forEach {
+            it.copyTo(
+                kotlinRuntimeIncludePath.resolve(it.name)
+            )
+        }
+        kotlinRuntimeModulePath.resolve("linkingStub.c").writeText("\n")
+    }
+
+    private fun createSwiftTarget(swiftApi: File) {
         swiftApiModulePath.resolve("Kotlin.swift").writer().use { kotlinApi ->
-            swiftApiPath.get().asFile.reader().forEachLine {
+            swiftApi.reader().forEachLine {
                 kotlinApi.append(it).appendLine()
             }
         }
@@ -117,10 +148,13 @@ abstract class GenerateSPMPackageFromSwiftExport : DefaultTask() {
                 targets: [
                     .target(
                         name: "$swiftApiModule",
-                        dependencies: ["$headerBridgeModule"]
+                        dependencies: ["$headerBridgeModule", "$KOTLIN_RUNTIME"]
                     ),
                     .target(
                         name: "$headerBridgeModule"
+                    ),
+                    .target(
+                        name: "$KOTLIN_RUNTIME"
                     )
                 ]
             )

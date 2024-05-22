@@ -1,16 +1,16 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.backend.jvm
 
-import org.jetbrains.kotlin.ir.KtDiagnosticReporterWithImplicitIrBasedContext
 import org.jetbrains.kotlin.backend.common.CommonBackendContext
 import org.jetbrains.kotlin.backend.common.DefaultMapping
 import org.jetbrains.kotlin.backend.common.Mapping
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.Ir
+import org.jetbrains.kotlin.backend.common.lower.InnerClassesSupport
 import org.jetbrains.kotlin.backend.common.lower.LocalDeclarationsLowering
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.backend.jvm.MemoizedMultiFieldValueClassReplacements.RemappedParameter.MultiFieldValueClassMapping
@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.codegen.state.JvmBackendConfig
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.ir.IrBuiltIns
-import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.KtDiagnosticReporterWithImplicitIrBasedContext
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.irBlock
@@ -85,10 +85,8 @@ class JvmBackendContext(
 
     val config: JvmBackendConfig = state.config
 
-    // If not-null, this is populated by LocalDeclarationsLowering with the intermediate data
-    // allowing mapping from local function captures to parameters and accurate transformation
-    // of calls to local functions from code fragments (i.e. the expression evaluator).
-    var localDeclarationsLoweringData: MutableMap<IrFunction, LocalFunctionData>? = null
+    // If this is not null, the JVM IR backend is invoked in the context of Evaluate Expression in the IDE.
+    var evaluatorData: JvmEvaluatorData? = null
 
     // If the JVM fqname of a class differs from what is implied by its parent, e.g. if it's a file class
     // annotated with @JvmPackageName, the correct name is recorded here.
@@ -104,7 +102,7 @@ class JvmBackendContext(
     val defaultTypeMapper = IrTypeMapper(this)
     val defaultMethodSignatureMapper = MethodSignatureMapper(this, defaultTypeMapper)
 
-    val innerClassesSupport = JvmInnerClassesSupport(irFactory)
+    override val innerClassesSupport: InnerClassesSupport = JvmInnerClassesSupport(irFactory)
     val cachedDeclarations = JvmCachedDeclarations(
         this, generatorExtensions.cachedFields
     )
@@ -221,18 +219,6 @@ class JvmBackendContext(
 
     internal fun referenceTypeParameter(descriptor: TypeParameterDescriptor): IrTypeParameterSymbol =
         symbolTable.lazyWrapper.descriptorExtension.referenceTypeParameter(descriptor)
-
-    override fun log(message: () -> String) {
-        /*TODO*/
-        if (inVerbosePhase) {
-            print(message())
-        }
-    }
-
-    override fun report(element: IrElement?, irFile: IrFile?, message: String, isError: Boolean) {
-        /*TODO*/
-        print(message)
-    }
 
     override fun throwUninitializedPropertyAccessException(builder: IrBuilderWithScope, name: String): IrExpression =
         builder.irBlock {

@@ -463,7 +463,7 @@ object PositioningStrategies {
             val elementToMark = when (element) {
                 is KtObjectDeclaration -> element.getObjectKeyword()!!
                 is KtPropertyAccessor -> element.namePlaceholder
-                is KtAnonymousInitializer -> element
+                is KtAnonymousInitializer, is KtPrimaryConstructor -> element
                 else -> throw IllegalArgumentException(
                     "Can't find text range for element '${element::class.java.canonicalName}' with the text '${element.text}'"
                 )
@@ -608,6 +608,13 @@ object PositioningStrategies {
     val WHEN_EXPRESSION: PositioningStrategy<KtWhenExpression> = object : PositioningStrategy<KtWhenExpression>() {
         override fun mark(element: KtWhenExpression): List<TextRange> {
             return markElement(element.whenKeyword)
+        }
+    }
+
+    @JvmField
+    val WHEN_GUARD: PositioningStrategy<KtWhenEntry> = object : PositioningStrategy<KtWhenEntry>() {
+        override fun mark(element: KtWhenEntry): List<TextRange> {
+            return markElement(element.guard ?: element)
         }
     }
 
@@ -1124,6 +1131,20 @@ object PositioningStrategies {
                 result = result.expression ?: break
             }
             return super.mark(result)
+        }
+    }
+
+    val TYPE_ARGUMENT_LIST_OR_SELF = object : PositioningStrategy<PsiElement>() {
+        override fun mark(element: PsiElement): List<TextRange> {
+            element.getChildOfType<KtTypeArgumentList>()?.let { return markElement(it) }
+            return super.mark(element)
+        }
+    }
+
+    val PACKAGE_DIRECTIVE_NAME_EXPRESSION: PositioningStrategy<KtElement> = object : PositioningStrategy<KtElement>() {
+        override fun mark(element: KtElement): List<TextRange> {
+            val packageNameExpression = (element as? KtPackageDirective)?.packageNameExpression
+            return super.mark(packageNameExpression ?: element)
         }
     }
 }

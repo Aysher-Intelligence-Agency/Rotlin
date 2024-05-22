@@ -73,9 +73,45 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
   }
 
   @Test
+  @TestMetadata("annotationWithCycleInDefaults.kt")
+  public void testAnnotationWithCycleInDefaults() {
+    runTest("analysis/low-level-api-fir/testData/lazyResolve/annotationWithCycleInDefaults.kt");
+  }
+
+  @Test
+  @TestMetadata("annotationWithDefaults.kt")
+  public void testAnnotationWithDefaults() {
+    runTest("analysis/low-level-api-fir/testData/lazyResolve/annotationWithDefaults.kt");
+  }
+
+  @Test
+  @TestMetadata("annotationWithEnumFromBody.kt")
+  public void testAnnotationWithEnumFromBody() {
+    runTest("analysis/low-level-api-fir/testData/lazyResolve/annotationWithEnumFromBody.kt");
+  }
+
+  @Test
+  @TestMetadata("annotationWithSecondaryConstructor.kt")
+  public void testAnnotationWithSecondaryConstructor() {
+    runTest("analysis/low-level-api-fir/testData/lazyResolve/annotationWithSecondaryConstructor.kt");
+  }
+
+  @Test
+  @TestMetadata("annotationWithSecondaryConstructor2.kt")
+  public void testAnnotationWithSecondaryConstructor2() {
+    runTest("analysis/low-level-api-fir/testData/lazyResolve/annotationWithSecondaryConstructor2.kt");
+  }
+
+  @Test
   @TestMetadata("annotationWithTypeArgument.kt")
   public void testAnnotationWithTypeArgument() {
     runTest("analysis/low-level-api-fir/testData/lazyResolve/annotationWithTypeArgument.kt");
+  }
+
+  @Test
+  @TestMetadata("annotationWithoutDefaults.kt")
+  public void testAnnotationWithoutDefaults() {
+    runTest("analysis/low-level-api-fir/testData/lazyResolve/annotationWithoutDefaults.kt");
   }
 
   @Test
@@ -373,6 +409,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
   }
 
   @Test
+  @TestMetadata("localAnnotations.kt")
+  public void testLocalAnnotations() {
+    runTest("analysis/low-level-api-fir/testData/lazyResolve/localAnnotations.kt");
+  }
+
+  @Test
   @TestMetadata("localConstructor.kt")
   public void testLocalConstructor() {
     runTest("analysis/low-level-api-fir/testData/lazyResolve/localConstructor.kt");
@@ -601,6 +643,18 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
   }
 
   @Test
+  @TestMetadata("superQualifierTypeArgsInDelegatedConstructorInnerClass.kt")
+  public void testSuperQualifierTypeArgsInDelegatedConstructorInnerClass() {
+    runTest("analysis/low-level-api-fir/testData/lazyResolve/superQualifierTypeArgsInDelegatedConstructorInnerClass.kt");
+  }
+
+  @Test
+  @TestMetadata("superQualifierTypeArgsInDelegatedConstructorLocalClass.kt")
+  public void testSuperQualifierTypeArgsInDelegatedConstructorLocalClass() {
+    runTest("analysis/low-level-api-fir/testData/lazyResolve/superQualifierTypeArgsInDelegatedConstructorLocalClass.kt");
+  }
+
+  @Test
   @TestMetadata("superTypes.kt")
   public void testSuperTypes() {
     runTest("analysis/low-level-api-fir/testData/lazyResolve/superTypes.kt");
@@ -610,6 +664,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
   @TestMetadata("superTypesLoop.kt")
   public void testSuperTypesLoop() {
     runTest("analysis/low-level-api-fir/testData/lazyResolve/superTypesLoop.kt");
+  }
+
+  @Test
+  @TestMetadata("superclassMetaAnnotation.kt")
+  public void testSuperclassMetaAnnotation() {
+    runTest("analysis/low-level-api-fir/testData/lazyResolve/superclassMetaAnnotation.kt");
   }
 
   @Test
@@ -724,6 +784,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     }
 
     @Test
+    @TestMetadata("classpathSubstitution.kt")
+    public void testClasspathSubstitution() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/classpathSubstitution.kt");
+    }
+
+    @Test
     @TestMetadata("compilerRequiredAnnotationConflict.kt")
     public void testCompilerRequiredAnnotationConflict() {
       runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/compilerRequiredAnnotationConflict.kt");
@@ -733,6 +799,120 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     @TestMetadata("compilerRequiredAnnotationConflict2.kt")
     public void testCompilerRequiredAnnotationConflict2() {
       runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/compilerRequiredAnnotationConflict2.kt");
+    }
+
+    @Test
+    @TestMetadata("complexEmptyInterfaceWithSuper.kt")
+    public void testComplexEmptyInterfaceWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/complexEmptyInterfaceWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitution.kt")
+    public void testCyclicSupertypeWithClasspathSubstitution() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitution.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitution2.kt")
+    public void testCyclicSupertypeWithClasspathSubstitution2() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitution2.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitutionAsLibrary.kt")
+    public void testCyclicSupertypeWithClasspathSubstitutionAsLibrary() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitutionAsLibrary.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitutionAsLibrary2.kt")
+    public void testCyclicSupertypeWithClasspathSubstitutionAsLibrary2() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitutionAsLibrary2.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottom.kt")
+    public void testCyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottom() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottom.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomBase.kt")
+    public void testCyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomBase() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomBase.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomBaseWithLibrary.kt")
+    public void testCyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomBaseWithLibrary() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomBaseWithLibrary.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomWithAlias.kt")
+    public void testCyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomWithAlias() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomWithAlias.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomWithAliasWithLibrary.kt")
+    public void testCyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomWithAliasWithLibrary() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomWithAliasWithLibrary.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomWithLibrary.kt")
+    public void testCyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomWithLibrary() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromBottomWithLibrary.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromMiddle.kt")
+    public void testCyclicSupertypeWithClasspathSubstitutionOnEachLevelFromMiddle() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromMiddle.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromMiddleBase.kt")
+    public void testCyclicSupertypeWithClasspathSubstitutionOnEachLevelFromMiddleBase() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromMiddleBase.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromTopBase.kt")
+    public void testCyclicSupertypeWithClasspathSubstitutionOnEachLevelFromTopBase() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromTopBase.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromTopmost.kt")
+    public void testCyclicSupertypeWithClasspathSubstitutionOnEachLevelFromTopmost() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromTopmost.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromTopmostBase.kt")
+    public void testCyclicSupertypeWithClasspathSubstitutionOnEachLevelFromTopmostBase() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/cyclicSupertypeWithClasspathSubstitutionOnEachLevelFromTopmostBase.kt");
+    }
+
+    @Test
+    @TestMetadata("emptyClassWithSuper.kt")
+    public void testEmptyClassWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/emptyClassWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("emptyInterfaceWithSuper.kt")
+    public void testEmptyInterfaceWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/emptyInterfaceWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("expectWithSuperClass.kt")
+    public void testExpectWithSuperClass() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/expectWithSuperClass.kt");
     }
 
     @Test
@@ -772,6 +952,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     }
 
     @Test
+    @TestMetadata("multiLevelClasspathSubstitution.kt")
+    public void testMultiLevelClasspathSubstitution() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/multiLevelClasspathSubstitution.kt");
+    }
+
+    @Test
     @TestMetadata("nestedClass.kt")
     public void testNestedClass() {
       runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/nestedClass.kt");
@@ -781,6 +967,18 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     @TestMetadata("nestedClassWithPropertiesOverrides.kt")
     public void testNestedClassWithPropertiesOverrides() {
       runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/nestedClassWithPropertiesOverrides.kt");
+    }
+
+    @Test
+    @TestMetadata("nonEmptyClassWithSuper.kt")
+    public void testNonEmptyClassWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/nonEmptyClassWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("nonEmptyInterfaceWithSuper.kt")
+    public void testNonEmptyInterfaceWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/nonEmptyInterfaceWithSuper.kt");
     }
 
     @Test
@@ -892,6 +1090,30 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     }
 
     @Test
+    @TestMetadata("classpathSubstitution.kt")
+    public void testClasspathSubstitution() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/classpathSubstitution.kt");
+    }
+
+    @Test
+    @TestMetadata("classpathSubstitution2.kt")
+    public void testClasspathSubstitution2() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/classpathSubstitution2.kt");
+    }
+
+    @Test
+    @TestMetadata("classpathSubstitutionWithLibraryClass.kt")
+    public void testClasspathSubstitutionWithLibraryClass() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/classpathSubstitutionWithLibraryClass.kt");
+    }
+
+    @Test
+    @TestMetadata("classpathSubstitutionWithPreresolvedClass.kt")
+    public void testClasspathSubstitutionWithPreresolvedClass() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/classpathSubstitutionWithPreresolvedClass.kt");
+    }
+
+    @Test
     @TestMetadata("contract.kt")
     public void testContract() {
       runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/contract.kt");
@@ -907,6 +1129,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     @TestMetadata("functionParameter.kt")
     public void testFunctionParameter() {
       runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/functionParameter.kt");
+    }
+
+    @Test
+    @TestMetadata("functionTypeParameter.kt")
+    public void testFunctionTypeParameter() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/functionTypeParameter.kt");
     }
 
     @Test
@@ -952,9 +1180,45 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     }
 
     @Test
+    @TestMetadata("incompleteFunctionTypeParameter.kt")
+    public void testIncompleteFunctionTypeParameter() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/incompleteFunctionTypeParameter.kt");
+    }
+
+    @Test
     @TestMetadata("javaAnnotationWithDefaultValueForenumArray.kt")
     public void testJavaAnnotationWithDefaultValueForenumArray() {
       runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/javaAnnotationWithDefaultValueForenumArray.kt");
+    }
+
+    @Test
+    @TestMetadata("multiLevelClasspathSubstitution.kt")
+    public void testMultiLevelClasspathSubstitution() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/multiLevelClasspathSubstitution.kt");
+    }
+
+    @Test
+    @TestMetadata("multiLevelClasspathSubstitution2.kt")
+    public void testMultiLevelClasspathSubstitution2() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/multiLevelClasspathSubstitution2.kt");
+    }
+
+    @Test
+    @TestMetadata("overrideWithTransitiveClass.kt")
+    public void testOverrideWithTransitiveClass() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/overrideWithTransitiveClass.kt");
+    }
+
+    @Test
+    @TestMetadata("overrideWithTransitiveClassWithPreresolvedClass.kt")
+    public void testOverrideWithTransitiveClassWithPreresolvedClass() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/overrideWithTransitiveClassWithPreresolvedClass.kt");
+    }
+
+    @Test
+    @TestMetadata("preresolvedMultiLevelClasspathSubstitution.kt")
+    public void testPreresolvedMultiLevelClasspathSubstitution() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/preresolvedMultiLevelClasspathSubstitution.kt");
     }
 
     @Test
@@ -1041,6 +1305,30 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     @Test
     public void testAllFilesPresentInProperties() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/low-level-api-fir/testData/lazyResolve/properties"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("constCyclePropertyWithExplicitType.kt")
+    public void testConstCyclePropertyWithExplicitType() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/properties/constCyclePropertyWithExplicitType.kt");
+    }
+
+    @Test
+    @TestMetadata("constErrorPropertyWithExplicitType.kt")
+    public void testConstErrorPropertyWithExplicitType() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/properties/constErrorPropertyWithExplicitType.kt");
+    }
+
+    @Test
+    @TestMetadata("constPropertiesWithExplicitType.kt")
+    public void testConstPropertiesWithExplicitType() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/properties/constPropertiesWithExplicitType.kt");
+    }
+
+    @Test
+    @TestMetadata("constPropertyWithExplicitTypeAndInitializer.kt")
+    public void testConstPropertyWithExplicitTypeAndInitializer() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/properties/constPropertyWithExplicitTypeAndInitializer.kt");
     }
 
     @Test
@@ -1204,6 +1492,18 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     }
 
     @Test
+    @TestMetadata("explicitReturnTypeRecursiveResolve.kt")
+    public void testExplicitReturnTypeRecursiveResolve() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/syntheticProperties/explicitReturnTypeRecursiveResolve.kt");
+    }
+
+    @Test
+    @TestMetadata("explicitReturnTypeRecursiveResolveAsGetter.kt")
+    public void testExplicitReturnTypeRecursiveResolveAsGetter() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/syntheticProperties/explicitReturnTypeRecursiveResolveAsGetter.kt");
+    }
+
+    @Test
     @TestMetadata("getterFromLibraryAndSetterFromSources.kt")
     public void testGetterFromLibraryAndSetterFromSources() {
       runTest("analysis/low-level-api-fir/testData/lazyResolve/syntheticProperties/getterFromLibraryAndSetterFromSources.kt");
@@ -1289,6 +1589,76 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     @TestMetadata("unresolvedAnnotationOnTypeAlias.kt")
     public void testUnresolvedAnnotationOnTypeAlias() {
       runTest("analysis/low-level-api-fir/testData/lazyResolve/typeAliases/unresolvedAnnotationOnTypeAlias.kt");
+    }
+  }
+
+  @Nested
+  @TestMetadata("analysis/low-level-api-fir/testData/lazyResolve/withCallableMembers")
+  @TestDataPath("$PROJECT_ROOT")
+  public class WithCallableMembers {
+    @Test
+    public void testAllFilesPresentInWithCallableMembers() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/low-level-api-fir/testData/lazyResolve/withCallableMembers"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("complexEmptyInterfaceWithSuper.kt")
+    public void testComplexEmptyInterfaceWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/withCallableMembers/complexEmptyInterfaceWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("emptyClassWithSuper.kt")
+    public void testEmptyClassWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/withCallableMembers/emptyClassWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("emptyInterfaceWithSuper.kt")
+    public void testEmptyInterfaceWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/withCallableMembers/emptyInterfaceWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("nonEmptyClassWithSuper.kt")
+    public void testNonEmptyClassWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/withCallableMembers/nonEmptyClassWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("nonEmptyInterfaceWithSuper.kt")
+    public void testNonEmptyInterfaceWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/withCallableMembers/nonEmptyInterfaceWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("preresolvedComplexEmptyInterfaceWithSuper.kt")
+    public void testPreresolvedComplexEmptyInterfaceWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/withCallableMembers/preresolvedComplexEmptyInterfaceWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("preresolvedEmptyClassWithSuper.kt")
+    public void testPreresolvedEmptyClassWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/withCallableMembers/preresolvedEmptyClassWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("preresolvedEmptyInterfaceWithSuper.kt")
+    public void testPreresolvedEmptyInterfaceWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/withCallableMembers/preresolvedEmptyInterfaceWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("preresolvedNonEmptyClassWithSuper.kt")
+    public void testPreresolvedNonEmptyClassWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/withCallableMembers/preresolvedNonEmptyClassWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("preresolvedNonEmptyInterfaceWithSuper.kt")
+    public void testPreresolvedNonEmptyInterfaceWithSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/withCallableMembers/preresolvedNonEmptyInterfaceWithSuper.kt");
     }
   }
 }

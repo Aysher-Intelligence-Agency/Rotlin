@@ -5,36 +5,54 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.types.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
-import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.types.KaClassErrorType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
-public interface KtUnresolvedClassErrorTypeRenderer {
-    context(KtAnalysisSession, KtTypeRenderer)
-    public fun renderType(type: KtClassErrorType, printer: PrettyPrinter)
+public interface KaUnresolvedClassErrorTypeRenderer {
+    public fun renderType(
+        analysisSession: KaSession,
+        type: KaClassErrorType,
+        typeRenderer: KaTypeRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object UNRESOLVED_QUALIFIER : KtUnresolvedClassErrorTypeRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderType(type: KtClassErrorType, printer: PrettyPrinter): Unit = printer {
-            annotationsRenderer.renderAnnotations(type, printer)
-            classIdRenderer.renderClassTypeQualifier(type, printer)
+    public object UNRESOLVED_QUALIFIER : KaUnresolvedClassErrorTypeRenderer {
+        override fun renderType(
+            analysisSession: KaSession,
+            type: KaClassErrorType,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                typeRenderer.annotationsRenderer.renderAnnotations(analysisSession, type, printer)
+                typeRenderer.classIdRenderer.renderClassTypeQualifier(analysisSession, type, typeRenderer, printer)
+            }
         }
     }
 
-
-    public object AS_ERROR_WORD : KtUnresolvedClassErrorTypeRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderType(type: KtClassErrorType, printer: PrettyPrinter) {
+    public object AS_ERROR_WORD : KaUnresolvedClassErrorTypeRenderer {
+        override fun renderType(
+            analysisSession: KaSession,
+            type: KaClassErrorType,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
             printer.append("ERROR_TYPE")
         }
     }
 
-    public object WITH_ERROR_MESSAGE : KtUnresolvedClassErrorTypeRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderType(type: KtClassErrorType, printer: PrettyPrinter) {
+    public object WITH_ERROR_MESSAGE : KaUnresolvedClassErrorTypeRenderer {
+        override fun renderType(
+            analysisSession: KaSession,
+            type: KaClassErrorType,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
             printer.append("ERROR_TYPE(${type.errorMessage})")
         }
     }
 }
 
+public typealias KtUnresolvedClassErrorTypeRenderer = KaUnresolvedClassErrorTypeRenderer

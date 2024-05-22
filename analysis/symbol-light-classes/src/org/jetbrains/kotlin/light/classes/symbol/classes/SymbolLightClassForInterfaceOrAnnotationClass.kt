@@ -9,10 +9,10 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierList
 import com.intellij.psi.PsiReferenceList
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.symbolPointerOfType
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.asJava.classes.lazyPub
@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.light.classes.symbol.annotations.AbstractClassAdditi
 import org.jetbrains.kotlin.light.classes.symbol.annotations.GranularAnnotationsBox
 import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolAnnotationsProvider
 import org.jetbrains.kotlin.light.classes.symbol.cachedValue
+import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightField
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.GranularModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightClassModifierList
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.with
@@ -29,9 +30,9 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 
 internal abstract class SymbolLightClassForInterfaceOrAnnotationClass : SymbolLightClassForNamedClassLike {
     constructor(
-        ktAnalysisSession: KtAnalysisSession,
+        ktAnalysisSession: KaSession,
         ktModule: KtModule,
-        classOrObjectSymbol: KtNamedClassOrObjectSymbol,
+        classOrObjectSymbol: KaNamedClassOrObjectSymbol,
         manager: PsiManager
     ) : super(
         ktAnalysisSession = ktAnalysisSession,
@@ -40,7 +41,7 @@ internal abstract class SymbolLightClassForInterfaceOrAnnotationClass : SymbolLi
         manager = manager,
     ) {
         val classKind = classOrObjectSymbol.classKind
-        require(classKind == KtClassKind.INTERFACE || classKind == KtClassKind.ANNOTATION_CLASS)
+        require(classKind == KaClassKind.INTERFACE || classKind == KaClassKind.ANNOTATION_CLASS)
     }
 
     constructor(
@@ -57,7 +58,7 @@ internal abstract class SymbolLightClassForInterfaceOrAnnotationClass : SymbolLi
 
     protected constructor(
         classOrObjectDeclaration: KtClassOrObject?,
-        classOrObjectSymbolPointer: KtSymbolPointer<KtNamedClassOrObjectSymbol>,
+        classOrObjectSymbolPointer: KaSymbolPointer<KaNamedClassOrObjectSymbol>,
         ktModule: KtModule,
         manager: PsiManager,
     ) : super(
@@ -89,7 +90,7 @@ internal abstract class SymbolLightClassForInterfaceOrAnnotationClass : SymbolLi
         withClassOrObjectSymbol { classOrObjectSymbol ->
             buildList {
                 addCompanionObjectFieldIfNeeded(this, classOrObjectSymbol)
-                addFieldsFromCompanionIfNeeded(this, classOrObjectSymbol)
+                addFieldsFromCompanionIfNeeded(this, classOrObjectSymbol, SymbolLightField.FieldNameGenerator())
             }
         }
     }

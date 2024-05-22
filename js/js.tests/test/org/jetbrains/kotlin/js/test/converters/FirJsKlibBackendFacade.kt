@@ -25,11 +25,11 @@ import org.jetbrains.kotlin.test.frontend.fir.getAllJsDependenciesPaths
 import org.jetbrains.kotlin.test.frontend.fir.resolveLibraries
 import org.jetbrains.kotlin.test.model.ArtifactKinds
 import org.jetbrains.kotlin.test.model.BinaryArtifacts
+import org.jetbrains.kotlin.test.model.DependencyRelation
 import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurator
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.io.File
+import org.jetbrains.kotlin.test.services.configuration.getDependencies
 
 class FirJsKlibBackendFacade(
     testServices: TestServices,
@@ -51,7 +51,7 @@ class FirJsKlibBackendFacade(
         }
 
         val configuration = testServices.compilerConfigurationProvider.getCompilerConfiguration(module)
-        val outputFile = JsEnvironmentConfigurator.getJsKlibArtifactPath(testServices, module.name)
+        val outputFile = JsEnvironmentConfigurator.getKlibArtifactFile(testServices, module.name)
 
         // TODO: consider avoiding repeated libraries resolution
         val libraries = resolveLibraries(configuration, getAllJsDependenciesPaths(module, testServices))
@@ -62,7 +62,7 @@ class FirJsKlibBackendFacade(
                 configuration,
                 inputArtifact.diagnosticReporter,
                 inputArtifact.metadataSerializer,
-                klibPath = outputFile,
+                klibPath = outputFile.path,
                 libraries.map { it.library },
                 inputArtifact.irModuleFragment,
                 cleanFiles = inputArtifact.icData,
@@ -76,7 +76,7 @@ class FirJsKlibBackendFacade(
 
         // TODO: consider avoiding repeated libraries resolution
         val lib = CommonKLibResolver.resolve(
-            getAllJsDependenciesPaths(module, testServices) + listOf(outputFile),
+            getAllJsDependenciesPaths(module, testServices) + listOf(outputFile.path),
             configuration.getLogger(treatWarningsAsErrors = true)
         ).getFullResolvedList().last().library
 
@@ -87,18 +87,30 @@ class FirJsKlibBackendFacade(
             inputArtifact.irModuleFragment.descriptor.builtIns,
             packageAccessHandler = null,
             lookupTracker = LookupTracker.DO_NOTHING
-        )
-        // TODO: find out why it must be so weird
-        moduleDescriptor.safeAs<ModuleDescriptorImpl>()?.let {
-            it.setDependencies(inputArtifact.irModuleFragment.descriptor.allDependencyModules.filterIsInstance<ModuleDescriptorImpl>() + it)
+        ).apply {
+            setDependencies(inputArtifact.regularDependencyModules + this, module.friendDependencyModules)
         }
 
         testServices.moduleDescriptorProvider.replaceModuleDescriptorForModule(module, moduleDescriptor)
         if (JsEnvironmentConfigurator.incrementalEnabled(testServices)) {
             testServices.jsIrIncrementalDataProvider.recordIncrementalData(module, lib)
         }
-        testServices.libraryProvider.setDescriptorAndLibraryByName(outputFile, moduleDescriptor, lib)
+        testServices.libraryProvider.setDescriptorAndLibraryByName(outputFile.path, moduleDescriptor, lib)
 
-        return BinaryArtifacts.KLib(File(outputFile), inputArtifact.diagnosticReporter)
+        return BinaryArtifacts.KLib(outputFile, inputArtifact.diagnosticReporter)
     }
+
+
+    /**
+     * Note: If it is implemented the same way as [friendDependencyModules] (i.e., get regular
+     * dependencies through [getDependencies] call), then important dependencies which do
+     * not exist in the form of [TestModule] such as stdlib & stdlib-test would not be included here.
+     */
+    private val IrBackendInput.regularDependencyModules: List<ModuleDescriptorImpl>
+        get() = irModuleFragment.descriptor.allDependencyModules
+            .filterIsInstance<ModuleDescriptorImpl>()
+
+    private val TestModule.friendDependencyModules: Set<ModuleDescriptorImpl>
+        get() = getDependencies(this, testServices, DependencyRelation.FriendDependency)
+            .filterIsInstanceTo<ModuleDescriptorImpl, MutableSet<ModuleDescriptorImpl>>(mutableSetOf())
 }

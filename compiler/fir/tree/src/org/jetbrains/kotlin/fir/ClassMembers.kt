@@ -74,6 +74,7 @@ val FirCallableDeclaration.isSubstitutionOverride: Boolean get() = origin is Fir
 val FirCallableDeclaration.isSubstitutionOrIntersectionOverride: Boolean get() = isSubstitutionOverride || isIntersectionOverride
 val FirCallableDeclaration.isDelegated: Boolean get() = origin == FirDeclarationOrigin.Delegated
 val FirCallableDeclaration.isCopyCreatedInScope: Boolean get() = isSubstitutionOrIntersectionOverride || isDelegated
+val FirCallableDeclaration.canHaveDeferredReturnTypeCalculation: Boolean get() = isCopyCreatedInScope || origin == FirDeclarationOrigin.Enhancement || origin == FirDeclarationOrigin.Synthetic.JavaProperty
 
 val FirCallableSymbol<*>.isIntersectionOverride: Boolean get() = origin == FirDeclarationOrigin.IntersectionOverride
 val FirCallableSymbol<*>.isSubstitutionOverride: Boolean get() = origin is FirDeclarationOrigin.SubstitutionOverride
@@ -235,5 +236,5 @@ class DelegatedWrapperData<D : FirCallableDeclaration>(
 var <D : FirCallableDeclaration>
         D.delegatedWrapperData: DelegatedWrapperData<D>? by FirDeclarationDataRegistry.data(DelegatedWrapperDataKey)
 
-val <D : FirCallableDeclaration> FirCallableSymbol<out D>.delegatedWrapperData: DelegatedWrapperData<D>?
+val <D : FirCallableDeclaration> FirCallableSymbol<D>.delegatedWrapperData: DelegatedWrapperData<D>?
     get() = fir.delegatedWrapperData

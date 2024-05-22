@@ -5,9 +5,11 @@
 
 package org.jetbrains.kotlin.fir.java.scopes
 
+import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.analysis.checkers.isVisibleInClass
 import org.jetbrains.kotlin.fir.declarations.*
@@ -18,6 +20,9 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertySetter
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.synthetic.buildSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.*
+import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
+import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
+import org.jetbrains.kotlin.fir.java.SyntheticPropertiesCacheKey
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaClass
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaMethod
 import org.jetbrains.kotlin.fir.java.declarations.buildJavaMethodCopy
@@ -35,6 +40,7 @@ import org.jetbrains.kotlin.fir.scopes.impl.MembersByScope
 import org.jetbrains.kotlin.fir.scopes.impl.isIntersectionOverride
 import org.jetbrains.kotlin.fir.scopes.impl.similarFunctionsOrBothProperties
 import org.jetbrains.kotlin.fir.scopes.jvm.computeJvmDescriptor
+import org.jetbrains.kotlin.fir.scopes.jvm.computeJvmDescriptorRepresentation
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
@@ -46,7 +52,9 @@ import org.jetbrains.kotlin.load.java.SpecialGenericSignatures.Companion.sameAsR
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.name.withClassId
 import org.jetbrains.kotlin.types.AbstractTypeChecker
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 /**
@@ -97,12 +105,13 @@ class JavaClassUseSiteMemberScope(
         property: FirProperty,
         takeModalityFromGetter: Boolean,
     ): FirSyntheticPropertySymbol {
+        val callableId = getterSymbol.callableId.withClassId(klass.classId)
         return buildSyntheticProperty {
             moduleData = session.moduleData
             name = property.name
             symbol = FirJavaOverriddenSyntheticPropertySymbol(
-                getterId = getterSymbol.callableId,
-                propertyId = CallableId(getterSymbol.callableId.packageName, getterSymbol.callableId.className, property.name)
+                getterId = callableId,
+                propertyId = CallableId(klass.classId, property.name)
             )
             delegateGetter = getterSymbol.fir
             delegateSetter = setterSymbol?.fir
@@ -114,6 +123,7 @@ class JavaClassUseSiteMemberScope(
                 }
             )
             deprecationsProvider = getDeprecationsProviderFromAccessors(session, delegateGetter, delegateSetter)
+            dispatchReceiverType = klass.defaultType()
         }.symbol
     }
 
@@ -163,7 +173,12 @@ class JavaClassUseSiteMemberScope(
 
         @Suppress("UNCHECKED_CAST")
         for (overriddenProperty in propertiesFromSupertypes as List<ResultOfIntersection<FirPropertySymbol>>) {
-            val overrideInClass = syntheticPropertyCache.getValue(name, this to overriddenProperty)
+            val key = SyntheticPropertiesCacheKey(
+                name,
+                overriddenProperty.chosenSymbol.receiverParameter?.typeRef?.coneType,
+                overriddenProperty.chosenSymbol.resolvedContextReceivers.ifNotEmpty { map { it.typeRef.coneType } } ?: emptyList()
+            )
+            val overrideInClass = syntheticPropertyCache.getValue(key, this to overriddenProperty)
 
             val chosenSymbol = overrideInClass ?: overriddenProperty.chosenSymbol
             directOverriddenProperties[chosenSymbol] = listOf(overriddenProperty)
@@ -175,12 +190,13 @@ class JavaClassUseSiteMemberScope(
     }
 
     internal fun syntheticPropertyFromOverride(overriddenProperty: ResultOfIntersection<FirPropertySymbol>): FirSyntheticPropertySymbol? {
-        val overrideInClass = overriddenProperty.overriddenMembers.firstNotNullOfOrNull { (symbol, _) ->
+        val overrideInClass = overriddenProperty.overriddenMembers.firstNotNullOfOrNull superMember@{ (symbol, baseScope) ->
             // We may call this function at the STATUS phase, which means that using resolved status may lead to cycle
             // So we need to use raw status here
-            if (!symbol.isVisibleInClass(klass.symbol, symbol.rawStatus)) return@firstNotNullOfOrNull null
+            if (!symbol.isVisibleInClass(klass.symbol, symbol.rawStatus)) return@superMember null
             symbol.createOverridePropertyIfExists(declaredMemberScope, takeModalityFromGetter = true)
-                ?: superTypeScopes.firstNotNullOfOrNull { scope ->
+                ?: superTypeScopes.firstNotNullOfOrNull superScope@{ scope ->
+                    if (scope == baseScope) return@superScope null
                     symbol.createOverridePropertyIfExists(scope, takeModalityFromGetter = false)
                 }
         }
@@ -207,20 +223,24 @@ class JavaClassUseSiteMemberScope(
     ): FirNamedFunctionSymbol? {
         val specialGetterName = if (canUseSpecialGetters) getBuiltinSpecialPropertyGetterName() else null
         val name = specialGetterName?.asString() ?: JvmAbi.getterName(fir.name.asString())
-        return findGetterByName(name, scope)
+        return findGetterOverride(name, scope)
     }
 
-    private fun FirPropertySymbol.findGetterByName(
+    private fun FirPropertySymbol.findGetterOverride(
         getterName: String,
         scope: FirScope,
     ): FirNamedFunctionSymbol? {
         val propertyFromSupertype = fir
         val expectedReturnType = propertyFromSupertype.returnTypeRef.coneTypeSafe<ConeKotlinType>()
+        val receiverCount = (if (receiverParameter != null) 1 else 0) + resolvedContextReceivers.size
         return scope.getFunctions(Name.identifier(getterName)).firstNotNullOfOrNull factory@{ candidateSymbol ->
             val candidate = candidateSymbol.fir
-            if (candidate.valueParameters.isNotEmpty()) return@factory null
+            if (candidate.valueParameters.size != receiverCount) return@factory null
+            if (!checkValueParameters(candidate)) return@factory null
 
-            val candidateReturnType = candidate.returnTypeRef.toConeKotlinTypeProbablyFlexible(session, typeParameterStack)
+            val candidateReturnType = candidate.returnTypeRef.toConeKotlinTypeProbablyFlexible(
+                session, typeParameterStack, source?.fakeElement(KtFakeSourceElementKind.Enhancement)
+            )
 
             candidateSymbol.takeIf {
                 when {
@@ -238,14 +258,21 @@ class JavaClassUseSiteMemberScope(
         scope: FirScope,
     ): FirNamedFunctionSymbol? {
         val propertyType = fir.returnTypeRef.coneTypeSafe<ConeKotlinType>() ?: return null
+        val receiverCount = (if (receiverParameter != null) 1 else 0) + resolvedContextReceivers.size
+
         return scope.getFunctions(Name.identifier(JvmAbi.setterName(fir.name.asString()))).firstNotNullOfOrNull factory@{ candidateSymbol ->
             val candidate = candidateSymbol.fir
-            if (candidate.valueParameters.size != 1) return@factory null
 
-            if (!candidate.returnTypeRef.toConeKotlinTypeProbablyFlexible(session, typeParameterStack).isUnit) return@factory null
+            if (candidate.valueParameters.size != receiverCount + 1) return@factory null
+            if (!checkValueParameters(candidate)) return@factory null
+
+            val fakeSource = source?.fakeElement(KtFakeSourceElementKind.Enhancement)
+            if (!candidate.returnTypeRef.toConeKotlinTypeProbablyFlexible(session, typeParameterStack, fakeSource).isUnit) {
+                return@factory null
+            }
 
             val parameterType =
-                candidate.valueParameters.single().returnTypeRef.toConeKotlinTypeProbablyFlexible(session, typeParameterStack)
+                candidate.valueParameters.last().returnTypeRef.toConeKotlinTypeProbablyFlexible(session, typeParameterStack, fakeSource)
 
             candidateSymbol.takeIf {
                 candidate.isAcceptableAsAccessorOverride() && AbstractTypeChecker.equalTypes(
@@ -253,6 +280,27 @@ class JavaClassUseSiteMemberScope(
                 )
             }
         }
+    }
+
+    private fun FirPropertySymbol.checkValueParameters(candidate: FirSimpleFunction): Boolean {
+        var parameterIndex = 0
+        val fakeSource = source?.fakeElement(KtFakeSourceElementKind.Enhancement)
+
+        for (contextReceiver in this.resolvedContextReceivers) {
+            if (contextReceiver.typeRef.coneType.computeJvmDescriptorRepresentation() !=
+                candidate.valueParameters[parameterIndex++].returnTypeRef
+                    .toConeKotlinTypeProbablyFlexible(session, typeParameterStack, fakeSource)
+                    .computeJvmDescriptorRepresentation()
+            ) {
+                return false
+            }
+        }
+
+        return receiverParameter == null ||
+                receiverParameter!!.typeRef.coneType.computeJvmDescriptorRepresentation() ==
+                candidate.valueParameters[parameterIndex].returnTypeRef
+                    .toConeKotlinTypeProbablyFlexible(session, typeParameterStack, fakeSource)
+                    .computeJvmDescriptorRepresentation()
     }
 
     private fun FirSimpleFunction.isAcceptableAsAccessorOverride(): Boolean {
@@ -361,7 +409,7 @@ class JavaClassUseSiteMemberScope(
         val owner = ownerClassLookupTag.toSymbol(session)?.fir as? FirJavaClass ?: return this
         val continuationParameterType = continuationParameter
             .returnTypeRef
-            .resolveIfJavaType(session, owner.javaTypeParameterStack)
+            .resolveIfJavaType(session, owner.javaTypeParameterStack, source?.fakeElement(KtFakeSourceElementKind.Enhancement))
             .coneTypeSafe<ConeKotlinType>()
             ?.lowerBoundIfFlexible() as? ConeClassLikeType
             ?: return this
@@ -858,10 +906,9 @@ class JavaClassUseSiteMemberScope(
     }
 
     private fun FirTypeRef.probablyJavaTypeRefToConeType(): ConeKotlinType {
-        return when (this) {
-            is FirJavaTypeRef -> toConeKotlinTypeProbablyFlexible(session, typeParameterStack)
-            else -> coneType
-        }
+        return toConeKotlinTypeProbablyFlexible(
+                session, typeParameterStack, source?.fakeElement(KtFakeSourceElementKind.Enhancement)
+            )
     }
 
     // It's either overrides Collection.contains(Object) or Collection.containsAll(Collection<?>) or similar methods
@@ -873,7 +920,9 @@ class JavaClassUseSiteMemberScope(
         if (!this.isJavaOrEnhancement) return false
 
         val valueParameter = fir.valueParameters.first()
-        val parameterType = valueParameter.returnTypeRef.toConeKotlinTypeProbablyFlexible(session, typeParameterStack)
+        val parameterType = valueParameter.returnTypeRef.toConeKotlinTypeProbablyFlexible(
+            session, typeParameterStack, valueParameter.source?.fakeElement(KtFakeSourceElementKind.Enhancement)
+        )
         val upperBound = parameterType.upperBoundIfFlexible()
         if (upperBound !is ConeClassLikeType) return false
 
@@ -920,7 +969,8 @@ class JavaClassUseSiteMemberScope(
         return computeJvmDescriptor(customName, includeReturnType) {
             it.toConeKotlinTypeProbablyFlexible(
                 session,
-                typeParameterStack
+                typeParameterStack,
+                source?.fakeElement(KtFakeSourceElementKind.Enhancement),
             )
         }
     }

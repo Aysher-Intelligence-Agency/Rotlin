@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -13,14 +13,15 @@ import com.intellij.psi.impl.compiled.SignatureParsing
 import com.intellij.psi.impl.compiled.StubBuildingVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
-import org.jetbrains.kotlin.analysis.api.components.KtPsiTypeProvider
-import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaAnalysisNonPublicApi
+import org.jetbrains.kotlin.analysis.api.components.KaPsiTypeProvider
+import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
 import org.jetbrains.kotlin.analysis.api.fir.findPsi
-import org.jetbrains.kotlin.analysis.api.fir.types.KtFirType
+import org.jetbrains.kotlin.analysis.api.fir.types.KaFirType
 import org.jetbrains.kotlin.analysis.api.fir.types.PublicTypeApproximator
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightParameter
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.jvm.buildJavaTypeRef
+import org.jetbrains.kotlin.light.classes.symbol.annotations.annotateByKtType
 import org.jetbrains.kotlin.load.java.structure.impl.JavaClassImpl
 import org.jetbrains.kotlin.load.java.structure.impl.JavaTypeImpl
 import org.jetbrains.kotlin.load.java.structure.impl.JavaTypeParameterImpl
@@ -58,21 +60,25 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.psi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.types.model.SimpleTypeMarker
+import org.jetbrains.kotlin.types.updateArgumentModeFromAnnotations
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.text.StringCharacterIterator
 
-internal class KtFirPsiTypeProvider(
-    override val analysisSession: KtFirAnalysisSession,
-    override val token: KtLifetimeToken,
-) : KtPsiTypeProvider(), KtFirAnalysisSessionComponent {
-
-    override fun asPsiTypeElement(
-        type: KtType,
+internal class KaFirPsiTypeProvider(
+    override val analysisSession: KaFirSession,
+    override val token: KaLifetimeToken,
+) : KaPsiTypeProvider(), KaFirSessionComponent {
+    override fun asPsiType(
+        type: KaType,
         useSitePosition: PsiElement,
-        mode: KtTypeMappingMode,
+        allowErrorTypes: Boolean,
+        mode: KaTypeMappingMode,
         isAnnotationMethod: Boolean,
-        allowErrorTypes: Boolean
-    ): PsiTypeElement? {
+        suppressWildcards: Boolean?,
+        preserveAnnotations: Boolean,
+    ): PsiType? {
         val coneType = type.coneType
 
         with(rootModuleSession.typeContext) {
@@ -83,39 +89,69 @@ internal class KtFirPsiTypeProvider(
 
         if (!rootModuleSession.moduleData.platform.has<JvmPlatform>()) return null
 
-        return coneType.simplifyType(rootModuleSession, useSitePosition)
-            .asPsiTypeElement(rootModuleSession, mode.toTypeMappingMode(type, isAnnotationMethod), useSitePosition, allowErrorTypes)
-    }
+        val typeElement = coneType.simplifyType(rootModuleSession, useSitePosition).asPsiTypeElement(
+            session = rootModuleSession,
+            mode = mode.toTypeMappingMode(type, isAnnotationMethod, suppressWildcards),
+            useSitePosition = useSitePosition,
+            allowErrorTypes = allowErrorTypes,
+        ) ?: return null
 
-    private fun KtTypeMappingMode.toTypeMappingMode(type: KtType, isAnnotationMethod: Boolean): TypeMappingMode {
-        require(type is KtFirType)
-        return when (this) {
-            KtTypeMappingMode.DEFAULT -> TypeMappingMode.DEFAULT
-            KtTypeMappingMode.DEFAULT_UAST -> TypeMappingMode.DEFAULT_UAST
-            KtTypeMappingMode.GENERIC_ARGUMENT -> TypeMappingMode.GENERIC_ARGUMENT
-            KtTypeMappingMode.SUPER_TYPE -> TypeMappingMode.SUPER_TYPE
-            KtTypeMappingMode.SUPER_TYPE_KOTLIN_COLLECTIONS_AS_IS -> TypeMappingMode.SUPER_TYPE_KOTLIN_COLLECTIONS_AS_IS
-            KtTypeMappingMode.RETURN_TYPE_BOXED -> TypeMappingMode.RETURN_TYPE_BOXED
-            KtTypeMappingMode.RETURN_TYPE -> {
-                val expandedType = type.coneType.fullyExpandedType(rootModuleSession)
-                rootModuleSession.jvmTypeMapper.typeContext.getOptimalModeForReturnType(expandedType, isAnnotationMethod)
-            }
-            KtTypeMappingMode.VALUE_PARAMETER -> {
-                val expandedType = type.coneType.fullyExpandedType(rootModuleSession)
-                rootModuleSession.jvmTypeMapper.typeContext.getOptimalModeForValueParameter(expandedType)
-            }
+        val psiType = typeElement.type
+        if (!preserveAnnotations) return psiType
+
+        @OptIn(KaAnalysisNonPublicApi::class)
+        return with(analysisSession) {
+            annotateByKtType(
+                psiType = psiType,
+                ktType = type,
+                annotationParent = typeElement,
+            )
         }
     }
 
-    override fun asKtType(
+    private fun KaTypeMappingMode.toTypeMappingMode(
+        type: KaType,
+        isAnnotationMethod: Boolean,
+        suppressWildcards: Boolean?,
+    ): TypeMappingMode {
+        require(type is KaFirType)
+        val expandedType = type.coneType.fullyExpandedType(rootModuleSession)
+        return when (this) {
+            KaTypeMappingMode.DEFAULT -> TypeMappingMode.DEFAULT
+            KaTypeMappingMode.DEFAULT_UAST -> TypeMappingMode.DEFAULT_UAST
+            KaTypeMappingMode.GENERIC_ARGUMENT -> TypeMappingMode.GENERIC_ARGUMENT
+            KaTypeMappingMode.SUPER_TYPE -> TypeMappingMode.SUPER_TYPE
+            KaTypeMappingMode.SUPER_TYPE_KOTLIN_COLLECTIONS_AS_IS -> TypeMappingMode.SUPER_TYPE_KOTLIN_COLLECTIONS_AS_IS
+            KaTypeMappingMode.RETURN_TYPE_BOXED -> TypeMappingMode.RETURN_TYPE_BOXED
+            KaTypeMappingMode.RETURN_TYPE -> {
+                rootModuleSession.jvmTypeMapper.typeContext.getOptimalModeForReturnType(expandedType, isAnnotationMethod)
+            }
+            KaTypeMappingMode.VALUE_PARAMETER -> {
+                rootModuleSession.jvmTypeMapper.typeContext.getOptimalModeForValueParameter(expandedType)
+            }
+        }.let { typeMappingMode ->
+            // Otherwise, i.e., if we won't skip type with no type arguments, flag overriding might bother a case like:
+            // @JvmSuppressWildcards(false) Long -> java.lang.Long, not long, even though it should be no-op!
+            if (expandedType.typeArguments.isEmpty())
+                typeMappingMode
+            else
+                typeMappingMode.updateArgumentModeFromAnnotations(
+                    expandedType,
+                    rootModuleSession.jvmTypeMapper.typeContext,
+                    suppressWildcards,
+                )
+        }
+    }
+
+    override fun asKaType(
         psiType: PsiType,
         useSitePosition: PsiElement,
-    ): KtType? {
+    ): KaType? {
         val javaElementSourceFactory = JavaElementSourceFactory.getInstance(project)
         val javaType = JavaTypeImpl.create(psiType, javaElementSourceFactory.createTypeSource(psiType))
 
         val javaTypeRef = buildJavaTypeRef {
-            //TODO KT-62351
+            // Annotations are unused during `resolveIfJavaType`, so there is no need to provide something
             annotationBuilder = { emptyList() }
             type = javaType
         }
@@ -123,7 +159,7 @@ internal class KtFirPsiTypeProvider(
         val javaTypeParameterStack = MutableJavaTypeParameterStack()
 
         var psiClass = PsiTreeUtil.getContextOfType(useSitePosition, PsiClass::class.java, false)
-        while (psiClass != null && psiClass.name == null) {
+        while (psiClass != null && psiClass.name == null || psiClass is PsiTypeParameter) {
             psiClass = PsiTreeUtil.getContextOfType(psiClass, PsiClass::class.java, true)
         }
         if (psiClass != null) {
@@ -140,9 +176,13 @@ internal class KtFirPsiTypeProvider(
                     ),
                     javaClass
                 )
+
                 if (containingClassSymbol != null) {
-                    val member =
-                        PsiTreeUtil.getContextOfType(useSitePosition, PsiTypeParameterListOwner::class.java, false, PsiClass::class.java)
+                    val member = useSitePosition.parentsWithSelf
+                        .filterNot { it is PsiTypeParameter }
+                        .takeWhile { it !is PsiClass }
+                        .firstIsInstanceOrNull<PsiTypeParameterListOwner>()
+
                     if (member != null) {
                         val memberSymbol = containingClassSymbol.declarationSymbols.find { it.findPsi() == member } as? FirCallableSymbol<*>
                         if (memberSymbol != null) {
@@ -159,7 +199,7 @@ internal class KtFirPsiTypeProvider(
                 }
             }
         }
-        val firTypeRef = javaTypeRef.resolveIfJavaType(analysisSession.useSiteSession, javaTypeParameterStack)
+        val firTypeRef = javaTypeRef.resolveIfJavaType(analysisSession.useSiteSession, javaTypeParameterStack, source = null)
         val coneKotlinType = (firTypeRef as? FirResolvedTypeRef)?.type ?: return null
         return coneKotlinType.asKtType()
     }
@@ -168,7 +208,7 @@ internal class KtFirPsiTypeProvider(
 private fun ConeKotlinType.simplifyType(
     session: FirSession,
     useSitePosition: PsiElement,
-    visited: MutableSet<ConeKotlinType> = mutableSetOf()
+    visited: MutableSet<ConeKotlinType> = mutableSetOf(),
 ): ConeKotlinType {
     // E.g., Wrapper<T> : Comparable<Wrapper<T>>
     if (!visited.add(this)) return this
@@ -208,7 +248,7 @@ private fun ConeKotlinType.needLocalTypeApproximation(
     visibilityForApproximation: Visibility,
     isInlineFunction: Boolean,
     session: FirSession,
-    useSitePosition: PsiElement
+    useSitePosition: PsiElement,
 ): Boolean {
     if (!shouldApproximateAnonymousTypesOfNonLocalDeclaration(visibilityForApproximation, isInlineFunction)) return false
     val localTypes: List<ConeKotlinType> = if (isLocal(session)) listOf(this) else {
@@ -282,7 +322,7 @@ private fun ConeKotlinType.asPsiTypeElement(
     session: FirSession,
     mode: TypeMappingMode,
     useSitePosition: PsiElement,
-    allowErrorTypes: Boolean
+    allowErrorTypes: Boolean,
 ): PsiTypeElement? {
     if (this !is SimpleTypeMarker) return null
 
@@ -313,8 +353,10 @@ private fun ConeKotlinType.asPsiTypeElement(
     val typeInfo = TypeInfo.fromString(javaType, false)
     val typeText = TypeInfo.createTypeText(typeInfo) ?: return null
 
-    return ClsTypeElementImpl(useSitePosition, typeText, '\u0000')
+    return SyntheticTypeElement(useSitePosition, typeText)
 }
+
+private class SyntheticTypeElement(parent: PsiElement, typeText: String) : ClsTypeElementImpl(parent, typeText, '\u0000'), SyntheticElement
 
 private val PsiElement.containingKtFile: KtFile?
     get() = (this as? KtLightElement<*, *>)?.kotlinOrigin?.containingKtFile
@@ -346,7 +388,7 @@ private class AnonymousTypesSubstitutor(
     }
 
     private fun ConeKotlinType.hasRecursiveTypeArgument(
-        visited: MutableSet<ConeKotlinType> = mutableSetOf()
+        visited: MutableSet<ConeKotlinType> = mutableSetOf(),
     ): Boolean {
         if (typeArguments.isEmpty()) return false
         if (!visited.add(this)) return true

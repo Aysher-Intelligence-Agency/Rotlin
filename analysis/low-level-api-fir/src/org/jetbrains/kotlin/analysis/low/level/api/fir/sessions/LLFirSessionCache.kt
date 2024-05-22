@@ -5,10 +5,11 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.sessions
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
+import org.jetbrains.kotlin.analysis.low.level.api.fir.caches.CleanableSoftValueCache
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkCanceled
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.fir.FirModuleDataImpl
@@ -20,27 +21,29 @@ import org.jetbrains.kotlin.platform.JsPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatform
-import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
-import java.util.concurrent.ConcurrentMap
 
-private typealias SessionStorage = ConcurrentMap<KtModule, LLFirSession>
+private typealias SessionStorage = CleanableSoftValueCache<KtModule, LLFirSession>
 
 @LLFirInternals
-class LLFirSessionCache(private val project: Project) {
+class LLFirSessionCache(private val project: Project) : Disposable {
     companion object {
         fun getInstance(project: Project): LLFirSessionCache {
             return project.getService(LLFirSessionCache::class.java)
         }
     }
 
-    private val sourceCache: SessionStorage = CollectionFactory.createConcurrentSoftValueMap()
-    private val binaryCache: SessionStorage = CollectionFactory.createConcurrentSoftValueMap()
-    private val danglingFileSessionCache: SessionStorage = CollectionFactory.createConcurrentSoftValueMap()
-    private val unstableDanglingFileSessionCache: SessionStorage = CollectionFactory.createConcurrentSoftValueMap()
+    // Removal from the session storage invokes the `LLFirSession`'s cleaner, which marks the session as invalid and disposes any
+    // disposables registered with the `LLFirSession`'s disposable.
+    private val sourceCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createSessionCleaner)
+    private val binaryCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createSessionCleaner)
+    private val danglingFileSessionCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createSessionCleaner)
+    private val unstableDanglingFileSessionCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createSessionCleaner)
 
     /**
      * Returns the existing session if found, or creates a new session and caches it.
      * Analyzable session will be returned for a library module.
+     *
+     * Must be called from a read action.
      */
     fun getSession(module: KtModule, preferBinary: Boolean = false): LLFirSession {
         if (module is KtBinaryModule && (preferBinary || module is KtSdkModule)) {
@@ -94,8 +97,8 @@ class LLFirSessionCache(private val project: Project) {
             // Non-isolated session creation may need to access other sessions, so we should create the session outside `computeIfAbsent` to
             // avoid recursive update exceptions.
             storage[module] ?: run {
-                val danglingSession = factory(module)
-                storage.computeIfAbsent(module) { danglingSession }
+                val newSession = factory(module)
+                storage.computeIfAbsent(module) { newSession }
             }
         }
 
@@ -123,11 +126,7 @@ class LLFirSessionCache(private val project: Project) {
         return didSourceSessionExist || didBinarySessionExist || didDanglingFileSessionExist || didUnstableDanglingFileSessionExist
     }
 
-    private fun removeSessionFrom(module: KtModule, storage: SessionStorage): Boolean {
-        val session = storage.remove(module) ?: return false
-        session.markInvalid()
-        return true
-    }
+    private fun removeSessionFrom(module: KtModule, storage: SessionStorage): Boolean = storage.remove(module) != null
 
     /**
      * Removes all sessions after global invalidation. If [includeLibraryModules] is `false`, sessions of library modules will not be
@@ -190,26 +189,21 @@ class LLFirSessionCache(private val project: Project) {
     }
 
     private fun removeAllSessionsFrom(storage: SessionStorage) {
-        // Because `removeAllSessionsFrom` is executed in a write action, the order of setting `isValid` and clearing `storage` is not
-        // important.
-        storage.values.forEach { it.markInvalid() }
         storage.clear()
     }
 
     private inline fun removeAllMatchingSessionsFrom(storage: SessionStorage, shouldBeRemoved: (KtModule) -> Boolean) {
-        // `ConcurrentSoftValueHashMap` (the implementation used by `storage`) does not back its entry set but rather creates a copy, which
-        // is in violation of the contract of `Map.entrySet`, and thus changes to the entry set are not reflected in `storage`. Because this
-        // function is executed in a write action, we do not need the weak consistency guarantees made by `ConcurrentMap`'s iterator, so a
+        // Because this function is executed in a write action, we do not need concurrency guarantees to remove all matching sessions, so a
         // "collect and remove" approach also works.
-        val scriptEntries = storage.entries.filter { (module, _) -> shouldBeRemoved(module) }
-        for ((module, session) in scriptEntries) {
-            session.markInvalid()
-            storage.remove(module)
+        storage.keys.forEach { module ->
+            if (shouldBeRemoved(module)) {
+                storage.remove(module)
+            }
         }
     }
 
     /**
-     * Whether the session for [module] can be created without getting other sessions from the cache. Should be kept in sync with
+     * Whether the session for this [KtModule] can be created without getting other sessions from the cache. Should be kept in sync with
      * [createSession].
      */
     private val KtModule.supportsIsolatedSessionCreation: Boolean
@@ -241,7 +235,12 @@ class LLFirSessionCache(private val project: Project) {
             else -> LLFirCommonSessionFactory(project)
         }
     }
+
+    override fun dispose() {
+    }
 }
+
+private fun LLFirSession.createSessionCleaner(): LLFirSessionCleaner = LLFirSessionCleaner(requestedDisposableOrNull)
 
 internal fun LLFirSessionConfigurator.Companion.configure(session: LLFirSession) {
     val project = session.project
@@ -263,7 +262,6 @@ fun createEmptySession(): FirSession {
             dependsOnDependencies = emptyList(),
             friendDependencies = emptyList(),
             platform = JvmPlatforms.unspecifiedJvmPlatform,
-            analyzerServices = JvmPlatformAnalyzerServices
         )
         registerModuleData(moduleData)
         moduleData.bindSession(this)

@@ -5,30 +5,43 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
 
-public interface KtTypeParameterRendererFilter {
-    context(KtAnalysisSession)
-    public fun filter(typeParameter: KtTypeParameterSymbol, owner: KtSymbolWithTypeParameters): Boolean
+public interface KaTypeParameterRendererFilter {
+    public fun filter(
+        analysisSession: KaSession,
+        typeParameter: KaTypeParameterSymbol,
+        owner: KaSymbolWithTypeParameters,
+    ): Boolean
 
-    public object NO_FOR_CONSTURCTORS : KtTypeParameterRendererFilter {
-        context(KtAnalysisSession)
-        override fun filter(typeParameter: KtTypeParameterSymbol, owner: KtSymbolWithTypeParameters): Boolean {
-            return owner !is KtConstructorSymbol
+    public object NO_FOR_CONSTURCTORS : KaTypeParameterRendererFilter {
+        override fun filter(
+            analysisSession: KaSession,
+            typeParameter: KaTypeParameterSymbol,
+            owner: KaSymbolWithTypeParameters,
+        ): Boolean {
+            return owner !is KaConstructorSymbol
         }
     }
 
     public companion object {
-        public operator fun invoke(predicate: context(KtAnalysisSession)(typeParameter: KtTypeParameterSymbol, owner: KtSymbolWithTypeParameters) -> Boolean): KtTypeParameterRendererFilter {
-            return object : KtTypeParameterRendererFilter {
-                context(KtAnalysisSession)
-                override fun filter(typeParameter: KtTypeParameterSymbol, owner: KtSymbolWithTypeParameters): Boolean {
-                    return predicate(this@KtAnalysisSession, typeParameter, owner)
+        public operator fun invoke(
+            predicate: KaSession.(typeParameter: KaTypeParameterSymbol, owner: KaSymbolWithTypeParameters) -> Boolean
+        ): KaTypeParameterRendererFilter {
+            return object : KaTypeParameterRendererFilter {
+                override fun filter(
+                    analysisSession: KaSession,
+                    typeParameter: KaTypeParameterSymbol,
+                    owner: KaSymbolWithTypeParameters,
+                ): Boolean {
+                    return predicate(analysisSession, typeParameter, owner)
                 }
             }
         }
     }
 }
+
+public typealias KtTypeParameterRendererFilter = KaTypeParameterRendererFilter

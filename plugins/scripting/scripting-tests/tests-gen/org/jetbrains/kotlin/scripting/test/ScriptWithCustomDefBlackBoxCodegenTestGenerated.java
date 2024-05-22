@@ -9,7 +9,6 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -23,6 +22,42 @@ public class ScriptWithCustomDefBlackBoxCodegenTestGenerated extends AbstractScr
   @Test
   public void testAllFilesPresentInTestScripts() {
     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("plugins/scripting/scripting-tests/testData/codegen/testScripts"), Pattern.compile("^(.+)\\.kts$"), null, TargetBackend.JVM_IR, true);
+  }
+
+  @Test
+  @TestMetadata("declarationsOrderExtension.test.kts")
+  public void testDeclarationsOrderExtension_test() {
+    runTest("plugins/scripting/scripting-tests/testData/codegen/testScripts/declarationsOrderExtension.test.kts");
+  }
+
+  @Test
+  @TestMetadata("declarationsOrderSingleExpression.test.kts")
+  public void testDeclarationsOrderSingleExpression_test() {
+    runTest("plugins/scripting/scripting-tests/testData/codegen/testScripts/declarationsOrderSingleExpression.test.kts");
+  }
+
+  @Test
+  @TestMetadata("declarationsOrderTopLevelProperty.test.kts")
+  public void testDeclarationsOrderTopLevelProperty_test() {
+    runTest("plugins/scripting/scripting-tests/testData/codegen/testScripts/declarationsOrderTopLevelProperty.test.kts");
+  }
+
+  @Test
+  @TestMetadata("declarationsOrderWith.test.kts")
+  public void testDeclarationsOrderWith_test() {
+    runTest("plugins/scripting/scripting-tests/testData/codegen/testScripts/declarationsOrderWith.test.kts");
+  }
+
+  @Test
+  @TestMetadata("empty.test.kts")
+  public void testEmpty_test() {
+    runTest("plugins/scripting/scripting-tests/testData/codegen/testScripts/empty.test.kts");
+  }
+
+  @Test
+  @TestMetadata("params.test.kts")
+  public void testParams_test() {
+    runTest("plugins/scripting/scripting-tests/testData/codegen/testScripts/params.test.kts");
   }
 
   @Test

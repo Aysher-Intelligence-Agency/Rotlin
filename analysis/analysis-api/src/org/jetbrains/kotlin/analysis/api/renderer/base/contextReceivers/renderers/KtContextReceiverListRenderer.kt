@@ -5,30 +5,44 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.base.KtContextReceiversOwner
-import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KtContextReceiversRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
+import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
-public interface KtContextReceiverListRenderer {
-    context(KtAnalysisSession, KtContextReceiversRenderer, KtTypeRenderer)
-    public fun renderContextReceivers(owner: KtContextReceiversOwner, printer: PrettyPrinter)
+public interface KaContextReceiverListRenderer {
+    public fun renderContextReceivers(
+        analysisSession: KaSession,
+        owner: KaContextReceiversOwner,
+        contextReceiversRenderer: KaContextReceiversRenderer,
+        typeRenderer: KaTypeRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object AS_SOURCE : KtContextReceiverListRenderer {
-        context(KtAnalysisSession, KtContextReceiversRenderer, KtTypeRenderer)
-        override fun renderContextReceivers(owner: KtContextReceiversOwner, printer: PrettyPrinter) {
+    public object AS_SOURCE : KaContextReceiverListRenderer {
+        override fun renderContextReceivers(
+            analysisSession: KaSession,
+            owner: KaContextReceiversOwner,
+            contextReceiversRenderer: KaContextReceiversRenderer,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
             val contextReceivers = owner.contextReceivers
             if (contextReceivers.isEmpty()) return
 
             printer {
                 append("context(")
                 printCollection(contextReceivers) { contextReceiver ->
-                    contextReceiverLabelRenderer.renderLabel(contextReceiver, printer)
-                    renderType(contextReceiver.type, printer)
+                    contextReceiversRenderer.contextReceiverLabelRenderer
+                        .renderLabel(analysisSession, contextReceiver, contextReceiversRenderer, printer)
+
+                    typeRenderer.renderType(analysisSession, contextReceiver.type, printer)
                 }
                 append(")")
             }
         }
     }
 }
+
+public typealias KtContextReceiverListRenderer = KaContextReceiverListRenderer

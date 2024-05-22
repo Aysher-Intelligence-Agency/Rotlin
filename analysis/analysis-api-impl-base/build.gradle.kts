@@ -24,6 +24,7 @@ dependencies {
     testImplementation(projectTests(":compiler:tests-common"))
     testApi(projectTests(":compiler:test-infrastructure-utils"))
     testApi(projectTests(":compiler:test-infrastructure"))
+    testImplementation(projectTests(":plugins:fir-plugin-prototype"))
     testImplementation(projectTests(":compiler:tests-common-new"))
     testImplementation(projectTests(":analysis:analysis-api-impl-barebone"))
     testImplementation(project(":analysis:symbol-light-classes"))
@@ -44,7 +45,7 @@ sourceSets {
 
 tasks.withType<KotlinJvmCompile>().configureEach {
     compilerOptions.freeCompilerArgs.add("-Xcontext-receivers")
-    compilerOptions.optIn.add("org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals")
+    compilerOptions.optIn.add("org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals")
 }
 
 testsJar()

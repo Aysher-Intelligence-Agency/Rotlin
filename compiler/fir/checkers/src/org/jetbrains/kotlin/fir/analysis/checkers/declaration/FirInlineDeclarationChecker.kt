@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.references.symbol
+import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolve.transformers.publishedApiEffectiveVisibility
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -171,7 +172,7 @@ object FirInlineDeclarationChecker : FirFunctionChecker(MppCheckerKind.Common) {
                 if (valueParameterOfOriginalInlineFunction != null) {
                     val factory = when {
                         calledFunctionSymbol.isInline -> when {
-                            valueParameter.isNoinline -> {
+                            !valueParameter.isInlinable(context.session) -> {
                                 FirErrors.USAGE_IS_NOT_INLINABLE
                             }
                             !valueParameterOfOriginalInlineFunction.isCrossinline &&
@@ -257,14 +258,14 @@ object FirInlineDeclarationChecker : FirFunctionChecker(MppCheckerKind.Common) {
 
         private fun checkVisibilityAndAccess(
             accessExpression: FirStatement,
-            calledDeclaration: FirCallableSymbol<*>?,
+            calledDeclaration: FirCallableSymbol<*>,
             source: KtSourceElement,
             context: CheckerContext,
             reporter: DiagnosticReporter,
         ) {
-            if (calledDeclaration == null ||
+            if (// Access of backing field (e.g. from getter) is not important, see inline/property/propertyWithBackingField.kt
                 calledDeclaration.callableId.callableName == BACKING_FIELD ||
-                calledDeclaration is FirPropertySymbol && calledDeclaration.isConst &&
+                // Any annotations do not rely to visibility problems
                 context.callsOrAssignments.any { it is FirAnnotationCall }
             ) {
                 return
@@ -382,12 +383,12 @@ object FirInlineDeclarationChecker : FirFunctionChecker(MppCheckerKind.Common) {
 
     private fun checkParameters(
         function: FirSimpleFunction,
-        overriddenSymbols: List<FirCallableSymbol<out FirCallableDeclaration>>,
+        overriddenSymbols: List<FirCallableSymbol<FirCallableDeclaration>>,
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         for (param in function.valueParameters) {
-            val coneType = param.returnTypeRef.coneType
+            val coneType = param.returnTypeRef.coneType.fullyExpandedType(context.session)
             val functionKind = coneType.functionTypeKind(context.session)
             val isFunctionalType = functionKind != null
             val isSuspendFunctionType = functionKind?.isSuspendOrKSuspendFunction == true
@@ -453,12 +454,7 @@ object FirInlineDeclarationChecker : FirFunctionChecker(MppCheckerKind.Common) {
         if (function.isExpect || function.isSuspend) return
         if (function.typeParameters.any { it.symbol.isReified }) return
         val session = context.session
-        val hasInlinableParameters =
-            function.valueParameters.any { param ->
-                val type = param.returnTypeRef.coneType
-                !param.isNoinline && !type.isNullable
-                        && (type.isBasicFunctionType(session) || type.isSuspendOrKSuspendFunctionType(session))
-            }
+        val hasInlinableParameters = function.valueParameters.any { it.isInlinable(context.session) }
         if (hasInlinableParameters) return
         if (function.isInlineOnly(session)) return
         if (function.returnTypeRef.needsMultiFieldValueClassFlattening(session)) return
@@ -488,9 +484,8 @@ object FirInlineDeclarationChecker : FirFunctionChecker(MppCheckerKind.Common) {
     private fun isInlinableDefaultValue(expression: FirExpression): Boolean =
         expression is FirCallableReferenceAccess ||
                 expression is FirFunctionCall ||
-                expression is FirLambdaArgumentExpression ||
                 expression is FirAnonymousFunctionExpression ||
-                (expression is FirLiteralExpression<*> && expression.value == null) //this will be reported separately
+                (expression is FirLiteralExpression && expression.value == null) //this will be reported separately
 
     fun checkCallableDeclaration(declaration: FirCallableDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
         if (declaration is FirPropertyAccessor) return
@@ -561,12 +556,14 @@ object FirInlineDeclarationChecker : FirFunctionChecker(MppCheckerKind.Common) {
     }
 }
 
+private fun FirValueParameter.isInlinable(session: FirSession): Boolean {
+    if (isNoinline) return false
+    val fullyExpandedType = returnTypeRef.coneType.fullyExpandedType(session)
+    return fullyExpandedType.isNonKFunctionType(session) && !fullyExpandedType.isNullable
+}
+
 fun createInlineFunctionBodyContext(function: FirFunction, session: FirSession): FirInlineDeclarationChecker.InlineFunctionBodyContext {
-    val inlineableParameters = function.valueParameters.filter {
-        if (it.isNoinline) return@filter false
-        val type = it.returnTypeRef.coneType
-        !type.isMarkedNullable && type.isNonReflectFunctionType(session)
-    }.map { it.symbol }
+    val inlineableParameters = function.valueParameters.mapNotNull { p -> p.takeIf { it.isInlinable(session) }?.symbol }
 
     return FirInlineDeclarationChecker.InlineFunctionBodyContext(
         function,

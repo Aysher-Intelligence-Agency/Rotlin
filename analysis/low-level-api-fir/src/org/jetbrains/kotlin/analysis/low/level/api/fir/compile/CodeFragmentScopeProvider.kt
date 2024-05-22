@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.fir.FirSessionComponent
 import org.jetbrains.kotlin.fir.caches.firCachesFactory
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildProperty
-import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.java.JavaTypeParameterStack
 import org.jetbrains.kotlin.fir.java.resolveIfJavaType
@@ -37,7 +36,10 @@ val FirSession.codeFragmentScopeProvider: CodeFragmentScopeProvider by FirSessio
 
 private object ForeignValueMarkerDataKey : FirDeclarationDataKey()
 
-var FirProperty.foreignValueMarker: Boolean? by FirDeclarationDataRegistry.data(ForeignValueMarkerDataKey)
+private var FirProperty.foreignValueMarker: Boolean? by FirDeclarationDataRegistry.data(ForeignValueMarkerDataKey)
+
+val FirPropertySymbol.isForeignValue: Boolean
+    get() = fir.foreignValueMarker == true
 
 class CodeFragmentScopeProvider(private val session: FirSession) : FirSessionComponent {
     private val foreignValueProvider = ForeignValueProviderService.getInstance()
@@ -58,7 +60,7 @@ class CodeFragmentScopeProvider(private val session: FirSession) : FirSessionCom
             type = javaType
         }
 
-        javaTypeRef.resolveIfJavaType(session, JavaTypeParameterStack.EMPTY)
+        javaTypeRef.resolveIfJavaType(session, JavaTypeParameterStack.EMPTY, source = null)
     }
 
     fun getExtraScopes(codeFragment: KtCodeFragment): List<FirLocalScope> {

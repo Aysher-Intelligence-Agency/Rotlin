@@ -5,10 +5,11 @@
 
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.annotations
 
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationApplication
 import org.jetbrains.kotlin.analysis.api.symbols.DebugSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
+import org.jetbrains.kotlin.analysis.test.framework.project.structure.KtTestModule
 import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerProvider
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.directives.model.SimpleDirectivesContainer
 import org.jetbrains.kotlin.test.directives.model.singleValue
-import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
 
@@ -26,18 +26,18 @@ abstract class AbstractAnalysisApiSpecificAnnotationOnDeclarationTest : Abstract
         builder.useDirectives(Directives)
     }
 
-    override fun doTestByMainFile(mainFile: KtFile, mainModule: TestModule, testServices: TestServices) {
+    override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
         val ktDeclaration = testServices.expressionMarkerProvider.getElementOfTypeAtCaret<KtDeclaration>(mainFile)
-        val classIdString = mainModule.directives.singleValue(Directives.CLASS_ID)
+        val classIdString = mainModule.testModule.directives.singleValue(Directives.CLASS_ID)
 
         val actual = analyseForTest(ktDeclaration) {
-            val declarationSymbol = ktDeclaration.getSymbol() as KtAnnotatedSymbol
+            val declarationSymbol = ktDeclaration.getSymbol() as KaAnnotatedSymbol
             val annotationList = declarationSymbol.annotationsList
             val classId = ClassId.fromString(classIdString)
             val renderer = DebugSymbolRenderer()
-            fun renderAnnotation(application: KtAnnotationApplication): String = buildString {
+            fun renderAnnotation(application: KaAnnotationApplication): String = buildString {
                 appendLine("KtDeclaration: ${ktDeclaration::class.simpleName} ${ktDeclaration.name}")
-                append(renderer.renderAnnotationApplication(application))
+                append(renderer.renderAnnotationApplication(analysisSession, application))
             }
 
             val rawList = renderAnnotation(annotationList.annotationsByClassId(classId).single())

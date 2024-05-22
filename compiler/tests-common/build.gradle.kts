@@ -32,7 +32,6 @@ dependencies {
     testApi(project(":compiler:fir:checkers:checkers.wasm"))
     testApi(project(":compiler:fir:java"))
     testApi(project(":compiler:fir:entrypoint"))
-    testApi(project(":compiler:ir.ir2cfg"))
     testApi(project(":compiler:frontend"))
     testApi(project(":compiler:frontend.java"))
     testApi(project(":compiler:util"))
@@ -71,6 +70,7 @@ dependencies {
     testApi(commonDependency("one.util:streamex"))
     testApi(commonDependency("org.codehaus.woodstox:stax2-api"))
     testApi(commonDependency("com.fasterxml:aalto-xml"))
+    testApi(libs.opentest4j)
 
     testApi(jpsModel()) { isTransitive = false }
     testApi(jpsModelImpl()) { isTransitive = false }

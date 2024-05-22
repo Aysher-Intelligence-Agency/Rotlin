@@ -5,8 +5,10 @@
 
 package org.jetbrains.kotlin.fir.java.scopes
 
+import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.FirSession
@@ -15,6 +17,7 @@ import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isStatic
 import org.jetbrains.kotlin.fir.declarations.utils.modality
+import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.dispatchReceiverClassLookupTagOrNull
 import org.jetbrains.kotlin.fir.java.JavaTypeParameterStack
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaClass
@@ -25,12 +28,8 @@ import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
-import org.jetbrains.kotlin.fir.scopes.MemberWithBaseScope
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
-import org.jetbrains.kotlin.fir.scopes.impl.FirAbstractOverrideChecker
-import org.jetbrains.kotlin.fir.scopes.impl.chooseIntersectionVisibilityOrNull
-import org.jetbrains.kotlin.fir.scopes.impl.filterOutDuplicates
-import org.jetbrains.kotlin.fir.scopes.impl.isAbstract
+import org.jetbrains.kotlin.fir.scopes.impl.*
 import org.jetbrains.kotlin.fir.scopes.jvm.computeJvmDescriptorRepresentation
 import org.jetbrains.kotlin.fir.scopes.processOverriddenFunctions
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
@@ -96,8 +95,12 @@ class JavaOverrideChecker internal constructor(
         forceBoxBaseType: Boolean,
         dontComparePrimitivity: Boolean,
     ): Boolean {
-        val candidateType = candidateTypeRef.toConeKotlinTypeProbablyFlexible(session, javaTypeParameterStack)
-        val baseType = baseTypeRef.toConeKotlinTypeProbablyFlexible(session, javaTypeParameterStack)
+        val candidateType = candidateTypeRef.toConeKotlinTypeProbablyFlexible(
+            session, javaTypeParameterStack, candidateTypeRef.source?.fakeElement(KtFakeSourceElementKind.Enhancement)
+        )
+        val baseType = baseTypeRef.toConeKotlinTypeProbablyFlexible(
+            session, javaTypeParameterStack, baseTypeRef.source?.fakeElement(KtFakeSourceElementKind.Enhancement)
+        )
 
         val candidateTypeIsPrimitive = !forceBoxCandidateType && candidateType.isPrimitiveInJava(isReturnType = false)
         val baseTypeIsPrimitive = !forceBoxBaseType && baseType.isPrimitiveInJava(isReturnType = false)
@@ -115,8 +118,12 @@ class JavaOverrideChecker internal constructor(
         val candidateTypeRef = candidate.returnTypeRef
         val baseTypeRef = base.returnTypeRef
 
-        val candidateType = candidateTypeRef.toConeKotlinTypeProbablyFlexible(session, javaTypeParameterStack)
-        val baseType = baseTypeRef.toConeKotlinTypeProbablyFlexible(session, javaTypeParameterStack)
+        val candidateType = candidateTypeRef.toConeKotlinTypeProbablyFlexible(
+            session, javaTypeParameterStack, candidateTypeRef.source?.fakeElement(KtFakeSourceElementKind.Enhancement)
+        )
+        val baseType = baseTypeRef.toConeKotlinTypeProbablyFlexible(
+            session, javaTypeParameterStack, baseTypeRef.source?.fakeElement(KtFakeSourceElementKind.Enhancement)
+        )
 
         val candidateHasPrimitiveReturnType = candidate.hasPrimitiveReturnTypeInJvm(candidateType)
         if (candidateHasPrimitiveReturnType != base.hasPrimitiveReturnTypeInJvm(baseType)) return false
@@ -140,7 +147,9 @@ class JavaOverrideChecker internal constructor(
         var foundNonPrimitiveOverridden = false
 
         baseScopes?.processOverriddenFunctions(symbol) {
-            val type = it.fir.returnTypeRef.toConeKotlinTypeProbablyFlexible(session, javaTypeParameterStack)
+            val type = it.fir.returnTypeRef.toConeKotlinTypeProbablyFlexible(
+                session, javaTypeParameterStack, source?.fakeElement(KtFakeSourceElementKind.Enhancement)
+            )
             if (!type.isPrimitiveInJava(isReturnType = true)) {
                 foundNonPrimitiveOverridden = true
                 ProcessorAction.STOP
@@ -176,7 +185,9 @@ class JavaOverrideChecker internal constructor(
             }
         }
 
-        symbol to firstBound.toConeKotlinTypeProbablyFlexible(session, javaTypeParameterStack)
+        symbol to firstBound.toConeKotlinTypeProbablyFlexible(
+            session, javaTypeParameterStack, it.source?.fakeElement(KtFakeSourceElementKind.Enhancement)
+        )
     }
 
     private fun FirTypeRef?.isTypeParameterDependent(): Boolean =
@@ -246,6 +257,7 @@ class JavaOverrideChecker internal constructor(
 
     override fun isOverriddenFunction(overrideCandidate: FirSimpleFunction, baseDeclaration: FirSimpleFunction): Boolean {
         if (overrideCandidate.isStatic != baseDeclaration.isStatic) return false
+        if (Visibilities.isPrivate(baseDeclaration.visibility)) return false
 
         overrideCandidate.lazyResolveToPhase(FirResolvePhase.TYPES)
         baseDeclaration.lazyResolveToPhase(FirResolvePhase.TYPES)
@@ -309,6 +321,7 @@ class JavaOverrideChecker internal constructor(
 
     override fun isOverriddenProperty(overrideCandidate: FirCallableDeclaration, baseDeclaration: FirProperty): Boolean {
         if (baseDeclaration.modality == Modality.FINAL) return false
+        if (Visibilities.isPrivate(baseDeclaration.visibility)) return false
 
         overrideCandidate.lazyResolveToPhase(FirResolvePhase.TYPES)
         baseDeclaration.lazyResolveToPhase(FirResolvePhase.TYPES)
@@ -354,7 +367,9 @@ class JavaOverrideChecker internal constructor(
 
         val parameter = function.valueParameters.singleOrNull() ?: return false
 
-        val parameterConeType = parameter.returnTypeRef.toConeKotlinTypeProbablyFlexible(session, javaTypeParameterStack)
+        val parameterConeType = parameter.returnTypeRef.toConeKotlinTypeProbablyFlexible(
+            session, javaTypeParameterStack, function.source?.fakeElement(KtFakeSourceElementKind.Enhancement)
+        )
         if (!parameterConeType.fullyExpandedType(session).lowerBoundIfFlexible().isInt) return false
 
         var overridesMutableCollectionRemove = false
@@ -371,30 +386,23 @@ class JavaOverrideChecker internal constructor(
         return overridesMutableCollectionRemove
     }
 
-    override fun <D : FirCallableSymbol<*>> chooseIntersectionVisibility(
-        extractedOverrides: Collection<MemberWithBaseScope<D>>,
+    override fun chooseIntersectionVisibility(
+        overrides: Collection<FirCallableSymbol<*>>,
         dispatchClassSymbol: FirRegularClassSymbol?,
     ): Visibility {
-        // It's crucial that we only unwrap phantom intersection overrides.
-        // See comments in the following tests for explanation:
-        // - intersectionWithMultipleDefaultsInJavaOverriddenByIntersectionInKotlin.kt
-        // - intersectionOverridesIntersection.kt
-        val overridesWithoutIntersections = extractedOverrides.flatMap { it.flattenPhantomIntersectionsRecursively() }
-        val nonSubsumed = overridesWithoutIntersections.nonSubsumed().filterOutDuplicates()
-
         // In Java it's OK to inherit multiple implementations of the same function
         // from the supertypes as long as there's an implementation from a class.
         // We shouldn't reject green Java code.
         if (dispatchClassSymbol?.fir is FirJavaClass) {
-            val nonAbstractFromClass = nonSubsumed.find {
-                !it.isAbstract && it.member.dispatchReceiverClassLookupTagOrNull()
+            val nonAbstractFromClass = overrides.find {
+                !it.isAbstractAccordingToRawStatus && it.dispatchReceiverClassLookupTagOrNull()
                     ?.toSymbol(session)?.classKind == ClassKind.CLASS
             }
             if (nonAbstractFromClass != null) {
-                return nonAbstractFromClass.member.rawStatus.visibility
+                return nonAbstractFromClass.rawStatus.visibility
             }
         }
 
-        return chooseIntersectionVisibilityOrNull(nonSubsumed) ?: Visibilities.Unknown
+        return chooseIntersectionVisibilityOrNull(overrides) ?: Visibilities.Unknown
     }
 }

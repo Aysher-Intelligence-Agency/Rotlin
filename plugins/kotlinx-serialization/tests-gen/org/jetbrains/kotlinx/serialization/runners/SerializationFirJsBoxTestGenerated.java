@@ -9,7 +9,6 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -125,6 +124,12 @@ public class SerializationFirJsBoxTestGenerated extends AbstractSerializationFir
   @TestMetadata("interfaces.kt")
   public void testInterfaces() {
     runTest("plugins/kotlinx-serialization/testData/boxIr/interfaces.kt");
+  }
+
+  @Test
+  @TestMetadata("KeepGeneratedSerializer.kt")
+  public void testKeepGeneratedSerializer() {
+    runTest("plugins/kotlinx-serialization/testData/boxIr/KeepGeneratedSerializer.kt");
   }
 
   @Test

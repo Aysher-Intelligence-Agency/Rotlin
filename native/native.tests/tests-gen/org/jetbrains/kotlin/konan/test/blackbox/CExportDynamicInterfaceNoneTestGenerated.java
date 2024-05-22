@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.konan.test.blackbox.support.EnforcedProperty;
 import org.jetbrains.kotlin.konan.test.blackbox.support.ClassLevelProperty;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -26,6 +25,12 @@ public class CExportDynamicInterfaceNoneTestGenerated extends AbstractNativeCExp
   @Test
   public void testAllFilesPresentInInterfaceNone() {
     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("native/native.tests/testData/CExport/InterfaceNone"), Pattern.compile("^([^_](.+))$"), null, false);
+  }
+
+  @Test
+  @TestMetadata("nativeRefs")
+  public void testNativeRefs() {
+    runTest("native/native.tests/testData/CExport/InterfaceNone/nativeRefs/");
   }
 
   @Test

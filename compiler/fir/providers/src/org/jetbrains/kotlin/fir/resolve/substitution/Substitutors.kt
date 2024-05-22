@@ -43,14 +43,13 @@ inline fun ConeCapturedType.substitute(f: (ConeKotlinType) -> ConeKotlinType?): 
     //   C<CapturedType(out B)_1> <!:> C<CapturedType(out B)_2>
     //  ```
 
-    return ConeCapturedType(
-        captureStatus,
+    return copy(
         constructor = ConeCapturedTypeConstructor(
             wrapProjection(constructor.projection, substitutedInnerType),
             substitutedSuperTypes,
             typeParameterMarker = constructor.typeParameterMarker
         ),
-        lowerType = if (lowerType != null) substitutedInnerType else null
+        lowerType = if (lowerType != null) substitutedInnerType else null,
     )
 }
 
@@ -67,7 +66,7 @@ fun wrapProjection(old: ConeTypeProjection, newType: ConeKotlinType): ConeTypePr
 
 abstract class AbstractConeSubstitutor(protected val typeContext: ConeTypeContext) : ConeSubstitutor() {
     abstract fun substituteType(type: ConeKotlinType): ConeKotlinType?
-    open fun substituteArgument(projection: ConeTypeProjection, index: Int): ConeTypeProjection? {
+    override fun substituteArgument(projection: ConeTypeProjection, index: Int): ConeTypeProjection? {
         val type = (projection as? ConeKotlinTypeProjection)?.type ?: return null
         val newType = substituteOrNull(type) ?: return null
         return wrapProjection(projection, newType)
@@ -151,7 +150,7 @@ abstract class AbstractConeSubstitutor(protected val typeContext: ConeTypeContex
             ConeNullability.NOT_NULL,
             typeContext,
             substitutedOriginal.attributes.add(original.attributes),
-            preserveEnhancedNullability = true,
+            preserveAttributes = true,
         )
         return ConeDefinitelyNotNullType.create(
             substituted, typeContext, avoidComprehensiveCheck = true,
@@ -212,18 +211,18 @@ abstract class AbstractConeSubstitutor(protected val typeContext: ConeTypeContex
 }
 
 fun substitutorByMap(substitution: Map<FirTypeParameterSymbol, ConeKotlinType>, useSiteSession: FirSession): ConeSubstitutor {
-    // If all arguments match parameters, then substitutor isn't needed
-    if (substitution.all { (parameterSymbol, argumentType) ->
-            (argumentType as? ConeTypeParameterType)?.lookupTag?.typeParameterSymbol == parameterSymbol && !argumentType.isMarkedNullable
-        }
-    ) return ConeSubstitutor.Empty
-    return ConeSubstitutorByMap(substitution, useSiteSession)
+    return ConeSubstitutorByMap.create(substitution, useSiteSession, allowIdenticalSubstitution = false)
 }
 
 data class ChainedSubstitutor(val first: ConeSubstitutor, val second: ConeSubstitutor) : ConeSubstitutor() {
     override fun substituteOrNull(type: ConeKotlinType): ConeKotlinType? {
         first.substituteOrNull(type)?.let { return second.substituteOrSelf(it) }
         return second.substituteOrNull(type)
+    }
+
+    override fun substituteArgument(projection: ConeTypeProjection, index: Int): ConeTypeProjection? {
+        first.substituteArgument(projection, index)?.let { return second.substituteArgument(projection, index) }
+        return second.substituteArgument(projection, index)
     }
 
     override fun toString(): String {
@@ -237,11 +236,31 @@ fun ConeSubstitutor.chain(other: ConeSubstitutor): ConeSubstitutor {
     return ChainedSubstitutor(this, other)
 }
 
-class ConeSubstitutorByMap(
+class ConeSubstitutorByMap private constructor(
     // Used only for sake of optimizations at org.jetbrains.kotlin.analysis.api.fir.types.KtFirMapBackedSubstitutor
     val substitution: Map<FirTypeParameterSymbol, ConeKotlinType>,
     private val useSiteSession: FirSession
 ) : AbstractConeSubstitutor(useSiteSession.typeContext) {
+    companion object {
+        fun create(
+            substitution: Map<FirTypeParameterSymbol, ConeKotlinType>,
+            useSiteSession: FirSession,
+            allowIdenticalSubstitution: Boolean = true,
+        ): ConeSubstitutor {
+            if (substitution.isEmpty()) return Empty
+
+            if (!allowIdenticalSubstitution) {
+                // If all arguments match parameters, then substitutor isn't needed
+                val substitutionIsIdentical = substitution.all { (parameterSymbol, argumentType) ->
+                    (argumentType as? ConeTypeParameterType)?.lookupTag?.typeParameterSymbol == parameterSymbol && !argumentType.isMarkedNullable
+                }
+                if (substitutionIsIdentical) {
+                    return Empty
+                }
+            }
+            return ConeSubstitutorByMap(substitution, useSiteSession)
+        }
+    }
 
     private val hashCode by lazy(LazyThreadSafetyMode.PUBLICATION) {
         substitution.hashCode()
@@ -265,7 +284,7 @@ class ConeSubstitutorByMap(
         return true
     }
 
-    override fun hashCode() = hashCode
+    override fun hashCode(): Int = hashCode
 
     override fun toString(): String {
         return substitution.entries.joinToString(prefix = "{", postfix = "}", separator = " | ") { (param, type) ->
@@ -281,7 +300,7 @@ class ConeRawScopeSubstitutor(
         return when {
             type is ConeTypeParameterType -> {
                 substituteOrSelf(
-                    listOf(type.lookupTag.symbol).getProjectionsForRawType(useSiteSession)[0] as ConeKotlinType
+                    type.lookupTag.symbol.getProjectionForRawType(useSiteSession, makeNullable = type.isMarkedNullable)
                 )
             }
             type is ConeClassLikeType && type.typeArguments.isNotEmpty() -> {
@@ -295,8 +314,11 @@ class ConeRawScopeSubstitutor(
                 }
 
                 val firClass = type.fullyExpandedType(useSiteSession).lookupTag.toFirRegularClassSymbol(useSiteSession) ?: return null
+                val nullabilities = BooleanArray(type.typeArguments.size) { type.typeArguments[it].type?.isMarkedNullable == true }
                 ConeRawType.create(
-                    type.withArguments(firClass.typeParameterSymbols.getProjectionsForRawType(useSiteSession)),
+                    type.withArguments(
+                        firClass.typeParameterSymbols.getProjectionsForRawType(useSiteSession, nullabilities = nullabilities)
+                    ),
                     type.replaceArgumentsWithStarProjections()
                 )
             }
@@ -319,7 +341,7 @@ class ConeRawScopeSubstitutor(
         }
     }
 
-    override fun equals(other: Any?) = other is ConeRawScopeSubstitutor
+    override fun equals(other: Any?): Boolean = other is ConeRawScopeSubstitutor
 
     override fun hashCode(): Int = 0
 }

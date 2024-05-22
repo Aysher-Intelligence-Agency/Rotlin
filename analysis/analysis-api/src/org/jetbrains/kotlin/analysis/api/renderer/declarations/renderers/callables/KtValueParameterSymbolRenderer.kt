@@ -5,29 +5,50 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
-public interface KtValueParameterSymbolRenderer {
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    public fun renderSymbol(symbol: KtValueParameterSymbol, printer: PrettyPrinter)
+public interface KaValueParameterSymbolRenderer {
+    public fun renderSymbol(
+        analysisSession: KaSession,
+        symbol: KaValueParameterSymbol,
+        declarationRenderer: KaDeclarationRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object AS_SOURCE : KtValueParameterSymbolRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderSymbol(symbol: KtValueParameterSymbol, printer: PrettyPrinter): Unit = printer {
-            " = ".separated(
-                { callableSignatureRenderer.renderCallableSignature(symbol, keyword = null, printer) },
-                { parameterDefaultValueRenderer.renderDefaultValue(symbol, printer) },
-            )
+    public object AS_SOURCE : KaValueParameterSymbolRenderer {
+        override fun renderSymbol(
+            analysisSession: KaSession,
+            symbol: KaValueParameterSymbol,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                " = ".separated(
+                    {
+                        declarationRenderer.callableSignatureRenderer
+                            .renderCallableSignature(analysisSession, symbol, keyword = null, declarationRenderer, printer)
+                    },
+                    { declarationRenderer.parameterDefaultValueRenderer.renderDefaultValue(analysisSession, symbol, printer) },
+                )
+            }
         }
     }
 
-    public object TYPE_ONLY : KtValueParameterSymbolRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderSymbol(symbol: KtValueParameterSymbol, printer: PrettyPrinter): Unit = printer {
-            typeRenderer.renderType(symbol.returnType, printer)
+    public object TYPE_ONLY : KaValueParameterSymbolRenderer {
+        override fun renderSymbol(
+            analysisSession: KaSession,
+            symbol: KaValueParameterSymbol,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                declarationRenderer.typeRenderer.renderType(analysisSession, symbol.returnType, printer)
+            }
         }
     }
 }
+
+public typealias KtValueParameterSymbolRenderer = KaValueParameterSymbolRenderer

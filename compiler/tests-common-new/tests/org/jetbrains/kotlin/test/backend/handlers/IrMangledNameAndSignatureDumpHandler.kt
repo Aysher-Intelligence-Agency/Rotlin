@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.test.backend.handlers
 
-import com.intellij.rt.execution.junit.FileComparisonFailure
 import org.jetbrains.kotlin.backend.common.serialization.signature.PublicIdSignatureComputer
 import org.jetbrains.kotlin.backend.jvm.JvmSymbols
 import org.jetbrains.kotlin.backend.jvm.ir.hasPlatformDependent
@@ -46,6 +45,7 @@ import org.jetbrains.kotlin.test.utils.MultiModuleInfoDumper
 import org.jetbrains.kotlin.test.utils.withExtension
 import org.jetbrains.kotlin.utils.Printer
 import org.jetbrains.kotlin.utils.addToStdlib.same
+import org.opentest4j.AssertionFailedError
 import java.io.File
 import java.io.FileNotFoundException
 
@@ -114,7 +114,7 @@ class IrMangledNameAndSignatureDumpHandler(
     override val additionalAfterAnalysisCheckers: List<Constructor<AfterAnalysisChecker>>
         get() = listOf(::IdenticalChecker)
 
-    class IdenticalChecker(testServices: TestServices) : SimpleFirIrIdenticalChecker(testServices) {
+    class IdenticalChecker(testServices: TestServices) : SimpleFirIrIdenticalChecker(testServices, trimLines = true) {
         override val dumpExtension: String
             get() = DUMP_EXTENSION
 
@@ -186,12 +186,15 @@ class IrMangledNameAndSignatureDumpHandler(
     }
 
     override fun processAfterAllModules(someAssertionWasFailed: Boolean) {
-        if (dumper.isEmpty()) return
+        if (dumper.isEmpty()) {
+            assertions.assertFileDoesntExist(expectedFile, DUMP_SIGNATURES)
+            return
+        }
         val frontendKind = testServices.defaultsProvider.defaultFrontend
         val muteDirectives = listOfNotNull(
             MUTE_SIGNATURE_COMPARISON_K2.takeIf { frontendKind == FrontendKinds.FIR },
         )
-        testServices.codegenSuppressionChecker.checkMuted<FileComparisonFailure>(muteDirectives) {
+        testServices.codegenSuppressionChecker.checkMuted<AssertionFailedError>(muteDirectives) {
             assertions.assertEqualsToFile(expectedFile, dumper.generateResultingDump())
         }
     }

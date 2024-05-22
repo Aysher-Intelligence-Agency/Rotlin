@@ -47,6 +47,8 @@ object BinaryOptions : BinaryOptionRegistry() {
 
     val concurrentWeakSweep by booleanOption()
 
+    val concurrentMarkMaxIterations by uintOption()
+
     val gcMutatorsCooperate by booleanOption()
 
     val auxGCThreads by uintOption()
@@ -82,6 +84,10 @@ object BinaryOptions : BinaryOptionRegistry() {
     val cInterfaceMode by option<CInterfaceGenerationMode>()
 
     val globalDataLazyInit by booleanOption()
+
+    val swiftExport by booleanOption()
+
+    val genericSafeCasts by booleanOption()
 }
 
 open class BinaryOption<T : Any>(

@@ -163,6 +163,16 @@ progressive mode enabled may cause compilation errors in progressive mode."""
             field = value
         }
 
+    @Argument(
+        value = "-Xstdlib-compilation",
+        description = "Enables special features which are relevant only for stdlib compilation.",
+    )
+    var stdlibCompilation = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
     @Argument(value = "-Xreport-output-files", description = "Report the source-to-output file mapping.")
     var reportOutputFiles = false
         set(value) {
@@ -453,8 +463,8 @@ They should be a subset of sources passed as free arguments."""
 
     @GradleDeprecatedOption(
         message = "Compiler flag -Xuse-k2 is deprecated; please use language version 2.0 instead",
-        level = DeprecationLevel.WARNING,
-        removeAfter = "2.0.0",
+        level = DeprecationLevel.WARNING, // TODO: KT-65990 switch to ERROR in 2.1
+        removeAfter = LanguageVersion.KOTLIN_2_1,
     )
     @GradleOption(
         DefaultValue.BOOLEAN_FALSE_DEFAULT,
@@ -503,16 +513,6 @@ They should be a subset of sources passed as free arguments."""
         }
 
     @Argument(
-        value = "-Xuse-ir-fake-override-builder",
-        description = "Generate fake overrides via IR. See KT-61514"
-    )
-    var useIrFakeOverrideBuilder = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
         value = "-Xmetadata-klib",
         description = "Produce a klib that only contains the metadata of declarations.",
         deprecatedName = "-Xexpect-actual-linker"
@@ -537,6 +537,19 @@ They should be a subset of sources passed as free arguments."""
 Use the 'warning' level to issue warnings instead of errors."""
     )
     var explicitApi: String = ExplicitApiMode.DISABLED.state
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
+        value = "-XXexplicit-return-types",
+        valueDescription = "{strict|warning|disable}",
+        description = """Force the compiler to report errors on all public API declarations without an explicit return type.
+Use the 'warning' level to issue warnings instead of errors.
+This flag partially enables functionality of `-Xexplicit-api` flag, so please don't use them altogether"""
+    )
+    var explicitReturnTypes: String = ExplicitApiMode.DISABLED.state
         set(value) {
             checkFrozen()
             field = value
@@ -597,6 +610,17 @@ Kotlin reports a warning every time you use one of them. You can use this flag t
         }
 
     @Argument(
+        value = "-Xconsistent-data-class-copy-visibility",
+        description = "The effect of this compiler flag is the same as applying @ConsistentCopyVisibility annotation to all data classes in the module. " +
+                "See https://youtrack.jetbrains.com/issue/KT-11914"
+    )
+    var consistentDataClassCopyVisibility = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
         value = "-Xunrestricted-builder-inference",
         description = "Eliminate builder inference restrictions, for example by allowing type variables to be returned from builder inference calls."
     )
@@ -632,6 +656,16 @@ The corresponding calls' declarations may not be marked with @BuilderInference."
         description = "Enable experimental context receivers."
     )
     var contextReceivers = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
+        value = "-Xmulti-dollar-interpolation",
+        description = "Enable experimental multi-dollar interpolation."
+    )
+    var multiDollarInterpolation = false
         set(value) {
             checkFrozen()
             field = value
@@ -688,6 +722,13 @@ The corresponding calls' declarations may not be marked with @BuilderInference."
             field = value
         }
 
+    @Argument(value = "-Xreport-all-warnings", description = "Report all warnings even if errors are found.")
+    var reportAllWarnings = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
     @Argument(
         value = "-Xfragments",
         valueDescription = "<fragment name>",
@@ -737,6 +778,16 @@ The corresponding calls' declarations may not be marked with @BuilderInference."
             field = value
         }
 
+    @Argument(
+        value = "-Xwhen-guards",
+        description = "Enable language support for when guards."
+    )
+    var whenGuards = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
     @OptIn(IDEAPluginsCompatibilityAPI::class)
     open fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> {
         return HashMap<AnalysisFlag<*>, Any>().apply {
@@ -756,9 +807,15 @@ The corresponding calls' declarations may not be marked with @BuilderInference."
                 CompilerMessageSeverity.ERROR,
                 "Unknown value for parameter -Xexplicit-api: '$explicitApi'. Value should be one of ${ExplicitApiMode.availableValues()}"
             )
+            ExplicitApiMode.fromString(explicitReturnTypes)?.also { put(AnalysisFlags.explicitReturnTypes, it) } ?: collector.report(
+                CompilerMessageSeverity.ERROR,
+                "Unknown value for parameter -XXexplicit-return-types: '$explicitReturnTypes'. Value should be one of ${ExplicitApiMode.availableValues()}"
+            )
             put(AnalysisFlags.extendedCompilerChecks, extendedCompilerChecks)
             put(AnalysisFlags.allowKotlinPackage, allowKotlinPackage)
+            put(AnalysisFlags.stdlibCompilation, stdlibCompilation)
             put(AnalysisFlags.muteExpectActualClassesWarning, expectActualClasses)
+            put(AnalysisFlags.consistentDataClassCopyVisibility, consistentDataClassCopyVisibility)
             put(AnalysisFlags.allowFullyQualifiedNameInKClass, true)
             put(AnalysisFlags.dontWarnOnErrorSuppression, dontWarnOnErrorSuppression)
         }
@@ -803,6 +860,14 @@ The corresponding calls' declarations may not be marked with @BuilderInference."
 
             if (inferenceCompatibility) {
                 put(LanguageFeature.InferenceCompatibility, LanguageFeature.State.ENABLED)
+            }
+
+            if (whenGuards) {
+                put(LanguageFeature.WhenGuards, LanguageFeature.State.ENABLED)
+            }
+
+            if (multiDollarInterpolation) {
+                put(LanguageFeature.MultiDollarInterpolation, LanguageFeature.State.ENABLED)
             }
 
             if (progressiveMode) {
@@ -913,6 +978,7 @@ The corresponding calls' declarations may not be marked with @BuilderInference."
         checkIrSupport(languageVersionSettings, collector)
 
         checkPlatformSpecificSettings(languageVersionSettings, collector)
+        checkExplicitApiAndExplicitReturnTypesAtTheSameTime(collector)
 
         return languageVersionSettings
     }
@@ -997,6 +1063,22 @@ The corresponding calls' declarations may not be marked with @BuilderInference."
 
     protected open fun checkIrSupport(languageVersionSettings: LanguageVersionSettings, collector: MessageCollector) {
         // backend-specific
+    }
+
+    private fun checkExplicitApiAndExplicitReturnTypesAtTheSameTime(collector: MessageCollector) {
+        if (explicitApi == ExplicitApiMode.DISABLED.state || explicitReturnTypes == ExplicitApiMode.DISABLED.state) return
+        if (explicitApi != explicitReturnTypes) {
+            collector.report(
+                CompilerMessageSeverity.ERROR,
+                """
+                    '-Xexplicit-api' and '-XXexplicit-return-types' flags cannot have different values at the same time.
+                    Consider use only one of those flags
+                    Passed:
+                      '-Xexplicit-api=${explicitApi}'
+                      '-XXexplicit-return-types=${explicitReturnTypes}'
+                    """.trimIndent()
+            )
+        }
     }
 
     private enum class VersionKind(val text: String) {

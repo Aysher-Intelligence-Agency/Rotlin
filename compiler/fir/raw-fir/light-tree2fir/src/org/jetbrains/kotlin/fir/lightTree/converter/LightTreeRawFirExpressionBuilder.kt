@@ -142,7 +142,7 @@ class LightTreeRawFirExpressionBuilder(
 
             OBJECT_LITERAL -> declarationBuilder.convertObjectLiteral(expression)
             FUN -> declarationBuilder.convertFunctionDeclaration(expression)
-            DESTRUCTURING_DECLARATION -> declarationBuilder.convertDestructingDeclaration(expression).toFirDestructingDeclaration(baseModuleData)
+            DESTRUCTURING_DECLARATION -> declarationBuilder.convertDestructingDeclaration(expression).toFirDestructingDeclaration(this, baseModuleData)
             else -> buildErrorExpression(expression.toFirSourceElement(KtFakeSourceElementKind.ErrorTypeRef), ConeSimpleDiagnostic(errorReason, DiagnosticKind.ExpressionExpected))
         }
     }
@@ -202,12 +202,13 @@ class LightTreeRawFirExpressionBuilder(
                         isNoinline = false
                         isVararg = false
                     }
-                    destructuringStatements.addDestructuringStatements(
+                    addDestructuringStatements(
+                        destructuringStatements,
                         baseModuleData,
                         multiDeclaration,
                         multiParameter,
                         tmpVariable = false,
-                        localEntries = true
+                        forceLocal = true,
                     )
                     multiParameter
                 } else {
@@ -234,7 +235,7 @@ class LightTreeRawFirExpressionBuilder(
                                     source = expressionSource.fakeElement(KtFakeSourceElementKind.ImplicitReturn.FromExpressionBody)
                                     this.target = target
                                     result = buildUnitExpression {
-                                        source = expressionSource.fakeElement(KtFakeSourceElementKind.ImplicitUnit.LambdaCoercion)
+                                        source = expressionSource.fakeElement(KtFakeSourceElementKind.ImplicitUnit.ForEmptyLambda)
                                     }
                                 }
                             )
@@ -735,15 +736,20 @@ class LightTreeRawFirExpressionBuilder(
      * @see org.jetbrains.kotlin.parsing.KotlinExpressionParsing.parseStringTemplate
      */
     private fun convertStringTemplate(stringTemplate: LighterASTNode): FirExpression {
-        return stringTemplate.getChildrenAsArray().toInterpolatingCall(stringTemplate) { convertShortOrLongStringTemplate(it) }
+        val children = stringTemplate.getChildrenAsArray()
+        return children.toInterpolatingCall(
+            stringTemplate,
+            convertTemplateEntry = { convertShortOrLongStringTemplate(it) },
+            prefix = { children.firstOrNull { it?.tokenType == INTERPOLATION_PREFIX }?.asText ?: "" }
+        )
     }
 
-    private fun LighterASTNode?.convertShortOrLongStringTemplate(errorReason: String): FirExpression {
-        var firExpression: FirExpression? = null
-        this?.forEachChildren(LONG_TEMPLATE_ENTRY_START, LONG_TEMPLATE_ENTRY_END) {
-            firExpression = getAsFirExpression(it, errorReason)
+    private fun LighterASTNode?.convertShortOrLongStringTemplate(errorReason: String): Collection<FirExpression> {
+        val firExpressions = mutableListOf<FirExpression>()
+        this?.forEachChildren(LONG_TEMPLATE_ENTRY_START, LONG_TEMPLATE_ENTRY_END, SHORT_TEMPLATE_ENTRY_START) {
+            firExpressions.add(getAsFirExpression(it, errorReason))
         }
-        return firExpression ?: buildErrorExpression(null, ConeSyntaxDiagnostic(errorReason))
+        return firExpressions
     }
 
     /**
@@ -807,23 +813,23 @@ class LightTreeRawFirExpressionBuilder(
                 branches += if (!entry.isElse) {
                     if (hasSubject) {
                         val firCondition = entry.toFirWhenCondition()
-                        buildWhenBranch {
+                        buildWhenBranch(hasGuard = entry.guard != null) {
                             source = entrySource
-                            condition = firCondition
+                            condition = firCondition.guardedBy(entry.guard)
                             result = branch
                         }
                     } else {
                         val firCondition = entry.toFirWhenConditionWithoutSubject()
-                        buildWhenBranch {
+                        buildWhenBranch(hasGuard = entry.guard != null) {
                             source = entrySource
-                            condition = firCondition
+                            condition = firCondition.guardedBy(entry.guard)
                             result = branch
                         }
                     }
                 } else {
-                    buildWhenBranch {
+                    buildWhenBranch(hasGuard = entry.guard != null) {
                         source = entrySource
-                        condition = buildElseIfTrueCondition()
+                        condition = entry.guard ?: buildElseIfTrueCondition()
                         result = branch
                     }
                 }
@@ -847,6 +853,7 @@ class LightTreeRawFirExpressionBuilder(
         var isElse = false
         var firBlock: FirBlock = buildEmptyExpressionBlock()
         val conditions = mutableListOf<FirExpression>()
+        var guard: FirExpression? = null
         var shouldBindSubject = false
         whenEntry.forEachChildren {
             when (it.tokenType) {
@@ -861,13 +868,14 @@ class LightTreeRawFirExpressionBuilder(
                     conditions += condition
                     shouldBindSubject = shouldBindSubject || shouldBind
                 }
+                WHEN_ENTRY_GUARD -> guard = getAsFirExpression(it.getFirstChildExpressionUnwrapped(), "No expression in guard")
                 ELSE_KEYWORD -> isElse = true
                 BLOCK -> firBlock = declarationBuilder.convertBlock(it)
                 else -> if (it.isExpression()) firBlock = declarationBuilder.convertBlock(it)
             }
         }
 
-        return WhenEntry(conditions, firBlock, whenEntry, isElse, shouldBindSubject)
+        return WhenEntry(conditions, guard, firBlock, whenEntry, isElse, shouldBindSubject)
     }
 
     private fun convertWhenConditionExpression(
@@ -1212,12 +1220,13 @@ class LightTreeRawFirExpressionBuilder(
                         extractedAnnotations = valueParameter.annotations
                     )
                     if (multiDeclaration != null) {
-                        statements.addDestructuringStatements(
+                        addDestructuringStatements(
+                            statements,
                             baseModuleData,
                             multiDeclaration,
                             firLoopParameter,
                             tmpVariable = true,
-                            localEntries = true,
+                            forceLocal = true,
                         )
                     } else {
                         statements.add(firLoopParameter)
@@ -1335,42 +1344,28 @@ class LightTreeRawFirExpressionBuilder(
      * @see org.jetbrains.kotlin.fir.builder.RawFirBuilder.Visitor.visitIfExpression
      */
     private fun convertIfExpression(ifExpression: LighterASTNode): FirExpression {
-        var components = parseIfExpression(ifExpression)
-
         return buildWhenExpression {
             source = ifExpression.toFirSourceElement()
-            whenBranches@ while (true) {
-                with(components) {
-                    val trueBranch = convertLoopBody(thenBlock)
-                    branches += buildWhenBranch {
-                        source = firCondition?.source
-                        condition = firCondition ?: buildErrorExpression(
-                            null,
-                            ConeSyntaxDiagnostic("If statement should have condition")
-                        )
-                        result = trueBranch
-                    }
+            with(parseIfExpression(ifExpression)) {
+                val trueBranch = convertLoopBody(thenBlock)
+                branches += buildRegularWhenBranch {
+                    source = firCondition?.source
+                    condition = firCondition ?: buildErrorExpression(
+                        null,
+                        ConeSyntaxDiagnostic("If statement should have condition")
+                    )
+                    result = trueBranch
                 }
-                if (components.elseBlock == null) break@whenBranches
-                var cascadeIf = false
-                components.elseBlock?.forEachChildren {
-                    if (it.tokenType == IF) {
-                        cascadeIf = true
-                        components = parseIfExpression(it)
-                    }
-                }
-                if (!cascadeIf) {
-                    with(components) {
-                        val elseBranch = convertLoopOrIfBody(elseBlock)
-                        if (elseBranch != null) {
-                            branches += buildWhenBranch {
-                                source = elseBlock?.toFirSourceElement()
-                                condition = buildElseIfTrueCondition()
-                                result = elseBranch
-                            }
+
+                if (elseBlock != null) {
+                    val elseBranch = convertLoopOrIfBody(elseBlock)
+                    if (elseBranch != null) {
+                        branches += buildRegularWhenBranch {
+                            source = elseBlock.toFirSourceElement()
+                            condition = buildElseIfTrueCondition()
+                            result = elseBranch
                         }
                     }
-                    break@whenBranches
                 }
             }
             usedAsExpression = ifExpression.usedAsExpression
@@ -1527,9 +1522,11 @@ class LightTreeRawFirExpressionBuilder(
                 VALUE_ARGUMENT -> container += convertValueArgument(node)
                 LAMBDA_EXPRESSION,
                 LABELED_EXPRESSION,
-                ANNOTATED_EXPRESSION -> container += buildLambdaArgumentExpression {
-                    source = valueArguments.toFirSourceElement()
-                    expression = getAsFirExpression(node)
+                ANNOTATED_EXPRESSION,
+                -> container += getAsFirExpression<FirAnonymousFunctionExpression>(node).apply {
+                    // TODO(KT-66553) remove and set in builder
+                    @OptIn(RawFirApi::class)
+                    replaceIsTrailingLambda(newIsTrailingLambda = true)
                 }
             }
         }

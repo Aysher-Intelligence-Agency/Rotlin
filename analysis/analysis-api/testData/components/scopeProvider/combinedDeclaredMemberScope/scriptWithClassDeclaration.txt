@@ -15,6 +15,7 @@ KtFunctionSymbol:
   isOverride: false
   isStatic: false
   isSuspend: false
+  isTailRec: false
   modality: FINAL
   name: foo
   origin: SOURCE
@@ -65,7 +66,7 @@ KtFunctionSymbol:
 KtKotlinPropertySymbol:
   annotationsList: []
   backingFieldSymbol: null
-  callableIdIfNonLocal: null
+  callableIdIfNonLocal: /$$result
   contextReceivers: []
   getter: KtPropertyGetterSymbol:
     annotationsList: []

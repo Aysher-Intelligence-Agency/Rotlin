@@ -5,37 +5,38 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.components
 
-import org.jetbrains.kotlin.analysis.api.components.KtSubtypingComponent
-import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.types.KtFirType
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
+import org.jetbrains.kotlin.analysis.api.components.KaSubtypingComponent
+import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
+import org.jetbrains.kotlin.analysis.api.fir.types.KaFirType
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.assertIsValidAndAccessible
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 
-internal class KtFirSubtypingComponent(
-    override val analysisSession: KtFirAnalysisSession,
-    override val token: KtLifetimeToken,
-) : KtSubtypingComponent(), KtFirAnalysisSessionComponent {
-    override fun isEqualTo(first: KtType, second: KtType): Boolean {
+internal class KaFirSubtypingComponent(
+    override val analysisSession: KaFirSession,
+    override val token: KaLifetimeToken,
+) : KaSubtypingComponent(), KaFirSessionComponent {
+    override fun isEqualTo(first: KaType, second: KaType, errorTypePolicy: KaSubtypingErrorTypePolicy): Boolean {
         second.assertIsValidAndAccessible()
-        check(first is KtFirType)
-        check(second is KtFirType)
+        check(first is KaFirType)
+        check(second is KaFirType)
         return AbstractTypeChecker.equalTypes(
-            createTypeCheckerContext(),
+            createTypeCheckerContext(errorTypePolicy),
             first.coneType,
-            second.coneType
+            second.coneType,
         )
     }
 
-    override fun isSubTypeOf(subType: KtType, superType: KtType): Boolean {
+    override fun isSubTypeOf(subType: KaType, superType: KaType, errorTypePolicy: KaSubtypingErrorTypePolicy): Boolean {
         superType.assertIsValidAndAccessible()
-        check(subType is KtFirType)
-        check(superType is KtFirType)
+        check(subType is KaFirType)
+        check(superType is KaFirType)
         return AbstractTypeChecker.isSubtypeOf(
-            createTypeCheckerContext(),
+            createTypeCheckerContext(errorTypePolicy),
             subType.coneType,
-            superType.coneType
+            superType.coneType,
         )
     }
 }

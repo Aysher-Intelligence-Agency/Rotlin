@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.DiagnosticL
 import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.PositioningStrategy
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -65,6 +66,11 @@ object JVM_DIAGNOSTICS_LIST : DiagnosticList("FirJvmErrors") {
             parameter<ConeKotlinType>("actualType")
             parameter<ConeKotlinType>("expectedType")
             parameter<String>("messageSuffix")
+        }
+
+        val TYPE_MISMATCH_WHEN_FLEXIBILITY_CHANGES by warning<PsiElement> {
+            parameter<ConeKotlinType>("expectedType")
+            parameter<ConeKotlinType>("actualType")
         }
     }
 
@@ -193,6 +199,13 @@ object JVM_DIAGNOSTICS_LIST : DiagnosticList("FirJvmErrors") {
         }
     }
 
+    val INLINE by object : DiagnosticGroup("Inline") {
+        val INLINE_FROM_HIGHER_PLATFORM by error<PsiElement> {
+            parameter<String>("inlinedBytecodeVersion")
+            parameter<String>("currentModuleBytecodeVersion")
+        }
+    }
+
     val MISC by object : DiagnosticGroup("Misc") {
         val INAPPLICABLE_JVM_FIELD by error<KtAnnotationEntry> {
             parameter<String>("message")
@@ -212,6 +225,9 @@ object JVM_DIAGNOSTICS_LIST : DiagnosticList("FirJvmErrors") {
         val SYNTHETIC_PROPERTY_WITHOUT_JAVA_ORIGIN by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
             parameter<FirNamedFunctionSymbol>("originalSymbol")
             parameter<Name>("functionName")
+        }
+        val JAVA_FIELD_SHADOWED_BY_KOTLIN_PROPERTY by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
+            parameter<FirPropertySymbol>("kotlinProperty")
         }
     }
 }

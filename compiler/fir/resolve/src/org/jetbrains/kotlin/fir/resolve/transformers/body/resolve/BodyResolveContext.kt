@@ -51,11 +51,11 @@ class BodyResolveContext(
     lateinit var file: FirFile
 
     @PrivateForInline
-    var regularTowerDataContexts = FirRegularTowerDataContexts(regular = FirTowerDataContext())
+    var regularTowerDataContexts: FirRegularTowerDataContexts = FirRegularTowerDataContexts(regular = FirTowerDataContext())
 
     // TODO: Rename to postponed
     @PrivateForInline
-    val specialTowerDataContexts = FirSpecialTowerDataContexts()
+    val specialTowerDataContexts: FirSpecialTowerDataContexts = FirSpecialTowerDataContexts()
 
     @OptIn(PrivateForInline::class)
     val towerDataContext: FirTowerDataContext
@@ -86,6 +86,20 @@ class BodyResolveContext(
 
     @set:PrivateForInline
     var inferenceSession: FirInferenceSession = FirInferenceSession.DEFAULT
+
+    @set:PrivateForInline
+    var isInsideAssignmentRhs: Boolean = false
+
+    @OptIn(PrivateForInline::class)
+    inline fun <R> withAssignmentRhs(block: () -> R): R {
+        val oldMode = this.isInsideAssignmentRhs
+        this.isInsideAssignmentRhs = true
+        return try {
+            block()
+        } finally {
+            this.isInsideAssignmentRhs = oldMode
+        }
+    }
 
     /**
      * This is required to avoid changing current mode into [FirTowerDataMode.CLASS_HEADER_ANNOTATIONS].
@@ -534,7 +548,11 @@ class BodyResolveContext(
         val statics = base
             .addNonLocalScopeIfNotNull(towerElementsForScript.staticScope)
 
-        val parameterScope = owner.parameters.fold(FirLocalScope(holder.session)) { scope, parameter ->
+        val parameterScope = owner.parameters.filter {
+            // for compatibility with old script resolve, the parameters that implicitly copied from the base class c-tor are ignored here
+            // this quirk should be removed after removing base class support (KT-60449)
+            it.origin != FirDeclarationOrigin.ScriptCustomization.ParameterFromBaseClass
+        }.fold(FirLocalScope(holder.session)) { scope, parameter ->
             scope.storeVariable(parameter, holder.session)
         }
 

@@ -53,6 +53,12 @@ public class FirIdeNormalAnalysisSourceModuleReferenceResolveTestGenerated exten
   }
 
   @Test
+  @TestMetadata("AnnotationFromJava.kt")
+  public void testAnnotationFromJava() {
+    runTest("analysis/analysis-api/testData/referenceResolve/AnnotationFromJava.kt");
+  }
+
+  @Test
   @TestMetadata("AnnotationInsideFunction.kt")
   public void testAnnotationInsideFunction() {
     runTest("analysis/analysis-api/testData/referenceResolve/AnnotationInsideFunction.kt");
@@ -200,6 +206,18 @@ public class FirIdeNormalAnalysisSourceModuleReferenceResolveTestGenerated exten
   @TestMetadata("EqualsOperatorNoInfix.kt")
   public void testEqualsOperatorNoInfix() {
     runTest("analysis/analysis-api/testData/referenceResolve/EqualsOperatorNoInfix.kt");
+  }
+
+  @Test
+  @TestMetadata("ExpectSuperClassConstructorArgument.kt")
+  public void testExpectSuperClassConstructorArgument() {
+    runTest("analysis/analysis-api/testData/referenceResolve/ExpectSuperClassConstructorArgument.kt");
+  }
+
+  @Test
+  @TestMetadata("ExpectSuperClassConstructorCall.kt")
+  public void testExpectSuperClassConstructorCall() {
+    runTest("analysis/analysis-api/testData/referenceResolve/ExpectSuperClassConstructorCall.kt");
   }
 
   @Test
@@ -653,27 +671,27 @@ public class FirIdeNormalAnalysisSourceModuleReferenceResolveTestGenerated exten
   }
 
   @Test
-  @TestMetadata("TypeAlias.kt")
-  public void testTypeAlias() {
-    runTest("analysis/analysis-api/testData/referenceResolve/TypeAlias.kt");
-  }
-
-  @Test
-  @TestMetadata("TypeAliasAsSupertypeConstructor.kt")
-  public void testTypeAliasAsSupertypeConstructor() {
-    runTest("analysis/analysis-api/testData/referenceResolve/TypeAliasAsSupertypeConstructor.kt");
-  }
-
-  @Test
-  @TestMetadata("TypeAliasRHS.kt")
-  public void testTypeAliasRHS() {
-    runTest("analysis/analysis-api/testData/referenceResolve/TypeAliasRHS.kt");
+  @TestMetadata("UnresolvedCallArgument.kt")
+  public void testUnresolvedCallArgument() {
+    runTest("analysis/analysis-api/testData/referenceResolve/UnresolvedCallArgument.kt");
   }
 
   @Test
   @TestMetadata("ValueParameter.kt")
   public void testValueParameter() {
     runTest("analysis/analysis-api/testData/referenceResolve/ValueParameter.kt");
+  }
+
+  @Test
+  @TestMetadata("whenConditionInRange.kt")
+  public void testWhenConditionInRange() {
+    runTest("analysis/analysis-api/testData/referenceResolve/whenConditionInRange.kt");
+  }
+
+  @Test
+  @TestMetadata("whenConditionInRangeInverted.kt")
+  public void testWhenConditionInRangeInverted() {
+    runTest("analysis/analysis-api/testData/referenceResolve/whenConditionInRangeInverted.kt");
   }
 
   @Nested
@@ -836,6 +854,18 @@ public class FirIdeNormalAnalysisSourceModuleReferenceResolveTestGenerated exten
       @Test
       public void testAllFilesPresentInExpressionCodeFragment() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/referenceResolve/codeFragment/expressionCodeFragment"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("ArrayAssignmentOperator.kt")
+      public void testArrayAssignmentOperator() {
+        runTest("analysis/analysis-api/testData/referenceResolve/codeFragment/expressionCodeFragment/ArrayAssignmentOperator.kt");
+      }
+
+      @Test
+      @TestMetadata("ArrayPlusAssignmentOperator.kt")
+      public void testArrayPlusAssignmentOperator() {
+        runTest("analysis/analysis-api/testData/referenceResolve/codeFragment/expressionCodeFragment/ArrayPlusAssignmentOperator.kt");
       }
 
       @Test
@@ -1244,9 +1274,69 @@ public class FirIdeNormalAnalysisSourceModuleReferenceResolveTestGenerated exten
     }
 
     @Test
+    @TestMetadata("staticFieldFromJavaClassFromSuper.kt")
+    public void testStaticFieldFromJavaClassFromSuper() {
+      runTest("analysis/analysis-api/testData/referenceResolve/inImport/staticFieldFromJavaClassFromSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("staticImportFunction.kt")
+    public void testStaticImportFunction() {
+      runTest("analysis/analysis-api/testData/referenceResolve/inImport/staticImportFunction.kt");
+    }
+
+    @Test
+    @TestMetadata("staticImportFunctionFromSuper.kt")
+    public void testStaticImportFunctionFromSuper() {
+      runTest("analysis/analysis-api/testData/referenceResolve/inImport/staticImportFunctionFromSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("staticImportNestedFunction.kt")
+    public void testStaticImportNestedFunction() {
+      runTest("analysis/analysis-api/testData/referenceResolve/inImport/staticImportNestedFunction.kt");
+    }
+
+    @Test
+    @TestMetadata("staticImportNestedJavaField.kt")
+    public void testStaticImportNestedJavaField() {
+      runTest("analysis/analysis-api/testData/referenceResolve/inImport/staticImportNestedJavaField.kt");
+    }
+
+    @Test
+    @TestMetadata("staticImportNestedJavaFunction.kt")
+    public void testStaticImportNestedJavaFunction() {
+      runTest("analysis/analysis-api/testData/referenceResolve/inImport/staticImportNestedJavaFunction.kt");
+    }
+
+    @Test
+    @TestMetadata("staticImportNestedProperty.kt")
+    public void testStaticImportNestedProperty() {
+      runTest("analysis/analysis-api/testData/referenceResolve/inImport/staticImportNestedProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("staticImportProperty.kt")
+    public void testStaticImportProperty() {
+      runTest("analysis/analysis-api/testData/referenceResolve/inImport/staticImportProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("staticImportPropertyFromSuper.kt")
+    public void testStaticImportPropertyFromSuper() {
+      runTest("analysis/analysis-api/testData/referenceResolve/inImport/staticImportPropertyFromSuper.kt");
+    }
+
+    @Test
     @TestMetadata("staticMethodFromJavaClass.kt")
     public void testStaticMethodFromJavaClass() {
       runTest("analysis/analysis-api/testData/referenceResolve/inImport/staticMethodFromJavaClass.kt");
+    }
+
+    @Test
+    @TestMetadata("staticMethodFromJavaClassFromSuper.kt")
+    public void testStaticMethodFromJavaClassFromSuper() {
+      runTest("analysis/analysis-api/testData/referenceResolve/inImport/staticMethodFromJavaClassFromSuper.kt");
     }
 
     @Test
@@ -1479,6 +1569,12 @@ public class FirIdeNormalAnalysisSourceModuleReferenceResolveTestGenerated exten
     @TestMetadata("JavaAnnotationParameter.kt")
     public void testJavaAnnotationParameter() {
       runTest("analysis/analysis-api/testData/referenceResolve/java/JavaAnnotationParameter.kt");
+    }
+
+    @Test
+    @TestMetadata("JavaCallWithGenerics.kt")
+    public void testJavaCallWithGenerics() {
+      runTest("analysis/analysis-api/testData/referenceResolve/java/JavaCallWithGenerics.kt");
     }
 
     @Test
@@ -1797,6 +1893,12 @@ public class FirIdeNormalAnalysisSourceModuleReferenceResolveTestGenerated exten
       }
 
       @Test
+      @TestMetadata("NoSyntheticFieldInClass.kt")
+      public void testNoSyntheticFieldInClass() {
+        runTest("analysis/analysis-api/testData/referenceResolve/kDoc/javaDeclarations/NoSyntheticFieldInClass.kt");
+      }
+
+      @Test
       @TestMetadata("StaticFieldQualified.kt")
       public void testStaticFieldQualified() {
         runTest("analysis/analysis-api/testData/referenceResolve/kDoc/javaDeclarations/StaticFieldQualified.kt");
@@ -1830,6 +1932,24 @@ public class FirIdeNormalAnalysisSourceModuleReferenceResolveTestGenerated exten
       @TestMetadata("StaticFunctionQualifiedWithKotlinSubclass.kt")
       public void testStaticFunctionQualifiedWithKotlinSubclass() {
         runTest("analysis/analysis-api/testData/referenceResolve/kDoc/javaDeclarations/StaticFunctionQualifiedWithKotlinSubclass.kt");
+      }
+
+      @Test
+      @TestMetadata("SyntheticFieldInAnnotationInterface.kt")
+      public void testSyntheticFieldInAnnotationInterface() {
+        runTest("analysis/analysis-api/testData/referenceResolve/kDoc/javaDeclarations/SyntheticFieldInAnnotationInterface.kt");
+      }
+
+      @Test
+      @TestMetadata("SyntheticFieldInClass.kt")
+      public void testSyntheticFieldInClass() {
+        runTest("analysis/analysis-api/testData/referenceResolve/kDoc/javaDeclarations/SyntheticFieldInClass.kt");
+      }
+
+      @Test
+      @TestMetadata("SyntheticPropertyInKotlinSubclass.kt")
+      public void testSyntheticPropertyInKotlinSubclass() {
+        runTest("analysis/analysis-api/testData/referenceResolve/kDoc/javaDeclarations/SyntheticPropertyInKotlinSubclass.kt");
       }
     }
 
@@ -2005,6 +2125,12 @@ public class FirIdeNormalAnalysisSourceModuleReferenceResolveTestGenerated exten
         @Test
         public void testAllFilesPresentInCallables() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/referenceResolve/kDoc/qualified/callables"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("callableFromTypealias.kt")
+        public void testCallableFromTypealias() {
+          runTest("analysis/analysis-api/testData/referenceResolve/kDoc/qualified/callables/callableFromTypealias.kt");
         }
 
         @Test
@@ -2330,6 +2456,18 @@ public class FirIdeNormalAnalysisSourceModuleReferenceResolveTestGenerated exten
         public void testTopLevelFunctionFromStdlibByShortName() {
           runTest("analysis/analysis-api/testData/referenceResolve/kDoc/qualified/fromOtherFile/TopLevelFunctionFromStdlibByShortName.kt");
         }
+
+        @Test
+        @TestMetadata("TypealiasFromOtherFileByFullName.kt")
+        public void testTypealiasFromOtherFileByFullName() {
+          runTest("analysis/analysis-api/testData/referenceResolve/kDoc/qualified/fromOtherFile/TypealiasFromOtherFileByFullName.kt");
+        }
+
+        @Test
+        @TestMetadata("TypealiasFromOtherFileByShortName.kt")
+        public void testTypealiasFromOtherFileByShortName() {
+          runTest("analysis/analysis-api/testData/referenceResolve/kDoc/qualified/fromOtherFile/TypealiasFromOtherFileByShortName.kt");
+        }
       }
 
       @Nested
@@ -2375,6 +2513,18 @@ public class FirIdeNormalAnalysisSourceModuleReferenceResolveTestGenerated exten
         @TestMetadata("TopLevelFunctionFromStdlibByShortName.kt")
         public void testTopLevelFunctionFromStdlibByShortName() {
           runTest("analysis/analysis-api/testData/referenceResolve/kDoc/qualified/stdlib/TopLevelFunctionFromStdlibByShortName.kt");
+        }
+
+        @Test
+        @TestMetadata("TypealiasFromStdlibByFullName.kt")
+        public void testTypealiasFromStdlibByFullName() {
+          runTest("analysis/analysis-api/testData/referenceResolve/kDoc/qualified/stdlib/TypealiasFromStdlibByFullName.kt");
+        }
+
+        @Test
+        @TestMetadata("TypealiasFromStdlibByShortName.kt")
+        public void testTypealiasFromStdlibByShortName() {
+          runTest("analysis/analysis-api/testData/referenceResolve/kDoc/qualified/stdlib/TypealiasFromStdlibByShortName.kt");
         }
       }
     }
@@ -2659,6 +2809,134 @@ public class FirIdeNormalAnalysisSourceModuleReferenceResolveTestGenerated exten
     @TestMetadata("ResolvePackageOfFullyQualifiedReference.kt")
     public void testResolvePackageOfFullyQualifiedReference() {
       runTest("analysis/analysis-api/testData/referenceResolve/qualifiedAccess/ResolvePackageOfFullyQualifiedReference.kt");
+    }
+  }
+
+  @Nested
+  @TestMetadata("analysis/analysis-api/testData/referenceResolve/typeAlias")
+  @TestDataPath("$PROJECT_ROOT")
+  public class TypeAlias {
+    @Test
+    public void testAllFilesPresentInTypeAlias() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/referenceResolve/typeAlias"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("TypeAlias.kt")
+    public void testTypeAlias() {
+      runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/TypeAlias.kt");
+    }
+
+    @Test
+    @TestMetadata("TypeAliasAsSupertypeConstructor.kt")
+    public void testTypeAliasAsSupertypeConstructor() {
+      runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/TypeAliasAsSupertypeConstructor.kt");
+    }
+
+    @Test
+    @TestMetadata("TypeAliasRHS.kt")
+    public void testTypeAliasRHS() {
+      runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/TypeAliasRHS.kt");
+    }
+
+    @Nested
+    @TestMetadata("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency")
+    @TestDataPath("$PROJECT_ROOT")
+    public class MissingDependency {
+      @Test
+      public void testAllFilesPresentInMissingDependency() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("ListAliasUnresolvedListAlias.kt")
+      public void testListAliasUnresolvedListAlias() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/ListAliasUnresolvedListAlias.kt");
+      }
+
+      @Test
+      @TestMetadata("ListAliasUnresolvedStringAlias.kt")
+      public void testListAliasUnresolvedStringAlias() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/ListAliasUnresolvedStringAlias.kt");
+      }
+
+      @Test
+      @TestMetadata("MyString.kt")
+      public void testMyString() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/MyString.kt");
+      }
+
+      @Test
+      @TestMetadata("NestedAsymmetricAliasOnlyResolveAsymmetricAlias.kt")
+      public void testNestedAsymmetricAliasOnlyResolveAsymmetricAlias() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/NestedAsymmetricAliasOnlyResolveAsymmetricAlias.kt");
+      }
+
+      @Test
+      @TestMetadata("NestedAsymmetricAliasOnlyResolveAsymmetricAlias2.kt")
+      public void testNestedAsymmetricAliasOnlyResolveAsymmetricAlias2() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/NestedAsymmetricAliasOnlyResolveAsymmetricAlias2.kt");
+      }
+
+      @Test
+      @TestMetadata("NestedAsymmetricAliasOnlyResolveBaseAliases.kt")
+      public void testNestedAsymmetricAliasOnlyResolveBaseAliases() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/NestedAsymmetricAliasOnlyResolveBaseAliases.kt");
+      }
+
+      @Test
+      @TestMetadata("NestedAsymmetricAliasUnresolvedAsymmetricAlias.kt")
+      public void testNestedAsymmetricAliasUnresolvedAsymmetricAlias() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/NestedAsymmetricAliasUnresolvedAsymmetricAlias.kt");
+      }
+
+      @Test
+      @TestMetadata("NestedAsymmetricAliasUnresolvedAsymmetricAlias2.kt")
+      public void testNestedAsymmetricAliasUnresolvedAsymmetricAlias2() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/NestedAsymmetricAliasUnresolvedAsymmetricAlias2.kt");
+      }
+
+      @Test
+      @TestMetadata("NestedAsymmetricAliasUnresolvedBaseAliases.kt")
+      public void testNestedAsymmetricAliasUnresolvedBaseAliases() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/NestedAsymmetricAliasUnresolvedBaseAliases.kt");
+      }
+
+      @Test
+      @TestMetadata("NestedCollectionAliasesOnlyResolveListAlias.kt")
+      public void testNestedCollectionAliasesOnlyResolveListAlias() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/NestedCollectionAliasesOnlyResolveListAlias.kt");
+      }
+
+      @Test
+      @TestMetadata("NestedCollectionAliasesOnlyResolveSetAlias.kt")
+      public void testNestedCollectionAliasesOnlyResolveSetAlias() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/NestedCollectionAliasesOnlyResolveSetAlias.kt");
+      }
+
+      @Test
+      @TestMetadata("NestedCollectionAliasesOnlyResolveStringAlias.kt")
+      public void testNestedCollectionAliasesOnlyResolveStringAlias() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/NestedCollectionAliasesOnlyResolveStringAlias.kt");
+      }
+
+      @Test
+      @TestMetadata("NestedCollectionAliasesUnresolvedListAlias.kt")
+      public void testNestedCollectionAliasesUnresolvedListAlias() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/NestedCollectionAliasesUnresolvedListAlias.kt");
+      }
+
+      @Test
+      @TestMetadata("NestedCollectionAliasesUnresolvedSetAlias.kt")
+      public void testNestedCollectionAliasesUnresolvedSetAlias() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/NestedCollectionAliasesUnresolvedSetAlias.kt");
+      }
+
+      @Test
+      @TestMetadata("NestedCollectionAliasesUnresolvedStringAlias.kt")
+      public void testNestedCollectionAliasesUnresolvedStringAlias() {
+        runTest("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency/NestedCollectionAliasesUnresolvedStringAlias.kt");
+      }
     }
   }
 

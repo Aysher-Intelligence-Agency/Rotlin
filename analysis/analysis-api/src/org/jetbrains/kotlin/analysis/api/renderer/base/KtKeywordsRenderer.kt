@@ -5,30 +5,28 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.base
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 
-public class KtKeywordsRenderer private constructor(
-    public val keywordRenderer: KtKeywordRenderer,
-    public val keywordFilter: KtRendererKeywordFilter,
+public class KaKeywordsRenderer private constructor(
+    public val keywordRenderer: KaKeywordRenderer,
+    public val keywordFilter: KaRendererKeywordFilter,
 ) {
 
-    context(KtAnalysisSession)
-    public fun renderKeyword(keyword: KtKeywordToken, owner: KtAnnotated, printer: PrettyPrinter) {
-        keywordRenderer.renderKeyword(keyword, owner, printer)
+    public fun renderKeyword(analysisSession: KaSession, keyword: KtKeywordToken, owner: KaAnnotated, printer: PrettyPrinter) {
+        keywordRenderer.renderKeyword(analysisSession, keyword, owner, this, printer)
     }
 
-    context(KtAnalysisSession)
-    public fun renderKeywords(keywords: List<KtKeywordToken>, owner: KtAnnotated, printer: PrettyPrinter) {
-        keywordRenderer.renderKeywords(keywords, owner, printer)
+    public fun renderKeywords(analysisSession: KaSession, keywords: List<KtKeywordToken>, owner: KaAnnotated, printer: PrettyPrinter) {
+        keywordRenderer.renderKeywords(analysisSession, keywords, owner, this, printer)
     }
 
-    public inline fun with(action: Builder.() -> Unit): KtKeywordsRenderer {
+    public inline fun with(action: Builder.() -> Unit): KaKeywordsRenderer {
         val renderer = this
-        return KtKeywordsRenderer {
+        return KaKeywordsRenderer {
             this.keywordRenderer = renderer.keywordRenderer
             this.keywordFilter = renderer.keywordFilter
             action()
@@ -36,19 +34,21 @@ public class KtKeywordsRenderer private constructor(
     }
 
     public class Builder {
-        public lateinit var keywordRenderer: KtKeywordRenderer
-        public lateinit var keywordFilter: KtRendererKeywordFilter
+        public lateinit var keywordRenderer: KaKeywordRenderer
+        public lateinit var keywordFilter: KaRendererKeywordFilter
 
-        public fun build(): KtKeywordsRenderer = KtKeywordsRenderer(
+        public fun build(): KaKeywordsRenderer = KaKeywordsRenderer(
             keywordRenderer,
             keywordFilter
         )
     }
 
     public companion object {
-        public val AS_WORD: KtKeywordsRenderer = KtKeywordsRenderer(KtKeywordRenderer.AS_WORD, KtRendererKeywordFilter.ALL)
-        public val NONE: KtKeywordsRenderer = KtKeywordsRenderer(KtKeywordRenderer.NONE, KtRendererKeywordFilter.ALL)
-        public inline operator fun invoke(action: Builder.() -> Unit): KtKeywordsRenderer =
+        public val AS_WORD: KaKeywordsRenderer = KaKeywordsRenderer(KaKeywordRenderer.AS_WORD, KaRendererKeywordFilter.ALL)
+        public val NONE: KaKeywordsRenderer = KaKeywordsRenderer(KaKeywordRenderer.NONE, KaRendererKeywordFilter.ALL)
+        public inline operator fun invoke(action: Builder.() -> Unit): KaKeywordsRenderer =
             Builder().apply(action).build()
     }
 }
+
+public typealias KtKeywordsRenderer = KaKeywordsRenderer

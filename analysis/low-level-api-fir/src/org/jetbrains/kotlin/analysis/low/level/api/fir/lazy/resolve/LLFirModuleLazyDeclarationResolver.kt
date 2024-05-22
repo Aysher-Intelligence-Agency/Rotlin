@@ -110,17 +110,17 @@ internal class LLFirModuleLazyDeclarationResolver(val moduleComponents: LLFirMod
     }
 
     private fun resolveFileToImportsWithLock(firFile: FirFile) {
-        moduleComponents.globalResolveComponents.lockProvider.withWriteLock(firFile, FirResolvePhase.IMPORTS) {
-            firFile.transformSingle(FirImportResolveTransformer(firFile.moduleData.session), null)
+        val lockProvider = moduleComponents.globalResolveComponents.lockProvider
+        lockProvider.withGlobalLock {
+            lockProvider.withWriteLock(firFile, FirResolvePhase.IMPORTS) {
+                firFile.transformSingle(FirImportResolveTransformer(firFile.moduleData.session), null)
+            }
         }
     }
 
     private fun lazyResolveTargets(target: LLFirResolveTarget, toPhase: FirResolvePhase) {
         var currentPhase = getMinResolvePhase(target).coerceAtLeast(FirResolvePhase.IMPORTS)
         if (currentPhase >= toPhase) return
-
-        // to catch a contract violation for jumping phases
-        moduleComponents.globalResolveComponents.lockProvider.checkContractViolations(toPhase)
 
         while (currentPhase < toPhase) {
             currentPhase = currentPhase.next

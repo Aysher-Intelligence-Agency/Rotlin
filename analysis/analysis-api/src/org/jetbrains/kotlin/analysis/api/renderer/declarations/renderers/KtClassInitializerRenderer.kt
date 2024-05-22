@@ -5,26 +5,35 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassInitializerSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassInitializerSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.lexer.KtTokens
 
-public interface KtClassInitializerRenderer {
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    public fun renderClassInitializer(symbol: KtClassInitializerSymbol, printer: PrettyPrinter)
+public interface KaClassInitializerRenderer {
+    public fun renderClassInitializer(
+        analysisSession: KaSession,
+        symbol: KaClassInitializerSymbol,
+        declarationRenderer: KaDeclarationRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object INIT_BLOCK_WITH_BRACES : KtClassInitializerRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderClassInitializer(symbol: KtClassInitializerSymbol, printer: PrettyPrinter): Unit = printer {
-            " ".separated(
-                {
-                    keywordsRenderer.renderKeyword(KtTokens.INIT_KEYWORD, symbol, this)
-                },
-                { printer.withIndentInBraces {} },
-            )
+    public object INIT_BLOCK_WITH_BRACES : KaClassInitializerRenderer {
+        override fun renderClassInitializer(
+            analysisSession: KaSession,
+            symbol: KaClassInitializerSymbol,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                " ".separated(
+                    { declarationRenderer.keywordsRenderer.renderKeyword(analysisSession, KtTokens.INIT_KEYWORD, symbol, this) },
+                    { printer.withIndentInBraces {} },
+                )
+            }
         }
     }
 }
 
+public typealias KtClassInitializerRenderer = KaClassInitializerRenderer

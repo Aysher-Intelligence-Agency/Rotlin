@@ -195,4 +195,26 @@ public class FirStandaloneNormalAnalysisSourceModuleScopeContextForPositionTestG
   public void testSyntheticPropertiesScope() {
     runTest("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/syntheticPropertiesScope.kt");
   }
+
+  @Nested
+  @TestMetadata("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/withTestCompilerPluginEnabled")
+  @TestDataPath("$PROJECT_ROOT")
+  public class WithTestCompilerPluginEnabled {
+    @Test
+    public void testAllFilesPresentInWithTestCompilerPluginEnabled() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/withTestCompilerPluginEnabled"), Pattern.compile("^(.+)\\.kt$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("callShapeBasedInjector_receiver.kt")
+    public void testCallShapeBasedInjector_receiver() {
+      runTest("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/withTestCompilerPluginEnabled/callShapeBasedInjector_receiver.kt");
+    }
+
+    @Test
+    @TestMetadata("callShapeBasedInjector_variable.kt")
+    public void testCallShapeBasedInjector_variable() {
+      runTest("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/withTestCompilerPluginEnabled/callShapeBasedInjector_variable.kt");
+    }
+  }
 }

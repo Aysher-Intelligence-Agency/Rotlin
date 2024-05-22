@@ -5,6 +5,8 @@ plugins {
     id("jps-compatible")
 }
 
+val scriptingTestDefinition by configurations.creating
+
 dependencies {
     api(project(":compiler:psi"))
     implementation(project(":analysis:project-structure"))
@@ -34,6 +36,8 @@ dependencies {
     implementation(project(":analysis:analysis-api-standalone:analysis-api-standalone-base"))
     implementation(project(":kotlin-scripting-compiler"))
     implementation(project(":kotlin-scripting-common"))
+    implementation(project(":kotlin-assignment-compiler-plugin.k2"))
+    implementation(project(":kotlin-assignment-compiler-plugin.cli"))
 
     // We cannot use the latest version `3.1.5` because it doesn't support Java 8.
     implementation("com.github.ben-manes.caffeine:caffeine:2.9.3")
@@ -44,7 +48,7 @@ dependencies {
     testApi(projectTests(":compiler:test-infrastructure"))
     testImplementation(projectTests(":compiler:tests-common-new"))
 
-    testImplementation("org.opentest4j:opentest4j:1.2.0")
+    testImplementation(libs.opentest4j)
     testImplementation(project(":analysis:analysis-api-standalone:analysis-api-fir-standalone-base"))
     testImplementation(toolsJar())
     testImplementation(projectTests(":compiler:tests-common"))
@@ -57,6 +61,8 @@ dependencies {
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(project(":analysis:symbol-light-classes"))
+    testImplementation(projectTests(":plugins:scripting:scripting-tests"))
+    testImplementation(project(":kotlin-scripting-common"))
 
     testRuntimeOnly(project(":core:descriptors.runtime"))
 
@@ -64,6 +70,8 @@ dependencies {
     // We use 'api' instead of 'implementation' because other modules might be using these jars indirectly
     testApi(project(":plugins:fir-plugin-prototype"))
     testApi(projectTests(":plugins:fir-plugin-prototype"))
+
+    scriptingTestDefinition(projectTests(":plugins:scripting:test-script-definition"))
 }
 
 sourceSets {
@@ -78,9 +86,14 @@ kotlin {
 }
 
 projectTest(jUnitMode = JUnitMode.JUnit5) {
-    dependsOn(":dist")
+    dependsOn(":dist", ":plugins:scripting:test-script-definition:testJar")
     workingDir = rootDir
     useJUnitPlatform()
+
+    val scriptingTestDefinitionClasspath = scriptingTestDefinition.asPath
+    doFirst {
+        systemProperty("kotlin.script.test.script.definition.classpath", scriptingTestDefinitionClasspath)
+    }
 }
 
 allprojects {
@@ -89,7 +102,7 @@ allprojects {
             listOf(
                 "org.jetbrains.kotlin.fir.symbols.SymbolInternals",
                 "org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals",
-                "org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals",
+                "org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals",
             )
         )
     }
@@ -100,7 +113,6 @@ testsJar()
 tasks.register("analysisLowLevelApiFirAllTests") {
     dependsOn(
         ":analysis:low-level-api-fir:test",
-        ":analysis:low-level-api-fir:tests-jdk11:test",
     )
 
     if (kotlinBuildProperties.isKotlinNativeEnabled) {

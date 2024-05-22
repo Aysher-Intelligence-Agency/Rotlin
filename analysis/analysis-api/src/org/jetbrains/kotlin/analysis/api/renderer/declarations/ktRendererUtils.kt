@@ -5,66 +5,75 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
-import org.jetbrains.kotlin.analysis.api.base.KtContextReceiversOwner
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
+import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 
-context(KtAnalysisSession, KtDeclarationRenderer)
 public fun <S> renderAnnotationsModifiersAndContextReceivers(
+    analysisSession: KaSession,
     symbol: S,
+    declarationRenderer: KaDeclarationRenderer,
     printer: PrettyPrinter,
     keyword: KtKeywordToken,
-): Unit where S : KtAnnotated, S : KtDeclarationSymbol = printer {
-    renderAnnotationsModifiersAndContextReceivers(symbol, printer, listOf(keyword))
+): Unit where S : KaAnnotated, S : KaDeclarationSymbol = printer {
+    renderAnnotationsModifiersAndContextReceivers(analysisSession, symbol, declarationRenderer, printer, listOf(keyword))
 }
 
-context(KtAnalysisSession, KtDeclarationRenderer)
 public fun <S> renderAnnotationsModifiersAndContextReceivers(
+    analysisSession: KaSession,
     symbol: S,
+    declarationRenderer: KaDeclarationRenderer,
     printer: PrettyPrinter,
     keywords: List<KtKeywordToken>,
-): Unit where S : KtAnnotated, S : KtDeclarationSymbol = printer {
-    renderContextReceivers(symbol, printer)
+) where S : KaAnnotated, S : KaDeclarationSymbol {
+    printer {
+        renderContextReceivers(analysisSession, symbol, declarationRenderer, printer)
 
-    val annotationsRendered: Boolean
-    val modifiersRendered: Boolean
-    codeStyle.getSeparatorBetweenAnnotationAndOwner(symbol).separated(
-        { annotationsRendered = checkIfPrinted { annotationRenderer.renderAnnotations(symbol, printer) } },
-        { modifiersRendered = checkIfPrinted { modifiersRenderer.renderDeclarationModifiers(symbol, printer) } }
-    )
-    val separator = when {
-        annotationsRendered && !modifiersRendered -> codeStyle.getSeparatorBetweenAnnotationAndOwner(symbol)
-        annotationsRendered || modifiersRendered -> codeStyle.getSeparatorBetweenModifiers()
-        else -> ""
-    }
+        val annotationsRendered: Boolean
+        val modifiersRendered: Boolean
+        declarationRenderer.codeStyle.getSeparatorBetweenAnnotationAndOwner(analysisSession, symbol).separated(
+            { annotationsRendered = checkIfPrinted { declarationRenderer.annotationRenderer.renderAnnotations(analysisSession, symbol, printer) } },
+            { modifiersRendered = checkIfPrinted { declarationRenderer.modifiersRenderer.renderDeclarationModifiers(analysisSession, symbol, printer) } }
+        )
+        val separator = when {
+            annotationsRendered && !modifiersRendered -> declarationRenderer.codeStyle.getSeparatorBetweenAnnotationAndOwner(analysisSession, symbol)
+            annotationsRendered || modifiersRendered -> declarationRenderer.codeStyle.getSeparatorBetweenModifiers(analysisSession)
+            else -> ""
+        }
 
-    withPrefix(separator) {
-        keywordsRenderer.renderKeywords(keywords, symbol, printer)
+        withPrefix(separator) {
+            declarationRenderer.keywordsRenderer.renderKeywords(analysisSession, keywords, symbol, printer)
+        }
     }
 }
 
-context(KtAnalysisSession, KtDeclarationRenderer)
 public fun <S> renderAnnotationsModifiersAndContextReceivers(
+    analysisSession: KaSession,
     symbol: S,
+    declarationRenderer: KaDeclarationRenderer,
     printer: PrettyPrinter,
-): Unit where S : KtAnnotated, S : KtDeclarationSymbol = printer {
-    renderContextReceivers(symbol, printer)
-    codeStyle.getSeparatorBetweenAnnotationAndOwner(symbol).separated(
-        { annotationRenderer.renderAnnotations(symbol, printer) },
-        { modifiersRenderer.renderDeclarationModifiers(symbol, printer) }
+): Unit where S : KaAnnotated, S : KaDeclarationSymbol = printer {
+    renderContextReceivers(analysisSession, symbol, declarationRenderer, printer)
+    declarationRenderer.codeStyle.getSeparatorBetweenAnnotationAndOwner(analysisSession, symbol).separated(
+        { declarationRenderer.annotationRenderer.renderAnnotations(analysisSession, symbol, printer) },
+        { declarationRenderer.modifiersRenderer.renderDeclarationModifiers(analysisSession, symbol, printer) }
     )
 }
 
-context(KtAnalysisSession, KtDeclarationRenderer)
-private fun renderContextReceivers(symbol: KtDeclarationSymbol, printer: PrettyPrinter): Unit = printer {
-    if (symbol !is KtContextReceiversOwner) return
+private fun renderContextReceivers(
+    analysisSession: KaSession,
+    symbol: KaDeclarationSymbol,
+    declarationRenderer: KaDeclarationRenderer,
+    printer: PrettyPrinter,
+): Unit = printer {
+    if (symbol !is KaContextReceiversOwner) return
 
-    with(typeRenderer) {
-        withSuffix(codeStyle.getSeparatorAfterContextReceivers()) {
-            contextReceiversRenderer.renderContextReceivers(symbol, printer)
+    with(declarationRenderer.typeRenderer) {
+        withSuffix(declarationRenderer.codeStyle.getSeparatorAfterContextReceivers(analysisSession)) {
+            contextReceiversRenderer.renderContextReceivers(analysisSession, symbol, declarationRenderer.typeRenderer, printer)
         }
     }
 }

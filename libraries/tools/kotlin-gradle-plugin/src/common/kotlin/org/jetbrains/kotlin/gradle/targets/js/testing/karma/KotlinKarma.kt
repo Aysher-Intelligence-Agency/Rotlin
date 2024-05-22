@@ -104,6 +104,7 @@ class KotlinKarma(
         requiredDependencies.add(versions.karma)
 
         useKotlinReporter()
+        useWebpackOutputPlugin()
         useMocha()
         useWebpack()
         useSourceMapSupport()
@@ -166,6 +167,22 @@ class KotlinKarma(
         }
     }
 
+    private fun useWebpackOutputPlugin() {
+        config.frameworks.add("webpack-output")
+
+        confJsWriters.add {
+            // Not all log events goes through this appender
+            // For example Error in config file
+            //language=ES6
+            it.appendLine(
+                """
+                config.plugins = config.plugins || [];
+                config.plugins.push('kotlin-test-js-runner/karma-webpack-output.js');
+            """.trimIndent()
+            )
+        }
+    }
+
     internal fun watch() {
         config.singleRun = false
         config.autoWatch = true
@@ -201,7 +218,11 @@ class KotlinKarma(
 
     fun useChromeCanaryHeadless() = useChromeLike("ChromeCanaryHeadless")
 
-    @Deprecated("Chrome supports wasm GC by default, so you can use useChromeHeadless", replaceWith = ReplaceWith("useChromHeadless"))
+    @Deprecated(
+        "Chrome supports wasm GC by default, so you can use useChromeHeadless",
+        replaceWith = ReplaceWith("useChromeHeadless"),
+        level = DeprecationLevel.ERROR
+    )
     fun useChromeHeadlessWasmGc() {
         val chromeCanaryHeadlessWasmGc = "ChromeHeadlessWasmGc"
 
@@ -624,13 +645,13 @@ internal fun createLoadWasm(npmProjectDir: File, file: File): File {
         val relativePath = file.relativeTo(static).invariantSeparatorsPath
         writer.println(
             """
-                import( /* webpackMode: "eager" */ "$relativePath")
-                    .then((exports) => {
-                        exports.default.startUnitTests();
-                        window.__karma__.loaded();
-                    }, (reason) => {
-                        window.__karma__.error("Problem with loading", void 0, void 0, void 0, reason)
-                    })
+                import { startUnitTests } from "$relativePath"
+                try {
+                    startUnitTests()
+                    window.__karma__.loaded();
+                } catch (e) {
+                    window.__karma__.error("Problem with loading", void 0, void 0, void 0, e)
+                }
             """.trimIndent()
         )
     }

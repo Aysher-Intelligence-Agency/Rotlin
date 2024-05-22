@@ -4,12 +4,19 @@ plugins {
     java
 }
 
+if (kotlinBuildProperties.isSwiftExportPluginPublishingEnabled) {
+    publish()
+}
+
 dependencies {
     embedded(project(":native:swift:sir")) { isTransitive = false }
     embedded(project(":native:swift:sir-compiler-bridge")) { isTransitive = false }
-    embedded(project(":native:swift:sir-passes")) { isTransitive = false }
+    embedded(project(":native:swift:sir-light-classes")) { isTransitive = false }
     embedded(project(":native:swift:sir-printer")) { isTransitive = false }
+    embedded(project(":native:swift:sir-providers")) { isTransitive = false }
     embedded(project(":native:swift:swift-export-standalone")) { isTransitive = false }
+
+    embedded(project(":native:analysis-api-klib-reader")) { isTransitive = false }
 
     embedded(project(":analysis:analysis-api-standalone")) { isTransitive = false }
     embedded(project(":analysis:analysis-api")) { isTransitive = false }

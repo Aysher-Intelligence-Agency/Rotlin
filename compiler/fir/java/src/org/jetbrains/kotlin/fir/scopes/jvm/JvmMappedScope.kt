@@ -302,7 +302,7 @@ class JvmMappedScope(
     override fun processDirectOverriddenFunctionsWithBaseScope(
         functionSymbol: FirNamedFunctionSymbol,
         processor: (FirNamedFunctionSymbol, FirTypeScope) -> ProcessorAction
-    ) = ProcessorAction.NONE
+    ): ProcessorAction = ProcessorAction.NONE
 
     private val firKotlinClassConstructors by lazy(LazyThreadSafetyMode.PUBLICATION) {
         firKotlinClass.constructors(session)
@@ -415,7 +415,7 @@ class JvmMappedScope(
          * @returns {T1  -> F1, T2 -> F2} substitution
          */
         private fun createMappingSubstitutor(fromClass: FirRegularClass, toClass: FirRegularClass, session: FirSession): ConeSubstitutor =
-            ConeSubstitutorByMap(
+            ConeSubstitutorByMap.create(
                 fromClass.typeParameters.zip(toClass.typeParameters).associate { (fromTypeParameter, toTypeParameter) ->
                     fromTypeParameter.symbol to ConeTypeParameterTypeImpl(
                         ConeTypeParameterLookupTag(toTypeParameter.symbol),

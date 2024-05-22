@@ -5,31 +5,32 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.types.Variance
 
-public interface KtRendererTypeApproximator {
-    context(KtAnalysisSession)
-    public fun approximateType(type: KtType, position: Variance): KtType
+public interface KaRendererTypeApproximator {
+    public fun approximateType(analysisSession: KaSession, type: KaType, position: Variance): KaType
 
-    public object TO_DENOTABLE : KtRendererTypeApproximator {
-        context(KtAnalysisSession)
-        override fun approximateType(type: KtType, position: Variance): KtType {
-            type.getEnhancedType()?.let { return it }
+    public object TO_DENOTABLE : KaRendererTypeApproximator {
+        override fun approximateType(analysisSession: KaSession, type: KaType, position: Variance): KaType {
+            with(analysisSession) {
+                val effectiveType = type.getEnhancedType() ?: type
 
-            return when (position) {
-                Variance.INVARIANT -> type
-                Variance.IN_VARIANCE -> type.approximateToSubPublicDenotableOrSelf(approximateLocalTypes = false)
-                Variance.OUT_VARIANCE -> type.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = false)
+                return when (position) {
+                    Variance.INVARIANT -> effectiveType
+                    Variance.IN_VARIANCE -> effectiveType.approximateToSubPublicDenotableOrSelf(approximateLocalTypes = false)
+                    Variance.OUT_VARIANCE -> effectiveType.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = false)
+                }
             }
         }
     }
 
-    public object NO_APPROXIMATION : KtRendererTypeApproximator {
-        context(KtAnalysisSession)
-        override fun approximateType(type: KtType, position: Variance): KtType {
+    public object NO_APPROXIMATION : KaRendererTypeApproximator {
+        override fun approximateType(analysisSession: KaSession, type: KaType, position: Variance): KaType {
             return type
         }
     }
 }
+
+public typealias KtRendererTypeApproximator = KaRendererTypeApproximator

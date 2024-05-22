@@ -1,5 +1,4 @@
-// FIR_IDENTICAL
-// !LANGUAGE: +ContextReceivers
+// LANGUAGE: +ContextReceivers
 // RENDER_DIAGNOSTICS_FULL_TEXT
 
 context(String)

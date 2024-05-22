@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":analysis:analysis-internal-utils"))
     implementation(project(":analysis:kt-references"))
     implementation(project(":analysis:kt-references:kt-references-fe10"))
+    implementation(project(":compiler:light-classes"))
 
     implementation(project(":compiler:backend"))
     implementation(project(":compiler:backend-common"))
@@ -48,7 +49,7 @@ tasks.withType<KotlinJvmCompile>().configureEach {
         optIn.addAll(
             listOf(
                 "kotlin.RequiresOptIn",
-                "org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals"
+                "org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals"
             )
         )
         freeCompilerArgs.add("-Xcontext-receivers")

@@ -5,22 +5,34 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.base.KtContextReceiver
-import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KtContextReceiversRenderer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
+import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.renderer.render
 
-public interface KtContextReceiverLabelRenderer {
-    context(KtAnalysisSession, KtContextReceiversRenderer)
-    public fun renderLabel(contextReceiver: KtContextReceiver, printer: PrettyPrinter)
+public interface KaContextReceiverLabelRenderer {
+    public fun renderLabel(
+        analysisSession: KaSession,
+        contextReceiver: KaContextReceiver,
+        contextReceiversRenderer: KaContextReceiversRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object WITH_LABEL : KtContextReceiverLabelRenderer {
-        context(KtAnalysisSession, KtContextReceiversRenderer)
-        override fun renderLabel(contextReceiver: KtContextReceiver, printer: PrettyPrinter): Unit = printer {
-            val label = contextReceiver.label ?: return@printer
-            append(label.render())
-            append('@')
+    public object WITH_LABEL : KaContextReceiverLabelRenderer {
+        override fun renderLabel(
+            analysisSession: KaSession,
+            contextReceiver: KaContextReceiver,
+            contextReceiversRenderer: KaContextReceiversRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                val label = contextReceiver.label ?: return@printer
+                append(label.render())
+                append('@')
+            }
         }
     }
 }
+
+public typealias KtContextReceiverLabelRenderer = KaContextReceiverLabelRenderer
