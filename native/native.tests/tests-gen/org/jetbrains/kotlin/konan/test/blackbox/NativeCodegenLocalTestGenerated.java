@@ -228,6 +228,12 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
     }
 
     @Test
+    @TestMetadata("kt66169.kt")
+    public void testKt66169() {
+      runTest("native/native.tests/testData/codegen/cinterop/kt66169.kt");
+    }
+
+    @Test
     @TestMetadata("libiconv.kt")
     public void testLibiconv() {
       runTest("native/native.tests/testData/codegen/cinterop/libiconv.kt");
@@ -467,6 +473,12 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
       @TestMetadata("kt55653.kt")
       public void testKt55653() {
         runTest("native/native.tests/testData/codegen/cinterop/objc/kt55653.kt");
+      }
+
+      @Test
+      @TestMetadata("kt65260.kt")
+      public void testKt65260() {
+        runTest("native/native.tests/testData/codegen/cinterop/objc/kt65260.kt");
       }
 
       @Test
@@ -1448,6 +1460,12 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
     @Test
     public void testAllFilesPresentInInterop() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("native/native.tests/testData/codegen/interop"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+    }
+
+    @Test
+    @TestMetadata("kt61441.kt")
+    public void testKt61441() {
+      runTest("native/native.tests/testData/codegen/interop/kt61441.kt");
     }
 
     @Test

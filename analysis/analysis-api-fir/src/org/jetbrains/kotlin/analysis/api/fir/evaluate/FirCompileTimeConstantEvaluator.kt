@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.fir.references.toResolvedVariableSymbol
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirFieldSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -39,6 +40,19 @@ import org.jetbrains.kotlin.types.ConstantValueKind
  * and the argument, are compile-time constant as well.
  */
 internal object FirCompileTimeConstantEvaluator {
+    private val variablesInProcessOfEvaluation = mutableSetOf<FirVariableSymbol<*>>()
+
+    private inline fun <R> withTrackingVariableEvaluation(variableSymbol: FirVariableSymbol<*>, f: () -> R): R? {
+        if (!variablesInProcessOfEvaluation.add(variableSymbol)) {
+            return null
+        }
+        return try {
+            f()
+        } finally {
+            variablesInProcessOfEvaluation.remove(variableSymbol)
+        }
+    }
+
     // TODO: Handle boolean operators, class reference, array, annotation values, etc.
     fun evaluate(
         fir: FirElement?,
@@ -81,8 +95,8 @@ internal object FirCompileTimeConstantEvaluator {
     ): FirLiteralExpression? {
         return when {
             mode == KaConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION && !isConst -> null
-            isVal && hasInitializer -> {
-                evaluate(resolvedInitializer, mode)
+            isVal -> {
+                withTrackingVariableEvaluation(this) { evaluate(resolvedInitializer, mode) }
             }
             else -> null
         }
@@ -93,8 +107,8 @@ internal object FirCompileTimeConstantEvaluator {
     ): FirLiteralExpression? {
         return when {
             mode == KaConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION && !(isStatic && isFinal) -> null
-            isVal && hasInitializer -> {
-                evaluate(fir.initializer, mode)
+            isVal -> {
+                withTrackingVariableEvaluation(this) { evaluate(resolvedInitializer, mode) }
             }
             else -> null
         }

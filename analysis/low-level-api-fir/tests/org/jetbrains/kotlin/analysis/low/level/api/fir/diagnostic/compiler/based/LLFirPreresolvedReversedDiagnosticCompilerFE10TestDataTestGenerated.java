@@ -5700,6 +5700,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("localClassWithCapturedTypeParameters.kt")
+        public void testLocalClassWithCapturedTypeParameters() {
+          runTest("compiler/testData/diagnostics/tests/callableReference/generic/localClassWithCapturedTypeParameters.kt");
+        }
+
+        @Test
         @TestMetadata("nestedCallWithOverload.kt")
         public void testNestedCallWithOverload() {
           runTest("compiler/testData/diagnostics/tests/callableReference/generic/nestedCallWithOverload.kt");
@@ -13176,6 +13182,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("stackOverflowOnDoUnify.kt")
       public void testStackOverflowOnDoUnify() {
         runTest("compiler/testData/diagnostics/tests/exceptions/stackOverflowOnDoUnify.kt");
+      }
+
+      @Test
+      @TestMetadata("transformErrorTypeChildrenWhileTransformingPartiallyResolvedType.kt")
+      public void testTransformErrorTypeChildrenWhileTransformingPartiallyResolvedType() {
+        runTest("compiler/testData/diagnostics/tests/exceptions/transformErrorTypeChildrenWhileTransformingPartiallyResolvedType.kt");
       }
     }
 
@@ -23276,6 +23288,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("mapMethodsImplementedInJava.kt")
+        public void testMapMethodsImplementedInJava() {
+          runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/mapMethodsImplementedInJava.kt");
+        }
+
+        @Test
         @TestMetadata("nonDirectHiddenOverride.kt")
         public void testNonDirectHiddenOverride() {
           runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/nonDirectHiddenOverride.kt");
@@ -23893,6 +23911,42 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("constantStaticStringField.kt")
         public void testConstantStaticStringField() {
           runTest("compiler/testData/diagnostics/tests/j+k/types/constantStaticStringField.kt");
+        }
+
+        @Test
+        @TestMetadata("newListMethodsNullabilityLinkedList20.kt")
+        public void testNewListMethodsNullabilityLinkedList20() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/newListMethodsNullabilityLinkedList20.kt");
+        }
+
+        @Test
+        @TestMetadata("newListMethodsNullabilityLinkedList21.kt")
+        public void testNewListMethodsNullabilityLinkedList21() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/newListMethodsNullabilityLinkedList21.kt");
+        }
+
+        @Test
+        @TestMetadata("newListMethodsNullabilityLinkedListLatest.kt")
+        public void testNewListMethodsNullabilityLinkedListLatest() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/newListMethodsNullabilityLinkedListLatest.kt");
+        }
+
+        @Test
+        @TestMetadata("newListMethodsNullabilityOverridesLinkedList20.kt")
+        public void testNewListMethodsNullabilityOverridesLinkedList20() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/newListMethodsNullabilityOverridesLinkedList20.kt");
+        }
+
+        @Test
+        @TestMetadata("newListMethodsNullabilityOverridesLinkedList21.kt")
+        public void testNewListMethodsNullabilityOverridesLinkedList21() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/newListMethodsNullabilityOverridesLinkedList21.kt");
+        }
+
+        @Test
+        @TestMetadata("newListMethodsNullabilityOverridesLinkedListLatest.kt")
+        public void testNewListMethodsNullabilityOverridesLinkedListLatest() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/newListMethodsNullabilityOverridesLinkedListLatest.kt");
         }
 
         @Test
@@ -40328,6 +40382,78 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("newListMethodsImmutable.kt")
       public void testNewListMethodsImmutable() {
         runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsImmutable.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullability20.kt")
+      public void testNewListMethodsNullability20() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullability20.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullability21.kt")
+      public void testNewListMethodsNullability21() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullability21.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityLatest.kt")
+      public void testNewListMethodsNullabilityLatest() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityLatest.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityLinkedList20.kt")
+      public void testNewListMethodsNullabilityLinkedList20() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityLinkedList20.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityLinkedList21.kt")
+      public void testNewListMethodsNullabilityLinkedList21() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityLinkedList21.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityLinkedListLatest.kt")
+      public void testNewListMethodsNullabilityLinkedListLatest() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityLinkedListLatest.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityOverrides20.kt")
+      public void testNewListMethodsNullabilityOverrides20() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityOverrides20.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityOverrides21.kt")
+      public void testNewListMethodsNullabilityOverrides21() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityOverrides21.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityOverridesLatest.kt")
+      public void testNewListMethodsNullabilityOverridesLatest() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityOverridesLatest.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityOverridesLinkedList20.kt")
+      public void testNewListMethodsNullabilityOverridesLinkedList20() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityOverridesLinkedList20.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityOverridesLinkedList21.kt")
+      public void testNewListMethodsNullabilityOverridesLinkedList21() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityOverridesLinkedList21.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityOverridesLinkedListLatest.kt")
+      public void testNewListMethodsNullabilityOverridesLinkedListLatest() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityOverridesLinkedListLatest.kt");
       }
 
       @Test
