@@ -10,13 +10,12 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.StandaloneProjectFactory
 import org.jetbrains.kotlin.analysis.project.structure.KtBuiltinsModule
-import org.jetbrains.kotlin.analysis.test.framework.project.structure.ktModuleProvider
+import org.jetbrains.kotlin.analysis.test.framework.project.structure.ktTestModuleStructure
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironmentMode
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreProjectEnvironment
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
-import org.jetbrains.kotlin.test.getAnalyzerServices
 import org.jetbrains.kotlin.test.services.*
 
 abstract class AnalysisApiEnvironmentManager : TestService {
@@ -54,20 +53,16 @@ class AnalysisApiEnvironmentManagerImpl(
     }
 
     override fun initializeProjectStructure() {
-        val ktModuleProjectStructure = testServices.ktModuleProvider.getModuleStructure()
+        val ktTestModuleStructure = testServices.ktTestModuleStructure
         val useSiteModule = testServices.moduleStructure.modules.first()
         val useSiteCompilerConfiguration = testServices.compilerConfigurationProvider.getCompilerConfiguration(useSiteModule)
-        val builtinsModule = KtBuiltinsModule(
-            useSiteModule.targetPlatform,
-            useSiteModule.targetPlatform.getAnalyzerServices(),
-            getProject()
-        )
+        val builtinsModule = KtBuiltinsModule(useSiteModule.targetPlatform, getProject())
 
         val globalLanguageVersionSettings = useSiteModule.languageVersionSettings
 
         StandaloneProjectFactory.registerServicesForProjectEnvironment(
             _projectEnvironment,
-            KtTestProjectStructureProvider(globalLanguageVersionSettings, builtinsModule, ktModuleProjectStructure),
+            KtTestProjectStructureProvider(globalLanguageVersionSettings, builtinsModule, ktTestModuleStructure),
             useSiteCompilerConfiguration.languageVersionSettings,
             useSiteCompilerConfiguration.get(JVMConfigurationKeys.JDK_HOME)?.toPath(),
         )

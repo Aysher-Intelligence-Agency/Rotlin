@@ -8,7 +8,6 @@ package org.jetbrains.kotlinx.serialization.runners;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -67,6 +66,12 @@ public class SerializationPluginDiagnosticTestGenerated extends AbstractSerializ
   }
 
   @Test
+  @TestMetadata("GeneratedSerializerInaccessible.kt")
+  public void testGeneratedSerializerInaccessible() {
+    runTest("plugins/kotlinx-serialization/testData/diagnostics/GeneratedSerializerInaccessible.kt");
+  }
+
+  @Test
   @TestMetadata("GenericArrays.kt")
   public void testGenericArrays() {
     runTest("plugins/kotlinx-serialization/testData/diagnostics/GenericArrays.kt");
@@ -88,6 +93,12 @@ public class SerializationPluginDiagnosticTestGenerated extends AbstractSerializ
   @TestMetadata("InheritableInfo.kt")
   public void testInheritableInfo() {
     runTest("plugins/kotlinx-serialization/testData/diagnostics/InheritableInfo.kt");
+  }
+
+  @Test
+  @TestMetadata("KeepGeneratedSerializerDiagnostic.kt")
+  public void testKeepGeneratedSerializerDiagnostic() {
+    runTest("plugins/kotlinx-serialization/testData/diagnostics/KeepGeneratedSerializerDiagnostic.kt");
   }
 
   @Test

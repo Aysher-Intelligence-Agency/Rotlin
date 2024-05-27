@@ -42,6 +42,12 @@ public class Fe10IdeNormalAnalysisSourceModuleRendererTestGenerated extends Abst
   }
 
   @Test
+  @TestMetadata("actualInheritance.kt")
+  public void testActualInheritance() {
+    runTest("analysis/analysis-api/testData/components/symbolDeclarationRenderer/renderDeclaration/actualInheritance.kt");
+  }
+
+  @Test
   public void testAllFilesPresentInRenderDeclaration() {
     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/components/symbolDeclarationRenderer/renderDeclaration"), Pattern.compile("^(.+)\\.kt$"), null, true);
   }
@@ -239,6 +245,12 @@ public class Fe10IdeNormalAnalysisSourceModuleRendererTestGenerated extends Abst
     @TestMetadata("annotationOnTypesWithComplexExpression.kt")
     public void testAnnotationOnTypesWithComplexExpression() {
       runTest("analysis/analysis-api/testData/components/symbolDeclarationRenderer/renderDeclaration/types/annotationOnTypesWithComplexExpression.kt");
+    }
+
+    @Test
+    @TestMetadata("approximatedCapturedType.kt")
+    public void testApproximatedCapturedType() {
+      runTest("analysis/analysis-api/testData/components/symbolDeclarationRenderer/renderDeclaration/types/approximatedCapturedType.kt");
     }
 
     @Test

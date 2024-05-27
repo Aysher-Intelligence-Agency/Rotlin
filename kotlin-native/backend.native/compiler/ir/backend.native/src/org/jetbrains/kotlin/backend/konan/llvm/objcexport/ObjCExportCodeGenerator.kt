@@ -173,7 +173,7 @@ internal fun ObjCExportFunctionGenerationContext.callAndMaybeRetainAutoreleased(
         forbidRuntime = true // Don't emit safe points, frame management etc.
 
         val actualArgs = signature.parameterTypes.indices.map { param(it) }
-        val actualCallable = if (functionIsPassedAsLastParameter) LlvmCallable(signature.llvmFunctionType, param(signature.parameterTypes.size), signature) else function
+        val actualCallable = if (functionIsPassedAsLastParameter) LlvmCallable(param(signature.parameterTypes.size), signature) else function
 
         // Use LLVMBuildCall instead of call, because the latter enforces using exception handler, which is exactly what we have to avoid.
         val result = actualCallable.buildCall(builder, actualArgs).let { callResult ->
@@ -205,20 +205,6 @@ internal open class ObjCExportCodeGeneratorBase(codegen: CodeGenerator) : ObjCCo
 
     fun dispose() {
         rttiGenerator.dispose()
-    }
-
-    fun ObjCExportFunctionGenerationContext.callFromBridge(
-            llvmFunction: LLVMValueRef,
-            args: List<LLVMValueRef>,
-            resultLifetime: Lifetime = Lifetime.IRRELEVANT
-    ): LLVMValueRef {
-        val llvmDeclarations = LlvmCallable(
-                getGlobalFunctionType(llvmFunction),
-                // llvmFunction could be a function pointer here, and we can't infer attributes from it.
-                llvmFunction,
-                LlvmFunctionAttributeProvider.makeEmpty()
-        )
-        return callFromBridge(llvmDeclarations, args, resultLifetime)
     }
 
     fun ObjCExportFunctionGenerationContext.callFromBridge(
@@ -305,7 +291,7 @@ internal class ObjCExportCodeGenerator(
 
     // Caution! Arbitrary methods shouldn't be called from Runnable thread state.
     fun ObjCExportFunctionGenerationContext.genSendMessage(
-            returnType: LlvmParamType,
+            returnType: LlvmRetType,
             parameterTypes: List<LlvmParamType>,
             receiver: LLVMValueRef,
             selector: String,
@@ -1225,7 +1211,7 @@ private fun ObjCExportCodeGenerator.generateKotlinToObjCBridge(
                     error("Method is not instance and thus can't have bridge for overriding: $baseMethod")
 
                 MethodBridgeValueParameter.ErrorOutParameter ->
-                    alloca(llvm.int8PtrType).also {
+                    alloca(llvm.int8PtrType, false).also {
                         store(llvm.kNullInt8Ptr, it)
                         errorOutPtr = it
                     }
@@ -1792,7 +1778,7 @@ private fun ObjCExportCodeGenerator.findImplementation(irClass: IrClass, method:
     val override = irClass.simpleFunctions().singleOrNull {
         method in it.getLowered().allOverriddenFunctions
     } ?: error("no implementation for ${method.render()}\nin ${irClass.fqNameWhenAvailable}")
-    return OverriddenFunctionInfo(override.getLowered(), method).getImplementation(context)
+    return OverriddenFunctionInfo(override.getLowered(), method, context.config.bridgesPolicy).getImplementation(context)
 }
 
 private inline fun ObjCExportCodeGenerator.generateObjCToKotlinSyntheticGetter(
@@ -1941,11 +1927,11 @@ private fun MethodBridge.ReturnValue.toLlvmRetType(
         MethodBridge.ReturnValue.Void -> LlvmRetType(llvm.voidType)
 
         MethodBridge.ReturnValue.HashCode -> LlvmRetType(if (generationState.is64BitNSInteger()) llvm.int64Type else llvm.int32Type)
-        is MethodBridge.ReturnValue.Mapped -> this.bridge.toLlvmParamType(llvm)
-        MethodBridge.ReturnValue.WithError.Success -> ValueTypeBridge(ObjCValueType.BOOL).toLlvmParamType(llvm)
+        is MethodBridge.ReturnValue.Mapped -> this.bridge.toLlvmRetType(llvm)
+        MethodBridge.ReturnValue.WithError.Success -> ValueTypeBridge(ObjCValueType.BOOL).toLlvmRetType(llvm)
 
         MethodBridge.ReturnValue.Instance.InitResult,
-        MethodBridge.ReturnValue.Instance.FactoryResult -> ReferenceBridge.toLlvmParamType(llvm)
+        MethodBridge.ReturnValue.Instance.FactoryResult -> ReferenceBridge.toLlvmRetType(llvm)
 
         is MethodBridge.ReturnValue.WithError.ZeroForError -> this.successBridge.toLlvmRetType(generationState)
     }
@@ -1954,6 +1940,11 @@ private fun MethodBridge.ReturnValue.toLlvmRetType(
 private fun TypeBridge.toLlvmParamType(llvm: CodegenLlvmHelpers): LlvmParamType = when (this) {
     is ReferenceBridge, is BlockPointerBridge -> LlvmParamType(llvm.int8PtrType)
     is ValueTypeBridge -> LlvmParamType(this.objCValueType.toLlvmType(llvm), this.objCValueType.defaultParameterAttributes)
+}
+
+private fun TypeBridge.toLlvmRetType(llvm: CodegenLlvmHelpers): LlvmRetType = when (this) {
+    is ReferenceBridge, is BlockPointerBridge -> LlvmRetType(llvm.int8PtrType)
+    is ValueTypeBridge -> LlvmRetType(this.objCValueType.toLlvmType(llvm), this.objCValueType.defaultParameterAttributes)
 }
 
 internal fun ObjCExportCodeGenerator.getEncoding(methodBridge: MethodBridge): String {

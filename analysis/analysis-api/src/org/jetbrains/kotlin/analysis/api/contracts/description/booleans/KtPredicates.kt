@@ -1,49 +1,61 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.analysis.api.contracts.description.booleans
 
 import com.google.common.base.Objects
-import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractParameterValue
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractParameterValue
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 
 /**
- * See: [KtContractBooleanExpression].
+ * See: [KaContractBooleanExpression].
  */
-public class KtContractIsInstancePredicateExpression(
-    private val _argument: KtContractParameterValue,
-    private val _type: KtType,
-    private val _isNegated: Boolean
-) : KtContractBooleanExpression {
-    override val token: KtLifetimeToken get() = _type.token
-    public val argument: KtContractParameterValue get() = withValidityAssertion { _argument }
-    public val type: KtType get() = withValidityAssertion { _type }
-    public val isNegated: Boolean get() = withValidityAssertion { _isNegated }
-    public fun negated(): KtContractIsInstancePredicateExpression = KtContractIsInstancePredicateExpression(argument, type, !isNegated)
+public class KaContractIsInstancePredicateExpression(
+    private val backingArgument: KaContractParameterValue,
+    private val backingType: KaType,
+    private val backingIsNegated: Boolean
+) : KaContractBooleanExpression {
+    override val token: KaLifetimeToken get() = backingType.token
+    public val argument: KaContractParameterValue get() = withValidityAssertion { backingArgument }
+    public val type: KaType get() = withValidityAssertion { backingType }
+    public val isNegated: Boolean get() = withValidityAssertion { backingIsNegated }
+    public fun negated(): KaContractIsInstancePredicateExpression = KaContractIsInstancePredicateExpression(argument, type, !isNegated)
 
-    override fun hashCode(): Int = Objects.hashCode(_argument, _type, _isNegated)
-    override fun equals(other: Any?): Boolean =
-        other is KtContractIsInstancePredicateExpression && other._argument == _argument && other._type == _type && other._isNegated
-                && _isNegated
+    override fun hashCode(): Int = Objects.hashCode(backingArgument, backingType, backingIsNegated)
+    override fun equals(other: Any?): Boolean {
+        return this === other ||
+                other is KaContractIsInstancePredicateExpression &&
+                other.backingArgument == backingArgument &&
+                other.backingType == backingType &&
+                other.backingIsNegated == backingIsNegated
+    }
 }
+
+public typealias KtContractIsInstancePredicateExpression = KaContractIsInstancePredicateExpression
 
 /**
- * See: [KtContractBooleanExpression].
+ * See: [KaContractBooleanExpression].
  */
-public class KtContractIsNullPredicateExpression(
-    private val _argument: KtContractParameterValue,
-    private val _isNegated: Boolean
-) : KtContractBooleanExpression {
-    override val token: KtLifetimeToken get() = _argument.token
-    public val argument: KtContractParameterValue get() = withValidityAssertion { _argument }
-    public val isNegated: Boolean get() = withValidityAssertion { _isNegated }
-    public fun negated(): KtContractIsNullPredicateExpression = KtContractIsNullPredicateExpression(argument, !isNegated)
+public class KaContractIsNullPredicateExpression(
+    private val backingArgument: KaContractParameterValue,
+    private val backingIsNegated: Boolean
+) : KaContractBooleanExpression {
+    override val token: KaLifetimeToken get() = backingArgument.token
+    public val argument: KaContractParameterValue get() = withValidityAssertion { backingArgument }
+    public val isNegated: Boolean get() = withValidityAssertion { backingIsNegated }
+    public fun negated(): KaContractIsNullPredicateExpression = KaContractIsNullPredicateExpression(argument, !isNegated)
 
-    override fun hashCode(): Int = Objects.hashCode(_argument, _isNegated)
-    override fun equals(other: Any?): Boolean =
-        other is KtContractIsNullPredicateExpression && other._argument == _argument && other._isNegated == _isNegated
+    override fun hashCode(): Int = Objects.hashCode(backingArgument, backingIsNegated)
+    override fun equals(other: Any?): Boolean {
+        return this === other ||
+                other is KaContractIsNullPredicateExpression &&
+                other.backingArgument == backingArgument &&
+                other.backingIsNegated == backingIsNegated
+    }
 }
+
+public typealias KtContractIsNullPredicateExpression = KaContractIsNullPredicateExpression

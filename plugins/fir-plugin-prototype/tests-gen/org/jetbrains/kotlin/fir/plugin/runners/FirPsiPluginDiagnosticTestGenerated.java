@@ -62,6 +62,12 @@ public class FirPsiPluginDiagnosticTestGenerated extends AbstractFirPsiPluginDia
     public void testSimple() {
       runTest("plugins/fir-plugin-prototype/testData/diagnostics/checkers/simple.kt");
     }
+
+    @Test
+    @TestMetadata("ValueOfCustomFunctionTypeAsArgumentOfInlineFunction.kt")
+    public void testValueOfCustomFunctionTypeAsArgumentOfInlineFunction() {
+      runTest("plugins/fir-plugin-prototype/testData/diagnostics/checkers/ValueOfCustomFunctionTypeAsArgumentOfInlineFunction.kt");
+    }
   }
 
   @Nested
@@ -148,6 +154,12 @@ public class FirPsiPluginDiagnosticTestGenerated extends AbstractFirPsiPluginDia
     }
 
     @Test
+    @TestMetadata("callShapeBasedInjector.kt")
+    public void testCallShapeBasedInjector() {
+      runTest("plugins/fir-plugin-prototype/testData/diagnostics/receivers/callShapeBasedInjector.kt");
+    }
+
+    @Test
     @TestMetadata("receiverInjection.kt")
     public void testReceiverInjection() {
       runTest("plugins/fir-plugin-prototype/testData/diagnostics/receivers/receiverInjection.kt");
@@ -173,6 +185,12 @@ public class FirPsiPluginDiagnosticTestGenerated extends AbstractFirPsiPluginDia
     @TestMetadata("metaAnnotationClashesWithSupertype.kt")
     public void testMetaAnnotationClashesWithSupertype() {
       runTest("plugins/fir-plugin-prototype/testData/diagnostics/status/metaAnnotationClashesWithSupertype.kt");
+    }
+
+    @Test
+    @TestMetadata("redundantTransformedVisibility.kt")
+    public void testRedundantTransformedVisibility() {
+      runTest("plugins/fir-plugin-prototype/testData/diagnostics/status/redundantTransformedVisibility.kt");
     }
 
     @Test

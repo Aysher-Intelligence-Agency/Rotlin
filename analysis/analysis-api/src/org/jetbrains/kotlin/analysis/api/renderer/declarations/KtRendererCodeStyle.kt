@@ -5,71 +5,66 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 
-public interface KtRendererCodeStyle {
-    context(KtAnalysisSession)
-    public fun getIndentSize(): Int
+public interface KaRendererCodeStyle {
+    public fun getIndentSize(analysisSession: KaSession): Int
 
-    context(KtAnalysisSession)
-    public fun getSeparatorAfterContextReceivers(): String
+    public fun getSeparatorAfterContextReceivers(analysisSession: KaSession): String
 
-    context(KtAnalysisSession)
-    public fun getSeparatorBetweenAnnotationAndOwner(symbol: KtAnnotated): String
+    public fun getSeparatorBetweenAnnotationAndOwner(analysisSession: KaSession, symbol: KaAnnotated): String
 
-    context(KtAnalysisSession)
-    public fun getSeparatorBetweenAnnotations(symbol: KtAnnotated): String
+    public fun getSeparatorBetweenAnnotations(analysisSession: KaSession, symbol: KaAnnotated): String
 
-    context(KtAnalysisSession)
-    public fun getSeparatorBetweenModifiers(): String
+    public fun getSeparatorBetweenModifiers(analysisSession: KaSession): String
 
-    context(KtAnalysisSession)
-    public fun getSeparatorBetweenMembers(first: KtDeclarationSymbol, second: KtDeclarationSymbol): String
+    public fun getSeparatorBetweenMembers(
+        analysisSession: KaSession,
+        first: KaDeclarationSymbol,
+        second: KaDeclarationSymbol,
+    ): String
 }
 
-public object KtRecommendedRendererCodeStyle : KtRendererCodeStyle {
-    context(KtAnalysisSession)
-    override fun getIndentSize(): Int = 4
+public typealias KtRendererCodeStyle = KaRendererCodeStyle
 
-    context(KtAnalysisSession)
-    override fun getSeparatorAfterContextReceivers(): String = "\n"
+public object KaRecommendedRendererCodeStyle : KaRendererCodeStyle {
+    override fun getIndentSize(analysisSession: KaSession): Int = 4
 
-    context(KtAnalysisSession)
-    override fun getSeparatorBetweenAnnotationAndOwner(symbol: KtAnnotated): String {
+    override fun getSeparatorAfterContextReceivers(analysisSession: KaSession): String = "\n"
+
+    override fun getSeparatorBetweenAnnotationAndOwner(analysisSession: KaSession, symbol: KaAnnotated): String {
         return when (symbol) {
-            is KtType -> " "
-            is KtTypeParameterSymbol -> " "
-            is KtValueParameterSymbol -> " "
+            is KaType -> " "
+            is KaTypeParameterSymbol -> " "
+            is KaValueParameterSymbol -> " "
             else -> "\n"
         }
     }
 
-    context(KtAnalysisSession)
-    override fun getSeparatorBetweenAnnotations(symbol: KtAnnotated): String {
+    override fun getSeparatorBetweenAnnotations(analysisSession: KaSession, symbol: KaAnnotated): String {
         return when (symbol) {
-            is KtType -> " "
-            is KtTypeParameterSymbol -> " "
-            is KtValueParameterSymbol -> " "
+            is KaType -> " "
+            is KaTypeParameterSymbol -> " "
+            is KaValueParameterSymbol -> " "
             else -> "\n"
         }
     }
 
-    context(KtAnalysisSession)
-    override fun getSeparatorBetweenModifiers(): String = " "
+    override fun getSeparatorBetweenModifiers(analysisSession: KaSession): String = " "
 
-    context(KtAnalysisSession)
-    override fun getSeparatorBetweenMembers(first: KtDeclarationSymbol, second: KtDeclarationSymbol): String {
+    override fun getSeparatorBetweenMembers(analysisSession: KaSession, first: KaDeclarationSymbol, second: KaDeclarationSymbol): String {
         return when {
-            first is KtEnumEntrySymbol && second is KtEnumEntrySymbol -> ",\n"
-            first is KtEnumEntrySymbol && second !is KtEnumEntrySymbol -> ";\n\n"
+            first is KaEnumEntrySymbol && second is KaEnumEntrySymbol -> ",\n"
+            first is KaEnumEntrySymbol && second !is KaEnumEntrySymbol -> ";\n\n"
             else -> "\n\n"
         }
     }
-
 }
+
+public typealias KtRecommendedRendererCodeStyle = KaRecommendedRendererCodeStyle

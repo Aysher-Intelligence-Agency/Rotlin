@@ -5,22 +5,33 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.types.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
-import org.jetbrains.kotlin.analysis.api.types.KtIntegerLiteralType
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.types.KaIntegerLiteralType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
+public interface KaIntegerLiteralTypeRenderer {
+    public fun renderType(
+        analysisSession: KaSession,
+        type: KaIntegerLiteralType,
+        typeRenderer: KaTypeRenderer,
+        printer: PrettyPrinter,
+    )
 
-public interface KtIntegerLiteralTypeRenderer {
-    context(KtAnalysisSession, KtTypeRenderer)
-    public fun renderType(type: KtIntegerLiteralType, printer: PrettyPrinter)
-
-    public object AS_ILT_WITH_VALUE : KtIntegerLiteralTypeRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderType(type: KtIntegerLiteralType, printer: PrettyPrinter): Unit = printer {
-            append("ILT(")
-            printer.append(type.value.toString())
-            append(')')
+    public object AS_ILT_WITH_VALUE : KaIntegerLiteralTypeRenderer {
+        override fun renderType(
+            analysisSession: KaSession,
+            type: KaIntegerLiteralType,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                append("ILT(")
+                printer.append(type.value.toString())
+                append(')')
+            }
         }
     }
 }
+
+public typealias KtIntegerLiteralTypeRenderer = KaIntegerLiteralTypeRenderer

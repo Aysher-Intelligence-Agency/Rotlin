@@ -5,23 +5,38 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
-public interface KtSuperTypeListRenderer {
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    public fun renderSuperTypes(symbol: KtClassOrObjectSymbol, printer: PrettyPrinter)
+public interface KaSuperTypeListRenderer {
+    public fun renderSuperTypes(
+        analysisSession: KaSession,
+        symbol: KaClassOrObjectSymbol,
+        declarationRenderer: KaDeclarationRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object AS_LIST : KtSuperTypeListRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderSuperTypes(symbol: KtClassOrObjectSymbol, printer: PrettyPrinter): Unit = printer {
-            val superTypesToRender = symbol.superTypes.filter { superTypesFilter.filter(it, symbol) }.ifEmpty { return }
-            printCollection(superTypesToRender) { type ->
-                superTypeRenderer.renderSuperType(type, symbol, printer)
-                superTypesArgumentRenderer.renderSuperTypeArguments(type, symbol, printer)
+    public object AS_LIST : KaSuperTypeListRenderer {
+        override fun renderSuperTypes(
+            analysisSession: KaSession,
+            symbol: KaClassOrObjectSymbol,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                val superTypesToRender = symbol.superTypes
+                    .filter { declarationRenderer.superTypesFilter.filter(analysisSession, it, symbol) }.ifEmpty { return }
+
+                printCollection(superTypesToRender) { type ->
+                    declarationRenderer.superTypeRenderer.renderSuperType(analysisSession, type, symbol, declarationRenderer, printer)
+                    declarationRenderer.superTypesArgumentRenderer
+                        .renderSuperTypeArguments(analysisSession, type, symbol, declarationRenderer, printer)
+                }
             }
         }
     }
 }
+
+public typealias KtSuperTypeListRenderer = KaSuperTypeListRenderer

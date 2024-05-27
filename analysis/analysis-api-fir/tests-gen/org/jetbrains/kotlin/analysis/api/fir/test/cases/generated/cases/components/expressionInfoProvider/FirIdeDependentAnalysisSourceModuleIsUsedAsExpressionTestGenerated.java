@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisS
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiMode;
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.expressionInfoProvider.AbstractIsUsedAsExpressionTest;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -1382,6 +1381,12 @@ public class FirIdeDependentAnalysisSourceModuleIsUsedAsExpressionTestGenerated 
   @TestMetadata("propertyDecl.kt")
   public void testPropertyDecl() {
     runTest("analysis/analysis-api/testData/components/expressionInfoProvider/isUsedAsExpression/propertyDecl.kt");
+  }
+
+  @Test
+  @TestMetadata("propertyDelegate.kt")
+  public void testPropertyDelegate() {
+    runTest("analysis/analysis-api/testData/components/expressionInfoProvider/isUsedAsExpression/propertyDelegate.kt");
   }
 
   @Test

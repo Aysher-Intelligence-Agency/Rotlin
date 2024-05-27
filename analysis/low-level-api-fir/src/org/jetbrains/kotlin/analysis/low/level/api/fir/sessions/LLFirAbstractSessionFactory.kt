@@ -21,6 +21,12 @@ import org.jetbrains.kotlin.analysis.providers.createDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.impl.declarationProviders.FileBasedKotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.impl.util.mergeInto
 import org.jetbrains.kotlin.analysis.utils.errors.withKtModuleEntry
+import org.jetbrains.kotlin.assignment.plugin.AssignmentCommandLineProcessor
+import org.jetbrains.kotlin.assignment.plugin.AssignmentConfigurationKeys
+import org.jetbrains.kotlin.assignment.plugin.k2.FirAssignmentPluginExtensionRegistrar
+import org.jetbrains.kotlin.cli.plugins.processCompilerPluginsOptions
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
+import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.fir.BuiltinTypes
@@ -56,6 +62,7 @@ import org.jetbrains.kotlin.utils.exceptions.withVirtualFileEntry
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import org.jetbrains.kotlin.fir.session.FirSessionFactoryHelper.registerDefaultComponents
+import org.jetbrains.kotlin.scripting.compiler.plugin.impl.makeScriptCompilerArguments
 
 @OptIn(PrivateSessionConstructor::class, SessionConfiguration::class)
 internal abstract class LLFirAbstractSessionFactory(protected val project: Project) {
@@ -85,7 +92,12 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
                 builtinTypes,
                 scope
             ),
-            LLFirDependenciesSymbolProvider(session) { listOf(builtinSymbolProvider) },
+            LLFirDependenciesSymbolProvider(session) {
+                buildList {
+                    addAll(collectDependencySymbolProviders(moduleData.ktModule))
+                    add(builtinSymbolProvider)
+                }
+            },
         )
     }
 
@@ -166,6 +178,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
         }
     }
 
+    @OptIn(ExperimentalCompilerApi::class)
     private fun registerScriptExtensions(session: LLFirSession, file: KtFile) {
         FirSessionConfigurator(session).apply {
             val hostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {}
@@ -173,6 +186,13 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
                 ?: errorWithAttachment("Cannot load script definition") {
                     withVirtualFileEntry("file", file.virtualFile)
                 }
+
+            val compilerArguments = makeScriptCompilerArguments(scriptDefinition.compilerOptions.toList())
+            val commandLineProcessors = listOf(AssignmentCommandLineProcessor())
+            val compilerConfiguration = CompilerConfiguration()
+            processCompilerPluginsOptions(
+                compilerConfiguration, compilerArguments.pluginOptions?.asIterable() ?: emptyList(), commandLineProcessors
+            )
 
             val extensionRegistrar = FirScriptingCompilerExtensionIdeRegistrar(
                 project,
@@ -183,6 +203,9 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
 
             registerExtensions(extensionRegistrar.configure())
             registerExtensions(FirScriptingSamWithReceiverExtensionRegistrar().configure())
+            compilerConfiguration.getList(AssignmentConfigurationKeys.ANNOTATION).takeIf { it.isNotEmpty() }?.let {
+                registerExtensions(FirAssignmentPluginExtensionRegistrar(it).configure())
+            }
         }.configure()
     }
 
@@ -435,6 +458,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
             register(FirLazyDeclarationResolver::class, FirDummyCompilerLazyDeclarationResolver)
             registerCommonComponents(ProjectStructureProvider.getInstance(project).libraryLanguageVersionSettings)
             registerCommonComponentsAfterExtensionsAreConfigured()
+            registerDefaultComponents()
 
             val kotlinScopeProvider = FirKotlinScopeProvider(::wrapScopeWithJvmMapped)
             register(FirKotlinScopeProvider::class, kotlinScopeProvider)
@@ -609,6 +633,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
         // Please update KmpModuleSorterTest#buildDependenciesToTest if the logic of collecting dependencies changes
         val dependencyModules = buildSet {
             addAll(module.directRegularDependencies)
+            addAll(module.directFriendDependencies)
 
             // The dependency provider needs to have access to all direct and indirect `dependsOn` dependencies, as `dependsOn`
             // dependencies are transitive.

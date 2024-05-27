@@ -89,7 +89,7 @@ import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.CodeAnalyzerInitializer
-import org.jetbrains.kotlin.resolve.ModuleAnnotationsResolver
+import org.jetbrains.kotlin.resolve.diagnostics.DiagnosticSuppressor
 import org.jetbrains.kotlin.resolve.extensions.AssignResolutionAltererExtension
 import org.jetbrains.kotlin.resolve.extensions.ExtraImportsProviderExtension
 import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
@@ -122,12 +122,12 @@ class KotlinCoreEnvironment private constructor(
         val jarFileSystem: VirtualFileSystem
 
         init {
-            val messageCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+            val messageCollector = configuration.messageCollector
 
             setIdeaIoUseFallback()
 
             if (configuration.getBoolean(JVMConfigurationKeys.USE_FAST_JAR_FILE_SYSTEM)) {
-                messageCollector?.report(
+                messageCollector.report(
                     STRONG_WARNING,
                     "Using new faster version of JAR FS: it should make your build faster, but the new implementation is experimental"
                 )
@@ -140,7 +140,7 @@ class KotlinCoreEnvironment private constructor(
                 configuration.getBoolean(JVMConfigurationKeys.USE_FAST_JAR_FILE_SYSTEM) || configuration.getBoolean(CommonConfigurationKeys.USE_FIR) -> {
                     val fastJarFs = applicationEnvironment.fastJarFileSystem
                     if (fastJarFs == null) {
-                        messageCollector?.report(
+                        messageCollector.report(
                             STRONG_WARNING,
                             "Your JDK doesn't seem to support mapped buffer unmapping, so the slower (old) version of JAR FS will be used"
                         )
@@ -153,7 +153,7 @@ class KotlinCoreEnvironment private constructor(
                             val contentRoots = configuration.get(CLIConfigurationKeys.CONTENT_ROOTS)
                             if (contentRoots?.any { it is JvmClasspathRoot && it.file.path == outputJar.path } == true) {
                                 // See KT-61883
-                                messageCollector?.report(
+                                messageCollector.report(
                                     STRONG_WARNING,
                                     "JAR from the classpath ${outputJar.path} is reused as output JAR, so the slower (old) version of JAR FS will be used"
                                 )
@@ -214,7 +214,7 @@ class KotlinCoreEnvironment private constructor(
 
         sourceFiles += createSourceFilesFromSourceRoots(
             configuration, project,
-            getSourceRootsCheckingForDuplicates(configuration, configuration[CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY])
+            getSourceRootsCheckingForDuplicates(configuration, configuration[CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY])
         )
 
         collectAdditionalSources(project)
@@ -223,7 +223,7 @@ class KotlinCoreEnvironment private constructor(
 
         val javaFileManager = project.getService(CoreJavaFileManager::class.java) as KotlinCliJavaFileManagerImpl
 
-        val messageCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+        val messageCollector = configuration.get(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
 
         val jdkHome = configuration.get(JVMConfigurationKeys.JDK_HOME)
         val releaseTarget = configuration.get(JVMConfigurationKeys.JDK_RELEASE)
@@ -320,9 +320,8 @@ class KotlinCoreEnvironment private constructor(
 
     fun createPackagePartProvider(scope: GlobalSearchScope): JvmPackagePartProvider {
         return JvmPackagePartProvider(configuration.languageVersionSettings, scope).apply {
-            addRoots(initialRoots, configuration.getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY))
+            addRoots(initialRoots, configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY))
             packagePartProviders += this
-            (ModuleAnnotationsResolver.getInstance(project) as CliModuleAnnotationsResolver).addPackagePartProvider(this)
         }
     }
 
@@ -381,7 +380,7 @@ class KotlinCoreEnvironment private constructor(
             initialRoots.addAll(newRoots)
         } else {
             for (packagePartProvider in packagePartProviders) {
-                packagePartProvider.addRoots(newRoots, configuration.getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY))
+                packagePartProvider.addRoots(newRoots, configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY))
             }
         }
 
@@ -726,6 +725,7 @@ class KotlinCoreEnvironment private constructor(
             TypeAttributeTranslatorExtension.registerExtensionPoint(project)
             AssignResolutionAltererExtension.registerExtensionPoint(project)
             FirAnalysisHandlerExtension.registerExtensionPoint(project)
+            DiagnosticSuppressor.registerExtensionPoint(project)
         }
 
         internal fun registerExtensionsFromPlugins(project: MockProject, configuration: CompilerConfiguration) {
@@ -733,7 +733,7 @@ class KotlinCoreEnvironment private constructor(
                 return "The provided plugin ${extension.javaClass.name} is not compatible with this version of compiler"
             }
 
-            val messageCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+            val messageCollector = configuration.messageCollector
 
             for (registrar in configuration.getList(ComponentRegistrar.PLUGIN_COMPONENT_REGISTRARS)) {
                 try {
@@ -743,11 +743,11 @@ class KotlinCoreEnvironment private constructor(
                     // Since the scripting plugin is often discovered in the compiler environment, it is often taken from the incompatible
                     // location, and in many cases this is not a fatal error, therefore strong warning is generated instead of exception
                     if (registrar.javaClass.simpleName == "ScriptingCompilerConfigurationComponentRegistrar") {
-                        messageCollector?.report(STRONG_WARNING, "Default scripting plugin is disabled: $message")
+                        messageCollector.report(STRONG_WARNING, "Default scripting plugin is disabled: $message")
                     } else {
                         val errorMessageWithStackTrace = "$message.\n" +
                                 e.stackTraceToString().lines().take(6).joinToString("\n")
-                        messageCollector?.report(ERROR, errorMessageWithStackTrace)
+                        messageCollector.report(ERROR, errorMessageWithStackTrace)
                     }
                 }
             }
@@ -805,7 +805,6 @@ class KotlinCoreEnvironment private constructor(
             with(project) {
                 registerService(JavaElementSourceFactory::class.java, JavaFixedElementSourceFactory::class.java)
                 registerService(KotlinJavaPsiFacade::class.java, KotlinJavaPsiFacade(this))
-                registerService(ModuleAnnotationsResolver::class.java, CliModuleAnnotationsResolver())
             }
         }
 
@@ -820,7 +819,7 @@ class KotlinCoreEnvironment private constructor(
         @JvmStatic
         fun registerKotlinLightClassSupport(project: MockProject) {
             with(project) {
-                val traceHolder = CliTraceHolder()
+                val traceHolder = CliTraceHolder(project)
                 val cliLightClassGenerationSupport = CliLightClassGenerationSupport(traceHolder, project)
                 val kotlinAsJavaSupport = CliKotlinAsJavaSupport(project, traceHolder)
                 registerService(LightClassGenerationSupport::class.java, cliLightClassGenerationSupport)

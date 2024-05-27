@@ -149,11 +149,11 @@ abstract class AbstractFirSpecificAnnotationResolveTransformer(
             return delegatedConstructorCall
         }
 
-        override fun transformAugmentedArraySetCall(
-            augmentedArraySetCall: FirAugmentedArraySetCall,
+        override fun transformIndexedAccessAugmentedAssignment(
+            indexedAccessAugmentedAssignment: FirIndexedAccessAugmentedAssignment,
             data: ResolutionMode,
         ): FirStatement {
-            return augmentedArraySetCall
+            return indexedAccessAugmentedAssignment
         }
 
         override fun transformArrayLiteral(arrayLiteral: FirArrayLiteral, data: ResolutionMode): FirStatement {
@@ -191,7 +191,7 @@ abstract class AbstractFirSpecificAnnotationResolveTransformer(
             isUsedAsGetClassReceiver: Boolean,
             callSite: FirElement,
             data: ResolutionMode,
-        ): FirStatement {
+        ): FirQualifiedAccessExpression {
             qualifiedAccessExpression.resolveFromImportScope()
             return qualifiedAccessExpression
         }
@@ -207,7 +207,7 @@ abstract class AbstractFirSpecificAnnotationResolveTransformer(
                 val receiverCalleeReference = receiver.calleeReference as? FirSimpleNamedReference ?: return
                 val receiverName = receiverCalleeReference.name.takeIf { !it.isSpecial } ?: return
 
-                val symbol = scopes.filterIsInstance<FirAbstractImportingScope>().firstNotNullOfOrNull {
+                val symbol = scopes.firstNotNullOfOrNull {
                     it.getSingleClassifier(receiverName) as? FirClassSymbol<*>
                 } ?: return
 
@@ -255,7 +255,7 @@ abstract class AbstractFirSpecificAnnotationResolveTransformer(
             calleeReference: FirSimpleNamedReference,
             calleeSymbol: FirEnumEntrySymbol
         ) {
-            session.lookupTracker?.recordLookup(
+            session.lookupTracker?.recordNameLookup(
                 calleeReference.name,
                 calleeSymbol.dispatchReceiverType?.classId?.asFqNameString() ?: calleeSymbol.callableId.packageName.asString(),
                 this.source,
@@ -290,13 +290,13 @@ abstract class AbstractFirSpecificAnnotationResolveTransformer(
     )
 
     @PrivateForInline
-    val argumentsTransformer = FirEnumAnnotationArgumentsTransformerDispatcher()
+    val argumentsTransformer: FirEnumAnnotationArgumentsTransformerDispatcher = FirEnumAnnotationArgumentsTransformerDispatcher()
 
     @PrivateForInline
     var owners: PersistentList<FirDeclaration> = persistentListOf()
 
     @PrivateForInline
-    val classDeclarationsStack = ArrayDeque<FirClass>().apply {
+    val classDeclarationsStack: ArrayDeque<FirClass> = ArrayDeque<FirClass>().apply {
         for (declaration in containingDeclarations) {
             if (declaration is FirClass) {
                 add(declaration)
@@ -557,7 +557,7 @@ abstract class AbstractFirSpecificAnnotationResolveTransformer(
         } as FirConstructor
     }
 
-    override fun transformErrorPrimaryConstructor(errorPrimaryConstructor: FirErrorPrimaryConstructor, data: Nothing?) =
+    override fun transformErrorPrimaryConstructor(errorPrimaryConstructor: FirErrorPrimaryConstructor, data: Nothing?): FirConstructor =
         transformConstructor(errorPrimaryConstructor, data)
 
     override fun transformEnumEntry(enumEntry: FirEnumEntry, data: Nothing?): FirStatement {

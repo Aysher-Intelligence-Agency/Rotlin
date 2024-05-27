@@ -7,13 +7,14 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.transformers
 
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirGlobalResolveComponents
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.*
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.withFirDesignationEntry
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirLockProvider
+import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.LLFirPhaseUpdater
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkPhase
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
-import org.jetbrains.kotlin.fir.FirFileAnnotationsContainer
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirScript
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.destructuringDeclarationContainerVariable
+import org.jetbrains.kotlin.fir.declarations.isItAllowedToCallLazyResolveToTheSamePhase
 import org.jetbrains.kotlin.fir.declarations.utils.componentFunctionSymbol
 import org.jetbrains.kotlin.fir.declarations.utils.correspondingValueParameterFromPrimaryConstructor
 import org.jetbrains.kotlin.fir.declarations.utils.fromPrimaryConstructor
@@ -66,20 +68,21 @@ import org.jetbrains.kotlin.utils.exceptions.requireWithAttachment
  * - [EXPECT_ACTUAL_MATCHING][FirResolvePhase.EXPECT_ACTUAL_MATCHING] – [LLFirExpectActualMatchingTargetResolver]
  * - [CONTRACTS][FirResolvePhase.CONTRACTS] – [LLFirContractsTargetResolver]
  * - [IMPLICIT_TYPES_BODY_RESOLVE][FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE] – [LLFirImplicitBodyTargetResolver]
+ * - [CONSTANT_EVALUATION][FirResolvePhase.CONSTANT_EVALUATION] - [LLFirConstantEvaluationTargetResolver]
  * - [ANNOTATION_ARGUMENTS][FirResolvePhase.ANNOTATION_ARGUMENTS] – [LLFirAnnotationArgumentsTargetResolver]
  * - [BODY_RESOLVE][FirResolvePhase.BODY_RESOLVE] – [LLFirBodyTargetResolver]
  *
  * @see LLFirLockProvider
  * @see FirResolvePhase
  */
-internal abstract class LLFirTargetResolver(
+internal sealed class LLFirTargetResolver(
     protected val resolveTarget: LLFirResolveTarget,
     val resolverPhase: FirResolvePhase,
-    private val isJumpingPhase: Boolean = false,
 ) : LLFirResolveTargetVisitor {
     val resolveTargetSession: LLFirSession get() = resolveTarget.session
     val resolveTargetScopeSession: ScopeSession get() = resolveTargetSession.getScopeSession()
     private val lockProvider: LLFirLockProvider get() = LLFirGlobalResolveComponents.getInstance(resolveTargetSession).lockProvider
+    private val requiresJumpingLock: Boolean get() = resolverPhase.isItAllowedToCallLazyResolveToTheSamePhase
 
     private val _containingDeclarations = mutableListOf<FirDeclaration>()
 
@@ -92,13 +95,16 @@ internal abstract class LLFirTargetResolver(
     fun containingClass(context: FirElement): FirRegularClass {
         val containingDeclaration = containingDeclarations.lastOrNull() ?: errorWithAttachment("Containing declaration is not found") {
             withFirEntry("context", context)
-            withEntry("originalTarget", resolveTarget.toString())
+            withFirDesignationEntry("designation", resolveTarget.designation)
         }
 
         requireWithAttachment(
             containingDeclaration is FirRegularClass,
             { "${FirRegularClass::class.simpleName} expected, but ${containingDeclaration::class.simpleName} found" },
-        )
+        ) {
+            withFirEntry("context", context)
+            withFirDesignationEntry("designation", resolveTarget.designation)
+        }
 
         return containingDeclaration
     }
@@ -135,8 +141,7 @@ internal abstract class LLFirTargetResolver(
      * @see skipDependencyTargetResolutionStep
      */
     private fun resolveDependencies(target: FirElementWithResolveState) {
-        if (skipDependencyTargetResolutionStep || target is FirFileAnnotationsContainer) return
-        resolveTarget.firFile?.annotationsContainer?.lazyResolveToPhase(resolverPhase)
+        if (skipDependencyTargetResolutionStep) return
 
         val originalDeclaration = (target as? FirCallableDeclaration)?.originalIfFakeOverrideOrDelegated()
         when {
@@ -160,6 +165,9 @@ internal abstract class LLFirTargetResolver(
             target is FirField && target.origin == FirDeclarationOrigin.Synthetic.DelegateField || target is FirConstructor -> {
                 containingClass(target).lazyResolveToPhase(resolverPhase)
             }
+
+            // We should resolve all script parameters for consistency as they are part of the script and visible from the beginning
+            target is FirScript -> target.parameters.forEach { it.lazyResolveToPhase(resolverPhase) }
         }
     }
 
@@ -279,7 +287,8 @@ internal abstract class LLFirTargetResolver(
 
         if (doResolveWithoutLock(target)) return
 
-        if (isJumpingPhase) {
+        if (requiresJumpingLock) {
+            checkThatResolvedAtLeastToPreviousPhase(target)
             lockProvider.withJumpingLock(
                 target,
                 resolverPhase,
@@ -316,11 +325,11 @@ internal abstract class LLFirTargetResolver(
      *
      * Allowed only for non-jumping phases.
      *
-     * @see isJumpingPhase
+     * @see requiresJumpingLock
      */
     protected inline fun performCustomResolveUnderLock(target: FirElementWithResolveState, crossinline action: () -> Unit) {
         checkThatResolvedAtLeastToPreviousPhase(target)
-        requireWithAttachment(!isJumpingPhase, { "This function cannot be called for jumping phase" }) {
+        requireWithAttachment(!requiresJumpingLock, { "This function cannot be called with enabled jumping lock" }) {
             withFirEntry("target", target)
         }
 
@@ -331,7 +340,11 @@ internal abstract class LLFirTargetResolver(
     }
 
     private fun updatePhaseForDeclarationInternals(target: FirElementWithResolveState) {
-        LLFirLazyPhaseResolverByPhase.getByPhase(resolverPhase).updatePhaseForDeclarationInternals(target)
+        LLFirPhaseUpdater.updateDeclarationInternalsPhase(
+            target = target,
+            newPhase = resolverPhase,
+            updateForLocalDeclarations = resolverPhase == FirResolvePhase.BODY_RESOLVE,
+        )
     }
 
     /**

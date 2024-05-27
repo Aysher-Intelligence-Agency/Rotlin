@@ -5,29 +5,43 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.types.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
-import org.jetbrains.kotlin.analysis.api.types.KtCapturedType
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
 
-public interface KtCapturedTypeRenderer {
-    context(KtAnalysisSession, KtTypeRenderer)
-    public fun renderType(type: KtCapturedType, printer: PrettyPrinter)
+public interface KaCapturedTypeRenderer {
+    public fun renderType(
+        analysisSession: KaSession,
+        type: KaCapturedType,
+        typeRenderer: KaTypeRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object AS_PROJECTION : KtCapturedTypeRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderType(type: KtCapturedType, printer: PrettyPrinter) {
-            typeProjectionRenderer.renderTypeProjection(type.projection, printer)
+    public object AS_PROJECTION : KaCapturedTypeRenderer {
+        override fun renderType(
+            analysisSession: KaSession,
+            type: KaCapturedType,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
+            typeRenderer.typeProjectionRenderer.renderTypeProjection(analysisSession, type.projection, typeRenderer, printer)
         }
     }
 
-    public object AS_CAPTURED_TYPE_WITH_PROJECTION : KtCapturedTypeRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderType(type: KtCapturedType, printer: PrettyPrinter) {
+    public object AS_CAPTURED_TYPE_WITH_PROJECTION : KaCapturedTypeRenderer {
+        override fun renderType(
+            analysisSession: KaSession,
+            type: KaCapturedType,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
             printer.append("CapturedType(")
-            AS_PROJECTION.renderType(type, printer)
+            AS_PROJECTION.renderType(analysisSession, type, typeRenderer, printer)
             printer.append(")")
         }
     }
 }
+
+public typealias KtCapturedTypeRenderer = KaCapturedTypeRenderer

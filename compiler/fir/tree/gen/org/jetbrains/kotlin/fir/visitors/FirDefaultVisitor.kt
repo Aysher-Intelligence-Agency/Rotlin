@@ -101,7 +101,7 @@ abstract class FirDefaultVisitor<out R, in D> : FirVisitor<R, D>() {
     override fun visitContinueExpression(continueExpression: FirContinueExpression, data: D): R =
         visitLoopJump(continueExpression, data)
 
-    override fun <T> visitLiteralExpression(literalExpression: FirLiteralExpression<T>, data: D): R =
+    override fun visitLiteralExpression(literalExpression: FirLiteralExpression, data: D): R =
         visitExpression(literalExpression, data)
 
     override fun visitStarProjection(starProjection: FirStarProjection, data: D): R =
@@ -122,14 +122,14 @@ abstract class FirDefaultVisitor<out R, in D> : FirVisitor<R, D>() {
     override fun visitComparisonExpression(comparisonExpression: FirComparisonExpression, data: D): R =
         visitExpression(comparisonExpression, data)
 
-    override fun visitAssignmentOperatorStatement(assignmentOperatorStatement: FirAssignmentOperatorStatement, data: D): R =
-        visitStatement(assignmentOperatorStatement, data)
+    override fun visitAugmentedAssignment(augmentedAssignment: FirAugmentedAssignment, data: D): R =
+        visitStatement(augmentedAssignment, data)
 
     override fun visitIncrementDecrementExpression(incrementDecrementExpression: FirIncrementDecrementExpression, data: D): R =
         visitExpression(incrementDecrementExpression, data)
 
-    override fun visitAugmentedArraySetCall(augmentedArraySetCall: FirAugmentedArraySetCall, data: D): R =
-        visitStatement(augmentedArraySetCall, data)
+    override fun visitIndexedAccessAugmentedAssignment(indexedAccessAugmentedAssignment: FirIndexedAccessAugmentedAssignment, data: D): R =
+        visitStatement(indexedAccessAugmentedAssignment, data)
 
     override fun visitClassReferenceExpression(classReferenceExpression: FirClassReferenceExpression, data: D): R =
         visitExpression(classReferenceExpression, data)
@@ -169,9 +169,6 @@ abstract class FirDefaultVisitor<out R, in D> : FirVisitor<R, D>() {
 
     override fun visitWrappedArgumentExpression(wrappedArgumentExpression: FirWrappedArgumentExpression, data: D): R =
         visitWrappedExpression(wrappedArgumentExpression, data)
-
-    override fun visitLambdaArgumentExpression(lambdaArgumentExpression: FirLambdaArgumentExpression, data: D): R =
-        visitWrappedArgumentExpression(lambdaArgumentExpression, data)
 
     override fun visitSpreadArgumentExpression(spreadArgumentExpression: FirSpreadArgumentExpression, data: D): R =
         visitWrappedArgumentExpression(spreadArgumentExpression, data)
@@ -217,9 +214,6 @@ abstract class FirDefaultVisitor<out R, in D> : FirVisitor<R, D>() {
 
     override fun visitNamedReferenceWithCandidateBase(namedReferenceWithCandidateBase: FirNamedReferenceWithCandidateBase, data: D): R =
         visitNamedReference(namedReferenceWithCandidateBase, data)
-
-    override fun visitFromMissingDependenciesNamedReference(fromMissingDependenciesNamedReference: FirFromMissingDependenciesNamedReference, data: D): R =
-        visitNamedReference(fromMissingDependenciesNamedReference, data)
 
     override fun visitSuperReference(superReference: FirSuperReference, data: D): R =
         visitReference(superReference, data)

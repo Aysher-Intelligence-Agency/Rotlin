@@ -236,7 +236,7 @@ interface TypeSystemInferenceExtensionContext : TypeSystemContext, TypeSystemBui
 
     fun TypeVariableMarker.defaultType(): SimpleTypeMarker
 
-    fun createTypeWithAlternativeForIntersectionResult(
+    fun createTypeWithUpperBoundForIntersectionResult(
         firstCandidate: KotlinTypeMarker,
         secondCandidate: KotlinTypeMarker
     ): KotlinTypeMarker
@@ -378,7 +378,8 @@ interface TypeSystemContext : TypeSystemOptimizationContext {
 
     fun SimpleTypeMarker.originalIfDefinitelyNotNullable(): SimpleTypeMarker = asDefinitelyNotNullType()?.original() ?: this
 
-    fun KotlinTypeMarker.makeDefinitelyNotNullOrNotNull(): KotlinTypeMarker
+    fun KotlinTypeMarker.makeDefinitelyNotNullOrNotNull(): KotlinTypeMarker = makeDefinitelyNotNullOrNotNull(preserveAttributes = false)
+    fun KotlinTypeMarker.makeDefinitelyNotNullOrNotNull(preserveAttributes: Boolean): KotlinTypeMarker
     fun SimpleTypeMarker.makeSimpleTypeDefinitelyNotNullOrNotNull(): SimpleTypeMarker
     fun SimpleTypeMarker.isMarkedNullable(): Boolean
     fun KotlinTypeMarker.isMarkedNullable(): Boolean =
@@ -447,6 +448,9 @@ interface TypeSystemContext : TypeSystemOptimizationContext {
 
     fun KotlinTypeMarker.lowerBoundIfFlexible(): SimpleTypeMarker = this.asFlexibleType()?.lowerBound() ?: this.asSimpleType()!!
     fun KotlinTypeMarker.upperBoundIfFlexible(): SimpleTypeMarker = this.asFlexibleType()?.upperBound() ?: this.asSimpleType()!!
+
+    fun KotlinTypeMarker.isFlexibleWithDifferentTypeConstructors(): Boolean =
+        lowerBoundIfFlexible().typeConstructor() != upperBoundIfFlexible().typeConstructor()
 
     fun TypeConstructorMarker.isDefinitelyClassTypeConstructor(): Boolean = isClassTypeConstructor() && !isInterface()
 
@@ -541,8 +545,8 @@ interface TypeSystemContext : TypeSystemOptimizationContext {
      */
     fun SimpleTypeMarker.isSingleClassifierType(): Boolean
 
-    fun intersectTypes(types: List<KotlinTypeMarker>): KotlinTypeMarker
-    fun intersectTypes(types: List<SimpleTypeMarker>): SimpleTypeMarker
+    fun intersectTypes(types: Collection<KotlinTypeMarker>): KotlinTypeMarker
+    fun intersectTypes(types: Collection<SimpleTypeMarker>): SimpleTypeMarker
 
     fun KotlinTypeMarker.isSimpleType(): Boolean = asSimpleType() != null
 

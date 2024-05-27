@@ -5,6 +5,9 @@
 
 package org.jetbrains.kotlin.generators.tree
 
+import org.jetbrains.kotlin.generators.tree.imports.ImportCollecting
+import org.jetbrains.kotlin.generators.tree.imports.Importable
+
 /**
  * Represents an abstract class/interface for a tree node in the tree generator.
  *
@@ -14,7 +17,7 @@ package org.jetbrains.kotlin.generators.tree
  */
 abstract class AbstractElement<Element, Field, Implementation>(
     val name: String,
-) : ElementOrRef<Element>, FieldContainer<Field>, ImplementationKindOwner
+) : ElementOrRef<Element>, FieldContainer<Field>, ImplementationKindOwner, ImportCollecting
         where Element : AbstractElement<Element, Field, Implementation>,
               Field : AbstractField<Field>,
               Implementation : AbstractImplementation<Implementation, Element, *> {
@@ -26,21 +29,47 @@ abstract class AbstractElement<Element, Field, Implementation>(
 
     abstract val namePrefix: String
 
-    abstract val kDoc: String?
+    var kDoc: String? = null
 
-    abstract val fields: Set<Field>
+    val fields = mutableSetOf<Field>()
 
-    abstract val params: List<TypeVariable>
+    val params = mutableListOf<TypeVariable>()
 
-    abstract val elementParents: List<ElementRef<Element>>
+    private val elementParentsMutable = mutableListOf<ElementRef<Element>>()
 
-    abstract val otherParents: MutableList<ClassRef<*>>
+    val elementParents: List<ElementRef<Element>>
+        get() = elementParentsMutable
+
+    fun addParent(parent: ElementRef<Element>) {
+        elementParentsMutable.add(parent)
+        parent.element.subElementsMutable.add(element)
+    }
+
+    fun replaceParent(oldParent: Element, newParent: ElementRef<Element>) {
+        val parentIndex = elementParentsMutable.indexOfFirst { it.element == oldParent }
+        require(parentIndex >= 0) {
+            "$oldParent is not parent of $this"
+        }
+        elementParentsMutable[parentIndex] = newParent
+        oldParent.subElementsMutable.remove(element)
+        newParent.element.subElementsMutable.add(element)
+    }
+
+    val otherParents = mutableListOf<ClassRef<*>>()
 
     val parentRefs: List<ClassOrElementRef>
         get() = elementParents + otherParents
 
     val isRootElement: Boolean
         get() = elementParents.isEmpty()
+
+    private val subElementsMutable: MutableSet<Element> = mutableSetOf()
+
+    /**
+     * A set of [Element]s which are direct subclasses of this element.
+     */
+    val subElements: Set<Element>
+        get() = subElementsMutable
 
     var isSealed: Boolean = false
 
@@ -79,13 +108,9 @@ abstract class AbstractElement<Element, Field, Implementation>(
     override val typeName: String
         get() = namePrefix + name
 
-    context(ImportCollector)
-    final override fun renderTo(appendable: Appendable) {
-        addImport(this)
+    final override fun renderTo(appendable: Appendable, importCollector: ImportCollecting) {
+        importCollector.addImport(this)
         appendable.append(typeName)
-        if (params.isNotEmpty()) {
-            params.joinTo(appendable, prefix = "<", postfix = ">") { it.name }
-        }
     }
 
     override val allFields: List<Field> by lazy {
@@ -154,21 +179,9 @@ abstract class AbstractElement<Element, Field, Implementation>(
     val transformerClass: Element
         get() = transformerReturnType ?: baseTransformerType ?: element
 
-    var defaultImplementation: Implementation? = null
-
-    val customImplementations = mutableListOf<Implementation>()
+    val implementations = mutableListOf<Implementation>()
 
     var doesNotNeedImplementation: Boolean = false
-
-    val allImplementations: List<Implementation> by lazy {
-        if (doesNotNeedImplementation) {
-            emptyList()
-        } else {
-            val implementations = customImplementations.toMutableList()
-            defaultImplementation?.let { implementations += it }
-            implementations
-        }
-    }
 
     /**
      * Types/functions that you want to additionally import in the file with the element class.
@@ -179,20 +192,42 @@ abstract class AbstractElement<Element, Field, Implementation>(
      */
     val additionalImports = mutableListOf<Importable>()
 
-    final override fun get(fieldName: String): Field? {
-        return allFields.firstOrNull { it.name == fieldName }
+    override fun addImport(importable: Importable) {
+        additionalImports.add(importable)
     }
 
-    @Suppress("UNCHECKED_CAST")
-    final override fun copy(nullable: Boolean) =
-        ElementRef(this as Element, args, nullable)
+    override var kind: ImplementationKind? = null
 
     @Suppress("UNCHECKED_CAST")
-    final override fun copy(args: Map<NamedTypeParameterRef, TypeRef>) =
-        ElementRef(this as Element, args, nullable)
+    final override val element: Element
+        get() = this as Element
+
+    final override val args: Map<NamedTypeParameterRef, TypeRef>
+        get() = emptyMap()
+
+    final override val nullable: Boolean
+        get() = false
+
+    var doPrint = true
+
+    final override fun copy(nullable: Boolean) = ElementRef(element, args, nullable)
+
+    final override fun copy(args: Map<NamedTypeParameterRef, TypeRef>) = ElementRef(element, args, nullable)
 
     @Suppress("UNCHECKED_CAST")
     override fun substitute(map: TypeParameterSubstitutionMap): Element = this as Element
 
     fun withStarArgs(): ElementRef<Element> = copy(params.associateWith { TypeRef.Star })
+
+    fun withSelfArgs(): ElementRef<Element> = copy(params.associateWith { it })
+
+    operator fun TypeVariable.unaryPlus() = apply {
+        params.add(this)
+    }
+
+    operator fun Field.unaryPlus() = apply {
+        fields.add(this)
+    }
+
+    override fun toString(): String = buildString { renderTo(this, ImportCollecting.Empty) }
 }

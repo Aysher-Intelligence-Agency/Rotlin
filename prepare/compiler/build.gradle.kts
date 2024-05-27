@@ -423,6 +423,9 @@ val distKotlinc = distTask<Sync>("distKotlinc") {
         from(compilerPluginsCompatFiles) {
             rename { it.removePrefix("kotlin-") }
         }
+        filePermissions {
+            unix("rw-r--r--")
+        }
     }
 }
 
@@ -452,7 +455,7 @@ distTask<Copy>("dist") {
 
     from(buildNumber)
     from(distStdlibMinimalForTests)
-    from(distSbomTask.map { it.outputDirectory.file("Dist.spdx.json") }) {
+    from(distSbomTask) {
         rename(".*", "${project.name}-${project.version}.spdx.json")
     }
 }

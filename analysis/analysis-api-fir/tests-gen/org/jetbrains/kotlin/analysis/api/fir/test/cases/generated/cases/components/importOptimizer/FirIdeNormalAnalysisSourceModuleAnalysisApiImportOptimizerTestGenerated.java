@@ -215,6 +215,18 @@ public class FirIdeNormalAnalysisSourceModuleAnalysisApiImportOptimizerTestGener
   }
 
   @Test
+  @TestMetadata("usedInKDoc.kt")
+  public void testUsedInKDoc() {
+    runTest("analysis/analysis-api/testData/components/importOptimizer/analyseImports/usedInKDoc.kt");
+  }
+
+  @Test
+  @TestMetadata("usedInKDocMultiplePlaces.kt")
+  public void testUsedInKDocMultiplePlaces() {
+    runTest("analysis/analysis-api/testData/components/importOptimizer/analyseImports/usedInKDocMultiplePlaces.kt");
+  }
+
+  @Test
   @TestMetadata("usedInvokeOperatorAliasedImport.kt")
   public void testUsedInvokeOperatorAliasedImport() {
     runTest("analysis/analysis-api/testData/components/importOptimizer/analyseImports/usedInvokeOperatorAliasedImport.kt");
@@ -254,6 +266,12 @@ public class FirIdeNormalAnalysisSourceModuleAnalysisApiImportOptimizerTestGener
   @TestMetadata("usedStaticFunctionImportFromJavaChildClass.kt")
   public void testUsedStaticFunctionImportFromJavaChildClass() {
     runTest("analysis/analysis-api/testData/components/importOptimizer/analyseImports/usedStaticFunctionImportFromJavaChildClass.kt");
+  }
+
+  @Test
+  @TestMetadata("usedTypeAsTypeArgumentInJavaMethodCall.kt")
+  public void testUsedTypeAsTypeArgumentInJavaMethodCall() {
+    runTest("analysis/analysis-api/testData/components/importOptimizer/analyseImports/usedTypeAsTypeArgumentInJavaMethodCall.kt");
   }
 
   @Test

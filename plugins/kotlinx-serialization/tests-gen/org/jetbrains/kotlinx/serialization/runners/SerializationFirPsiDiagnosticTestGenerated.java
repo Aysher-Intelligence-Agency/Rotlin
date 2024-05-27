@@ -69,6 +69,12 @@ public class SerializationFirPsiDiagnosticTestGenerated extends AbstractSerializ
     }
 
     @Test
+    @TestMetadata("GeneratedSerializerInaccessible.kt")
+    public void testGeneratedSerializerInaccessible() {
+      runTest("plugins/kotlinx-serialization/testData/diagnostics/GeneratedSerializerInaccessible.kt");
+    }
+
+    @Test
     @TestMetadata("GenericArrays.kt")
     public void testGenericArrays() {
       runTest("plugins/kotlinx-serialization/testData/diagnostics/GenericArrays.kt");
@@ -90,6 +96,12 @@ public class SerializationFirPsiDiagnosticTestGenerated extends AbstractSerializ
     @TestMetadata("InheritableInfo.kt")
     public void testInheritableInfo() {
       runTest("plugins/kotlinx-serialization/testData/diagnostics/InheritableInfo.kt");
+    }
+
+    @Test
+    @TestMetadata("KeepGeneratedSerializerDiagnostic.kt")
+    public void testKeepGeneratedSerializerDiagnostic() {
+      runTest("plugins/kotlinx-serialization/testData/diagnostics/KeepGeneratedSerializerDiagnostic.kt");
     }
 
     @Test

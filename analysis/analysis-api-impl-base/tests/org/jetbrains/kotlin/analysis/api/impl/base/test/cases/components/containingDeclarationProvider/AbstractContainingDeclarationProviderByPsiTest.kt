@@ -8,16 +8,16 @@ package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.contai
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols.checkContainingFileSymbol
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols.checkContainingJvmClassName
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtScriptSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaScriptSymbol
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
+import org.jetbrains.kotlin.analysis.test.framework.project.structure.KtTestModule
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
 
 abstract class AbstractContainingDeclarationProviderByPsiTest : AbstractAnalysisApiBasedTest() {
-    override fun doTestByMainFile(mainFile: KtFile, mainModule: TestModule, testServices: TestServices) {
+    override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
         val currentPath = mutableListOf<KtDeclaration>()
         val ktClasses = mutableListOf<KtClassOrObject>()
         analyseForTest(mainFile) {
@@ -34,7 +34,7 @@ abstract class AbstractContainingDeclarationProviderByPsiTest : AbstractAnalysis
                     val actualParentDeclarationSymbol = currentDeclarationSymbol.getContainingSymbol()
 
                     if (dcl is KtScriptInitializer) {
-                        testServices.assertions.assertTrue(currentDeclarationSymbol is KtScriptSymbol)
+                        testServices.assertions.assertTrue(currentDeclarationSymbol is KaScriptSymbol)
                     } else {
                         testServices.assertions.assertEquals(expectedParentDeclarationSymbol, actualParentDeclarationSymbol) {
                             "Invalid parent declaration for $currentDeclarationSymbol, expected $expectedParentDeclarationSymbol but $actualParentDeclarationSymbol found"
@@ -42,7 +42,7 @@ abstract class AbstractContainingDeclarationProviderByPsiTest : AbstractAnalysis
                     }
 
                     checkContainingFileSymbol(expectedFileSymbol, currentDeclarationSymbol, testServices)
-                    if (currentDeclarationSymbol is KtCallableSymbol) {
+                    if (currentDeclarationSymbol is KaCallableSymbol) {
                         checkContainingJvmClassName(mainFile, ktClasses.lastOrNull(), currentDeclarationSymbol, testServices)
                     }
 

@@ -26,6 +26,22 @@ public class FirLightTreeJsOldFrontendDiagnosticsWithBackendTestGenerated extend
   }
 
   @Nested
+  @TestMetadata("compiler/testData/diagnostics/testsWithJsStdLibAndBackendCompilation/constants")
+  @TestDataPath("$PROJECT_ROOT")
+  public class Constants {
+    @Test
+    public void testAllFilesPresentInConstants() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithJsStdLibAndBackendCompilation/constants"), Pattern.compile("^([^_](.+))\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), TargetBackend.JS_IR, true);
+    }
+
+    @Test
+    @TestMetadata("simpleConstFromLib.kt")
+    public void testSimpleConstFromLib() {
+      runTest("compiler/testData/diagnostics/testsWithJsStdLibAndBackendCompilation/constants/simpleConstFromLib.kt");
+    }
+  }
+
+  @Nested
   @TestMetadata("compiler/testData/diagnostics/testsWithJsStdLibAndBackendCompilation/exportedNamesClash")
   @TestDataPath("$PROJECT_ROOT")
   public class ExportedNamesClash {
@@ -226,6 +242,28 @@ public class FirLightTreeJsOldFrontendDiagnosticsWithBackendTestGenerated extend
     @TestMetadata("warning.kt")
     public void testWarning() {
       runTest("compiler/testData/diagnostics/testsWithJsStdLibAndBackendCompilation/jsCode/warning.kt");
+    }
+  }
+
+  @Nested
+  @TestMetadata("compiler/testData/diagnostics/testsWithJsStdLibAndBackendCompilation/name")
+  @TestDataPath("$PROJECT_ROOT")
+  public class Name {
+    @Test
+    public void testAllFilesPresentInName() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithJsStdLibAndBackendCompilation/name"), Pattern.compile("^([^_](.+))\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), TargetBackend.JS_IR, true);
+    }
+
+    @Test
+    @TestMetadata("illegalNameIR.kt")
+    public void testIllegalNameIR() {
+      runTest("compiler/testData/diagnostics/testsWithJsStdLibAndBackendCompilation/name/illegalNameIR.kt");
+    }
+
+    @Test
+    @TestMetadata("legalPackageName.kt")
+    public void testLegalPackageName() {
+      runTest("compiler/testData/diagnostics/testsWithJsStdLibAndBackendCompilation/name/legalPackageName.kt");
     }
   }
 

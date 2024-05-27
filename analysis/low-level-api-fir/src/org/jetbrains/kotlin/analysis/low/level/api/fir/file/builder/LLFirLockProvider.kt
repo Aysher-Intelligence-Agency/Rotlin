@@ -30,8 +30,6 @@ import java.util.concurrent.locks.ReentrantLock
 internal class LLFirLockProvider(private val checker: LLFirLazyResolveContractChecker) {
     private val globalLock = ReentrantLock()
 
-    private val implicitTypesLock = ReentrantLock()
-
     inline fun <R> withGlobalLock(
         lockingIntervalMs: Long = DEFAULT_LOCKING_INTERVAL,
         action: () -> R,
@@ -39,39 +37,6 @@ internal class LLFirLockProvider(private val checker: LLFirLazyResolveContractCh
         if (!globalLockEnabled) return action()
 
         return globalLock.lockWithPCECheck(lockingIntervalMs, action)
-    }
-
-    fun withGlobalPhaseLock(
-        phase: FirResolvePhase,
-        action: () -> Unit,
-    ) {
-        if (!implicitPhaseLockEnabled) return action()
-
-        val lock = when (phase) {
-            FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE -> implicitTypesLock
-            else -> null
-        }
-
-        if (lock == null) {
-            action()
-        } else {
-            lock.lockWithPCECheck(DEFAULT_LOCKING_INTERVAL, action)
-        }
-    }
-
-    /**
-     * A contract violation check to be sure that we won't request a violated phase later.
-     * This is useful to catch a contract violation for jumping phases because they may encounter infinite recursion.
-     *
-     * Example: we have cycle between phases 'implicit type (1) -> body (2) -> implicit type (3)` and
-     * we can get [StackOverflowError] because regular phases checks can't catch such case
-     * because will check only implicit type -> implicit type resolution due to
-     * sequent resolution requests
-     *
-     * @see org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.LLFirModuleLazyDeclarationResolver
-     */
-    fun checkContractViolations(toPhase: FirResolvePhase) {
-        checker.checkIfCanLazyResolveToPhase(toPhase, isJumpingPhase = true)
     }
 
     /**
@@ -235,7 +200,7 @@ internal class LLFirLockProvider(private val checker: LLFirLazyResolveContractCh
         actionUnderLock: () -> Unit,
         actionOnCycle: () -> Unit,
     ) {
-        checker.lazyResolveToPhaseInside(phase, isJumpingPhase = true) {
+        checker.lazyResolveToPhaseInside(phase) {
             target.withJumpingLockImpl(phase, actionUnderLock, actionOnCycle)
         }
     }
@@ -398,10 +363,6 @@ private val resolveStateFieldUpdater = AtomicReferenceFieldUpdater.newUpdater(
 
 private val globalLockEnabled: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
     Registry.`is`("kotlin.parallel.resolve.under.global.lock", false)
-}
-
-private val implicitPhaseLockEnabled: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    Registry.`is`("kotlin.implicit.resolve.phase.under.global.lock", false)
 }
 
 private const val DEFAULT_LOCKING_INTERVAL = 50L

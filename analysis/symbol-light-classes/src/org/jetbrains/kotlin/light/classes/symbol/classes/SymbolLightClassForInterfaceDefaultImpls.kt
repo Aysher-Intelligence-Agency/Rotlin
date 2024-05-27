@@ -7,10 +7,11 @@ package org.jetbrains.kotlin.light.classes.symbol.classes
 
 import com.intellij.psi.*
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
+import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.InitializedModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightClassModifierList
@@ -47,7 +48,7 @@ internal class SymbolLightClassForInterfaceDefaultImpls(private val containingCl
         modifiersBox = InitializedModifiersBox(PsiModifier.PUBLIC, PsiModifier.STATIC, PsiModifier.FINAL),
     )
 
-    override fun classKind(): KtClassKind = KtClassKind.CLASS
+    override fun classKind(): KaClassKind = KaClassKind.CLASS
 
     override fun hasTypeParameters(): Boolean = false
     override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean =
@@ -67,8 +68,10 @@ internal class SymbolLightClassForInterfaceDefaultImpls(private val containingCl
 
     override fun getOwnInnerClasses() = emptyList<PsiClass>()
 
-    context(KtAnalysisSession)
-    override fun acceptCallableSymbol(symbol: KtCallableSymbol): Boolean {
-        return super.acceptCallableSymbol(symbol) && (symbol as? KtSymbolWithModality)?.modality != Modality.ABSTRACT
+    context(KaSession)
+    override fun acceptCallableSymbol(symbol: KaCallableSymbol): Boolean {
+        return super.acceptCallableSymbol(symbol) && (symbol as? KaSymbolWithModality)?.modality != Modality.ABSTRACT
     }
+
+    override fun getOwnFields(): List<KtLightField> = emptyList()
 }

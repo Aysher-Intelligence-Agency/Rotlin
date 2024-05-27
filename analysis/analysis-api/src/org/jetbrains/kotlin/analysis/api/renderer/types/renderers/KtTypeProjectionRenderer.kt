@@ -5,42 +5,57 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.types.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
-import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
-import org.jetbrains.kotlin.analysis.api.KtTypeProjection
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.KaStarTypeProjection
+import org.jetbrains.kotlin.analysis.api.KaTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.KaTypeProjection
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
-public interface KtTypeProjectionRenderer {
-    context(KtAnalysisSession, KtTypeRenderer)
-    public fun renderTypeProjection(projection: KtTypeProjection, printer: PrettyPrinter)
+public interface KaTypeProjectionRenderer {
+    public fun renderTypeProjection(
+        analysisSession: KaSession,
+        projection: KaTypeProjection,
+        typeRenderer: KaTypeRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object WITH_VARIANCE : KtTypeProjectionRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderTypeProjection(projection: KtTypeProjection, printer: PrettyPrinter): Unit = printer {
-            when (projection) {
-                is KtStarTypeProjection -> printer.append('*')
-                is KtTypeArgumentWithVariance -> {
-                    " ".separated(
-                        { printer.append(projection.variance.label) },
-                        { renderType(projection.type, printer) },
-                    )
+    public object WITH_VARIANCE : KaTypeProjectionRenderer {
+        override fun renderTypeProjection(
+            analysisSession: KaSession,
+            projection: KaTypeProjection,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                when (projection) {
+                    is KaStarTypeProjection -> printer.append('*')
+                    is KaTypeArgumentWithVariance -> {
+                        " ".separated(
+                            { printer.append(projection.variance.label) },
+                            { typeRenderer.renderType(analysisSession, projection.type, printer) },
+                        )
+                    }
                 }
             }
         }
     }
 
-    public object WITHOUT_VARIANCE : KtTypeProjectionRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderTypeProjection(projection: KtTypeProjection, printer: PrettyPrinter) {
+    public object WITHOUT_VARIANCE : KaTypeProjectionRenderer {
+        override fun renderTypeProjection(
+            analysisSession: KaSession,
+            projection: KaTypeProjection,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
             when (projection) {
-                is KtStarTypeProjection -> printer.append('*')
-                is KtTypeArgumentWithVariance -> {
-                    renderType(projection.type, printer)
+                is KaStarTypeProjection -> printer.append('*')
+                is KaTypeArgumentWithVariance -> {
+                    typeRenderer.renderType(analysisSession, projection.type, printer)
                 }
             }
         }
     }
 }
 
+public typealias KtTypeProjectionRenderer = KaTypeProjectionRenderer

@@ -5,29 +5,39 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderAnnotationsModifiersAndContextReceivers
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.lexer.KtTokens
 
-public interface KtAnonymousObjectSymbolRenderer {
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    public fun renderSymbol(symbol: KtAnonymousObjectSymbol, printer: PrettyPrinter)
+public interface KaAnonymousObjectSymbolRenderer {
+    public fun renderSymbol(
+        analysisSession: KaSession,
+        symbol: KaAnonymousObjectSymbol,
+        declarationRenderer: KaDeclarationRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object AS_SOURCE : KtAnonymousObjectSymbolRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderSymbol(symbol: KtAnonymousObjectSymbol, printer: PrettyPrinter): Unit = printer {
+    public object AS_SOURCE : KaAnonymousObjectSymbolRenderer {
+        override fun renderSymbol(
+            analysisSession: KaSession,
+            symbol: KaAnonymousObjectSymbol,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ): Unit = printer {
             " ".separated(
                 {
                     " : ".separated(
-                        { renderAnnotationsModifiersAndContextReceivers(symbol, printer, KtTokens.OBJECT_KEYWORD) },
-                        { superTypeListRenderer.renderSuperTypes(symbol, printer) }
+                        { renderAnnotationsModifiersAndContextReceivers(analysisSession, symbol, declarationRenderer, printer, KtTokens.OBJECT_KEYWORD) },
+                        { declarationRenderer.superTypeListRenderer.renderSuperTypes(analysisSession, symbol, declarationRenderer, printer) }
                     )
                 },
-                { classifierBodyRenderer.renderBody(symbol, printer) },
+                { declarationRenderer.classifierBodyRenderer.renderBody(analysisSession, symbol, declarationRenderer, printer) },
             )
         }
     }
 }
+
+public typealias KtAnonymousObjectSymbolRenderer = KaAnonymousObjectSymbolRenderer

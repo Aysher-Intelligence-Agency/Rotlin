@@ -94,6 +94,11 @@ public class CompilerLightClassTestGenerated extends AbstractCompilerLightClassT
     runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/CompanionObject.kt");
   }
 
+  @TestMetadata("CompanionObjectWithAConflictingProperty.kt")
+  public void testCompanionObjectWithAConflictingProperty() {
+    runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/CompanionObjectWithAConflictingProperty.kt");
+  }
+
   @TestMetadata("Constructors.kt")
   public void testConstructors() {
     runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/Constructors.kt");
@@ -184,6 +189,11 @@ public class CompilerLightClassTestGenerated extends AbstractCompilerLightClassT
     runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/InterfaceTypeParameterAnnotation.kt");
   }
 
+  @TestMetadata("InterfaceWithDefaultMethodAndCompanion.kt")
+  public void testInterfaceWithDefaultMethodAndCompanion() {
+    runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/InterfaceWithDefaultMethodAndCompanion.kt");
+  }
+
   @TestMetadata("InvalidJavaIdentifierAsAnnotationArgument.kt")
   public void testInvalidJavaIdentifierAsAnnotationArgument() {
     runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/InvalidJavaIdentifierAsAnnotationArgument.kt");
@@ -227,6 +237,11 @@ public class CompilerLightClassTestGenerated extends AbstractCompilerLightClassT
   @TestMetadata("NestedObjects.kt")
   public void testNestedObjects() {
     runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/NestedObjects.kt");
+  }
+
+  @TestMetadata("NestedTypeAnnotations.kt")
+  public void testNestedTypeAnnotations() {
+    runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/NestedTypeAnnotations.kt");
   }
 
   @TestMetadata("NonDataClassWithComponentFunctions.kt")

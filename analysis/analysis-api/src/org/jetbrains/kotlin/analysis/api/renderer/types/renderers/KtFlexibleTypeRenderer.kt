@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.types.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -14,68 +14,84 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 
-public interface KtFlexibleTypeRenderer {
-    context(KtAnalysisSession, KtTypeRenderer)
-    public fun renderType(type: KtFlexibleType, printer: PrettyPrinter)
+public interface KaFlexibleTypeRenderer {
+    public fun renderType(
+        analysisSession: KaSession,
+        type: KaFlexibleType,
+        typeRenderer: KaTypeRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object AS_RANGE : KtFlexibleTypeRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderType(type: KtFlexibleType, printer: PrettyPrinter): Unit = printer {
-            append('(')
-            renderType(type.lowerBound, printer)
-            append("..")
-            renderType(type.upperBound, printer)
-            append(')')
+    public object AS_RANGE : KaFlexibleTypeRenderer {
+        override fun renderType(
+            analysisSession: KaSession,
+            type: KaFlexibleType,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                append('(')
+                typeRenderer.renderType(analysisSession, type.lowerBound, printer)
+                append("..")
+                typeRenderer.renderType(analysisSession, type.upperBound, printer)
+                append(')')
+            }
         }
     }
 
-    public object AS_SHORT : KtFlexibleTypeRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderType(type: KtFlexibleType, printer: PrettyPrinter): Unit = printer {
-            val lower = type.lowerBound
-            val upper = type.upperBound
+    public object AS_SHORT : KaFlexibleTypeRenderer {
+        override fun renderType(
+            analysisSession: KaSession,
+            type: KaFlexibleType,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                val lower = type.lowerBound
+                val upper = type.upperBound
 
-            when {
-                isNullabilityFlexibleType(lower, upper) -> {
-                    renderType(lower, printer)
-                    append("!")
-                }
-
-                isMutabilityFlexibleType(lower, upper) -> {
-                    " ".separated(
-                        { annotationsRenderer.renderAnnotations(type, printer) },
-                        { append(lower.classId.asFqNameString().replace("Mutable", "(Mutable)")) },
-                    )
-                    printCollectionIfNotEmpty(lower.ownTypeArguments, prefix = "<", postfix = ">") { typeArgument ->
-                        typeProjectionRenderer.renderTypeProjection(typeArgument, this)
+                when {
+                    isNullabilityFlexibleType(lower, upper) -> {
+                        typeRenderer.renderType(analysisSession, lower, printer)
+                        append("!")
                     }
-                    if (lower.nullability != type.upperBound.nullability) {
-                        append('!')
-                    }
-                }
 
-                else -> {
-                    AS_RANGE.renderType(type, printer)
+                    isMutabilityFlexibleType(lower, upper) -> {
+                        " ".separated(
+                            { typeRenderer.annotationsRenderer.renderAnnotations(analysisSession, type, printer) },
+                            { append(lower.classId.asFqNameString().replace("Mutable", "(Mutable)")) },
+                        )
+                        printCollectionIfNotEmpty(lower.ownTypeArguments, prefix = "<", postfix = ">") { typeArgument ->
+                            typeRenderer.typeProjectionRenderer.renderTypeProjection(analysisSession, typeArgument, typeRenderer, this)
+                        }
+                        if (lower.nullability != type.upperBound.nullability) {
+                            append('!')
+                        }
+                    }
+
+                    else -> {
+                        AS_RANGE.renderType(analysisSession, type, typeRenderer, printer)
+                    }
                 }
             }
         }
 
-        private fun isNullabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
-            val isTheSameType = lower is KtNonErrorClassType && upper is KtNonErrorClassType && lower.classId == upper.classId ||
-                    lower is KtTypeParameterType && upper is KtTypeParameterType && lower.symbol == upper.symbol
+        private fun isNullabilityFlexibleType(lower: KaType, upper: KaType): Boolean {
+            val isTheSameType = lower is KaNonErrorClassType && upper is KaNonErrorClassType && lower.classId == upper.classId ||
+                    lower is KaTypeParameterType && upper is KaTypeParameterType && lower.symbol == upper.symbol
             if (isTheSameType &&
-                lower.nullability == KtTypeNullability.NON_NULLABLE
-                && upper.nullability == KtTypeNullability.NULLABLE
+                lower.nullability == KaTypeNullability.NON_NULLABLE
+                && upper.nullability == KaTypeNullability.NULLABLE
             ) {
-                if (lower !is KtNonErrorClassType && upper !is KtNonErrorClassType) {
+                if (lower !is KaNonErrorClassType && upper !is KaNonErrorClassType) {
                     return true
                 }
-                if (lower is KtNonErrorClassType && upper is KtNonErrorClassType) {
+                if (lower is KaNonErrorClassType && upper is KaNonErrorClassType) {
                     val lowerOwnTypeArguments = lower.ownTypeArguments
                     val upperOwnTypeArguments = upper.ownTypeArguments
                     if (lowerOwnTypeArguments.size == upperOwnTypeArguments.size) {
-                        for ((index, ktTypeProjection) in lowerOwnTypeArguments.withIndex()) {
-                            if (upperOwnTypeArguments[index].type != ktTypeProjection.type) {
+                        for ((index, kaTypeProjection) in lowerOwnTypeArguments.withIndex()) {
+                            if (upperOwnTypeArguments[index].type != kaTypeProjection.type) {
                                 return false
                             }
                         }
@@ -87,18 +103,18 @@ public interface KtFlexibleTypeRenderer {
         }
 
         @OptIn(ExperimentalContracts::class)
-        private fun isMutabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
+        private fun isMutabilityFlexibleType(lower: KaType, upper: KaType): Boolean {
             contract {
-                returns(true) implies (lower is KtNonErrorClassType)
-                returns(true) implies (upper is KtNonErrorClassType)
+                returns(true) implies (lower is KaNonErrorClassType)
+                returns(true) implies (upper is KaNonErrorClassType)
             }
-            if (lower !is KtNonErrorClassType || upper !is KtNonErrorClassType) return false
+            if (lower !is KaNonErrorClassType || upper !is KaNonErrorClassType) return false
 
             if (StandardClassIds.Collections.mutableCollectionToBaseCollection[lower.classId] != upper.classId) return false
             return true
         }
 
     }
-
 }
 
+public typealias KtFlexibleTypeRenderer = KaFlexibleTypeRenderer

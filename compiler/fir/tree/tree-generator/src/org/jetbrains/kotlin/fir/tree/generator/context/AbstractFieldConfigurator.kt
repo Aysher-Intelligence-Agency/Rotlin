@@ -7,10 +7,11 @@ package org.jetbrains.kotlin.fir.tree.generator.context
 
 import org.jetbrains.kotlin.fir.tree.generator.model.*
 import org.jetbrains.kotlin.generators.tree.*
+import org.jetbrains.kotlin.generators.tree.imports.ImportCollecting
 import org.jetbrains.kotlin.types.Variance
 
 abstract class AbstractFieldConfigurator<T : AbstractFirTreeBuilder>(private val builder: T) {
-    inner class ConfigureContext(val element: Element) {
+    inner class ConfigureContext(val element: Element) : ImportCollecting by element {
         operator fun FieldSet.unaryPlus() {
             element.fields.addAll(this.map { it.copy() })
         }
@@ -44,15 +45,7 @@ abstract class AbstractFieldConfigurator<T : AbstractFirTreeBuilder>(private val
 
         @JvmName("parentArgs2")
         private fun parentArgs(parent: Element, arguments: List<Pair<NamedTypeParameterRef, TypeRef>>) {
-            val parentIndex = element.elementParents.indexOfFirst { it.element == parent }
-            require(parentIndex >= 0) {
-                "$parent is not parent of $element"
-            }
-            val parentRef = element.elementParents[parentIndex]
-            require(parentRef.args.isEmpty()) {
-                "Parent $parent of element $element already has type arguments: $parentRef"
-            }
-            element.elementParents[parentIndex] = parentRef.copy(arguments.toMap())
+            element.replaceParent(parent, parent.copy(arguments.toMap()))
         }
 
         fun needTransformOtherChildren() {

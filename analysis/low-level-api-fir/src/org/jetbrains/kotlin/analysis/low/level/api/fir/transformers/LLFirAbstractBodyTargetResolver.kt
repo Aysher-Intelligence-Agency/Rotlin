@@ -15,12 +15,11 @@ import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher
 import org.jetbrains.kotlin.fir.visitors.transformSingle
 
-internal abstract class LLFirAbstractBodyTargetResolver(
+internal sealed class LLFirAbstractBodyTargetResolver(
     resolveTarget: LLFirResolveTarget,
     resolvePhase: FirResolvePhase,
     protected val llImplicitBodyResolveComputationSession: LLImplicitBodyResolveComputationSession = LLImplicitBodyResolveComputationSession(),
-    isJumpingPhase: Boolean = false,
-) : LLFirTargetResolver(resolveTarget, resolvePhase, isJumpingPhase) {
+) : LLFirTargetResolver(resolveTarget, resolvePhase) {
     protected fun createReturnTypeCalculator(): LLFirReturnTypeCalculatorWithJump = LLFirReturnTypeCalculatorWithJump(
         resolveTargetScopeSession,
         llImplicitBodyResolveComputationSession,

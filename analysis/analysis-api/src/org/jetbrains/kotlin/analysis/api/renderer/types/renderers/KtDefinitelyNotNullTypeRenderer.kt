@@ -5,23 +5,36 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.types.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
-import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
 
-public interface KtDefinitelyNotNullTypeRenderer {
-    context(KtAnalysisSession, KtTypeRenderer)
-    public fun renderType(type: KtDefinitelyNotNullType, printer: PrettyPrinter)
+public interface KaDefinitelyNotNullTypeRenderer {
+    public fun renderType(
+        analysisSession: KaSession,
+        type: KaDefinitelyNotNullType,
+        typeRenderer: KaTypeRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object AS_TYPE_INTERSECTION : KtDefinitelyNotNullTypeRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderType(type: KtDefinitelyNotNullType, printer: PrettyPrinter): Unit = printer {
-            renderType(type.original, printer)
-            printer.append(" & ")
-            renderType(builtinTypes.ANY, printer)
+    public object AS_TYPE_INTERSECTION : KaDefinitelyNotNullTypeRenderer {
+        override fun renderType(
+            analysisSession: KaSession,
+            type: KaDefinitelyNotNullType,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
+            with(analysisSession) {
+                printer {
+                    typeRenderer.renderType(analysisSession, type.original, printer)
+                    printer.append(" & ")
+                    typeRenderer.renderType(analysisSession, builtinTypes.ANY, printer)
+                }
+            }
         }
     }
-
 }
+
+public typealias KtDefinitelyNotNullTypeRenderer = KaDefinitelyNotNullTypeRenderer

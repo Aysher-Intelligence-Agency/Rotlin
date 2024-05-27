@@ -1,47 +1,59 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.analysis.api.contracts.description.booleans
 
 import com.google.common.base.Objects
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 
 /**
- * See: [KtContractBooleanExpression].
+ * See: [KaContractBooleanExpression].
  */
-public class KtContractBinaryLogicExpression(
-    private val _left: KtContractBooleanExpression,
-    private val _right: KtContractBooleanExpression,
-    private val _operation: KtLogicOperation
-) : KtContractBooleanExpression {
+public class KaContractBinaryLogicExpression(
+    private val backingLeft: KaContractBooleanExpression,
+    private val backingRight: KaContractBooleanExpression,
+    private val backingOperation: KaLogicOperation
+) : KaContractBooleanExpression {
     init {
         check(left.token === right.token) { "$left and $right should have the same lifetime token" }
     }
 
-    override val token: KtLifetimeToken get() = _left.token
-    public val left: KtContractBooleanExpression get() = withValidityAssertion { _left }
-    public val right: KtContractBooleanExpression get() = withValidityAssertion { _right }
-    public val operation: KtLogicOperation get() = withValidityAssertion { _operation }
+    override val token: KaLifetimeToken get() = backingLeft.token
+    public val left: KaContractBooleanExpression get() = withValidityAssertion { backingLeft }
+    public val right: KaContractBooleanExpression get() = withValidityAssertion { backingRight }
+    public val operation: KaLogicOperation get() = withValidityAssertion { backingOperation }
 
-    override fun hashCode(): Int = Objects.hashCode(_left, _right, _operation)
-    override fun equals(other: Any?): Boolean =
-        other is KtContractBinaryLogicExpression && other._left == _left && other._right == _right && other._operation == _operation
+    override fun hashCode(): Int = Objects.hashCode(backingLeft, backingRight, backingOperation)
+    override fun equals(other: Any?): Boolean {
+        return this === other ||
+                other is KaContractBinaryLogicExpression &&
+                other.backingLeft == backingLeft &&
+                other.backingRight == backingRight &&
+                other.backingOperation == backingOperation
+    }
 
-    public enum class KtLogicOperation {
+    public enum class KaLogicOperation {
         AND, OR
     }
 }
 
-/**
- * See: [KtContractBooleanExpression].
- */
-public class KtContractLogicalNotExpression(private val _argument: KtContractBooleanExpression) : KtContractBooleanExpression {
-    override val token: KtLifetimeToken get() = _argument.token
-    public val argument: KtContractBooleanExpression get() = withValidityAssertion { _argument }
+public typealias KtContractBinaryLogicExpression = KaContractBinaryLogicExpression
 
-    override fun equals(other: Any?): Boolean = other is KtContractLogicalNotExpression && other._argument == _argument
-    override fun hashCode(): Int = _argument.hashCode()
+/**
+ * See: [KaContractBooleanExpression].
+ */
+public class KaContractLogicalNotExpression(private val backingArgument: KaContractBooleanExpression) : KaContractBooleanExpression {
+    override val token: KaLifetimeToken get() = backingArgument.token
+    public val argument: KaContractBooleanExpression get() = withValidityAssertion { backingArgument }
+
+    override fun equals(other: Any?): Boolean {
+        return this === other || other is KaContractLogicalNotExpression && other.backingArgument == backingArgument
+    }
+
+    override fun hashCode(): Int = backingArgument.hashCode()
 }
+
+public typealias KtContractLogicalNotExpression = KaContractLogicalNotExpression

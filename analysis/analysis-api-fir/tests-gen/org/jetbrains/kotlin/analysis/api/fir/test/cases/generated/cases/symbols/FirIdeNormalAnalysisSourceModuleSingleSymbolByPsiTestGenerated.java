@@ -119,6 +119,12 @@ public class FirIdeNormalAnalysisSourceModuleSingleSymbolByPsiTestGenerated exte
   }
 
   @Test
+  @TestMetadata("tailrecFunction.kt")
+  public void testTailrecFunction() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/tailrecFunction.kt");
+  }
+
+  @Test
   @TestMetadata("typeAnnotationWithArgument.kt")
   public void testTypeAnnotationWithArgument() {
     runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/typeAnnotationWithArgument.kt");
@@ -385,6 +391,12 @@ public class FirIdeNormalAnalysisSourceModuleSingleSymbolByPsiTestGenerated exte
     @TestMetadata("anonymousObjectInInvalidPosition.kt")
     public void testAnonymousObjectInInvalidPosition() {
       runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/errors/anonymousObjectInInvalidPosition.kt");
+    }
+
+    @Test
+    @TestMetadata("incompleteFunctionTypeParameter.kt")
+    public void testIncompleteFunctionTypeParameter() {
+      runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/errors/incompleteFunctionTypeParameter.kt");
     }
 
     @Test

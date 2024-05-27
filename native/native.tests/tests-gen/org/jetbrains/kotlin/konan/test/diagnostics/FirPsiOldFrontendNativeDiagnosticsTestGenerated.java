@@ -71,6 +71,12 @@ public class FirPsiOldFrontendNativeDiagnosticsTestGenerated extends AbstractFir
   }
 
   @Test
+  @TestMetadata("noIncompatibleThrowsOnSubstitutionAndIntersectionOverrides.kt")
+  public void testNoIncompatibleThrowsOnSubstitutionAndIntersectionOverrides() {
+    runTest("compiler/testData/diagnostics/nativeTests/noIncompatibleThrowsOnSubstitutionAndIntersectionOverrides.kt");
+  }
+
+  @Test
   @TestMetadata("noObjcOverrideConflictingOverloadsDisabled.kt")
   public void testNoObjcOverrideConflictingOverloadsDisabled() {
     runTest("compiler/testData/diagnostics/nativeTests/noObjcOverrideConflictingOverloadsDisabled.kt");
@@ -182,6 +188,60 @@ public class FirPsiOldFrontendNativeDiagnosticsTestGenerated extends AbstractFir
   @TestMetadata("topLevelSingleton.kt")
   public void testTopLevelSingleton() {
     runTest("compiler/testData/diagnostics/nativeTests/topLevelSingleton.kt");
+  }
+
+  @Nested
+  @TestMetadata("compiler/testData/diagnostics/nativeTests/multiplatform")
+  @TestDataPath("$PROJECT_ROOT")
+  @Tag("frontend-fir")
+  @FirPipeline()
+  public class Multiplatform {
+    @Test
+    public void testAllFilesPresentInMultiplatform() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/nativeTests/multiplatform"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+    }
+
+    @Test
+    @TestMetadata("objCAction_expectAnnotation.kt")
+    public void testObjCAction_expectAnnotation() {
+      runTest("compiler/testData/diagnostics/nativeTests/multiplatform/objCAction_expectAnnotation.kt");
+    }
+
+    @Test
+    @TestMetadata("objCName_expectAnnotation.kt")
+    public void testObjCName_expectAnnotation() {
+      runTest("compiler/testData/diagnostics/nativeTests/multiplatform/objCName_expectAnnotation.kt");
+    }
+
+    @Test
+    @TestMetadata("objCOutlet_expectAnnotation.kt")
+    public void testObjCOutlet_expectAnnotation() {
+      runTest("compiler/testData/diagnostics/nativeTests/multiplatform/objCOutlet_expectAnnotation.kt");
+    }
+
+    @Test
+    @TestMetadata("objCRefinement_expectAnnotation.kt")
+    public void testObjCRefinement_expectAnnotation() {
+      runTest("compiler/testData/diagnostics/nativeTests/multiplatform/objCRefinement_expectAnnotation.kt");
+    }
+
+    @Test
+    @TestMetadata("overrideInit_expectAnnotation.kt")
+    public void testOverrideInit_expectAnnotation() {
+      runTest("compiler/testData/diagnostics/nativeTests/multiplatform/overrideInit_expectAnnotation.kt");
+    }
+
+    @Test
+    @TestMetadata("sharedImmutable_expectAnnotation.kt")
+    public void testSharedImmutable_expectAnnotation() {
+      runTest("compiler/testData/diagnostics/nativeTests/multiplatform/sharedImmutable_expectAnnotation.kt");
+    }
+
+    @Test
+    @TestMetadata("threadLocal_expectAnnotation.kt")
+    public void testThreadLocal_expectAnnotation() {
+      runTest("compiler/testData/diagnostics/nativeTests/multiplatform/threadLocal_expectAnnotation.kt");
+    }
   }
 
   @Nested

@@ -188,6 +188,59 @@ public class CliTestGenerated extends AbstractCliTest {
     }
   }
 
+  @TestMetadata("compiler/testData/cli/jvm/sourceFilesAndDirectories")
+  @TestDataPath("$PROJECT_ROOT")
+  @RunWith(JUnit3RunnerWithInners.class)
+  public static class SourceFilesAndDirectories extends AbstractCliTest {
+    private void runTest(String testDataFilePath) {
+      KotlinTestUtils.runTest(this::doJvmTest, this, testDataFilePath);
+    }
+
+    public void testAllFilesPresentInSourceFilesAndDirectories() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/cli/jvm/sourceFilesAndDirectories"), Pattern.compile("^(.+)\\.args$"), null, false);
+    }
+
+    @TestMetadata("dirWithKotlinAndJavaFiles.args")
+    public void testDirWithKotlinAndJavaFiles() {
+      runTest("compiler/testData/cli/jvm/sourceFilesAndDirectories/dirWithKotlinAndJavaFiles.args");
+    }
+
+    @TestMetadata("dirWithKotlinAndNonKotlinFiles.args")
+    public void testDirWithKotlinAndNonKotlinFiles() {
+      runTest("compiler/testData/cli/jvm/sourceFilesAndDirectories/dirWithKotlinAndNonKotlinFiles.args");
+    }
+
+    @TestMetadata("dirWithKotlinFile.args")
+    public void testDirWithKotlinFile() {
+      runTest("compiler/testData/cli/jvm/sourceFilesAndDirectories/dirWithKotlinFile.args");
+    }
+
+    @TestMetadata("dirWithKotlinFileRecursive.args")
+    public void testDirWithKotlinFileRecursive() {
+      runTest("compiler/testData/cli/jvm/sourceFilesAndDirectories/dirWithKotlinFileRecursive.args");
+    }
+
+    @TestMetadata("dirWithKotlinScript.args")
+    public void testDirWithKotlinScript() {
+      runTest("compiler/testData/cli/jvm/sourceFilesAndDirectories/dirWithKotlinScript.args");
+    }
+
+    @TestMetadata("dirWithKotlinScriptPsi.args")
+    public void testDirWithKotlinScriptPsi() {
+      runTest("compiler/testData/cli/jvm/sourceFilesAndDirectories/dirWithKotlinScriptPsi.args");
+    }
+
+    @TestMetadata("dirWithOnlyNonKotlinFile.args")
+    public void testDirWithOnlyNonKotlinFile() {
+      runTest("compiler/testData/cli/jvm/sourceFilesAndDirectories/dirWithOnlyNonKotlinFile.args");
+    }
+
+    @TestMetadata("withNonKotlinFile.args")
+    public void testWithNonKotlinFile() {
+      runTest("compiler/testData/cli/jvm/sourceFilesAndDirectories/withNonKotlinFile.args");
+    }
+  }
+
   @TestMetadata("compiler/testData/cli/jvm")
   @TestDataPath("$PROJECT_ROOT")
   @RunWith(JUnit3RunnerWithInners.class)
@@ -495,6 +548,16 @@ public class CliTestGenerated extends AbstractCliTest {
       runTest("compiler/testData/cli/jvm/experimentalUnresolvedK1.args");
     }
 
+    @TestMetadata("explicitApiAndExplicitReturnTypesAtTheSameTime.args")
+    public void testExplicitApiAndExplicitReturnTypesAtTheSameTime() {
+      runTest("compiler/testData/cli/jvm/explicitApiAndExplicitReturnTypesAtTheSameTime.args");
+    }
+
+    @TestMetadata("explicitReturnTypesEnabled.args")
+    public void testExplicitReturnTypesEnabled() {
+      runTest("compiler/testData/cli/jvm/explicitReturnTypesEnabled.args");
+    }
+
     @TestMetadata("explicitlyDisableSamConversionsWithOldFlag.args")
     public void testExplicitlyDisableSamConversionsWithOldFlag() {
       runTest("compiler/testData/cli/jvm/explicitlyDisableSamConversionsWithOldFlag.args");
@@ -773,6 +836,11 @@ public class CliTestGenerated extends AbstractCliTest {
     @TestMetadata("jdkRelease6WithJvmTarget8Jdk8.args")
     public void testJdkRelease6WithJvmTarget8Jdk8() {
       runTest("compiler/testData/cli/jvm/jdkRelease6WithJvmTarget8Jdk8.args");
+    }
+
+    @TestMetadata("jdkRelease6WithJvmTarget9.args")
+    public void testJdkRelease6WithJvmTarget9() {
+      runTest("compiler/testData/cli/jvm/jdkRelease6WithJvmTarget9.args");
     }
 
     @TestMetadata("jdkRelease6WithoutExplicitJvmTarget.args")
@@ -1135,6 +1203,11 @@ public class CliTestGenerated extends AbstractCliTest {
       runTest("compiler/testData/cli/jvm/recordAsSingleFileRoot.args");
     }
 
+    @TestMetadata("reportAllWarnings.args")
+    public void testReportAllWarnings() {
+      runTest("compiler/testData/cli/jvm/reportAllWarnings.args");
+    }
+
     @TestMetadata("reportInternalDiagnosticNames.args")
     public void testReportInternalDiagnosticNames() {
       runTest("compiler/testData/cli/jvm/reportInternalDiagnosticNames.args");
@@ -1250,6 +1323,11 @@ public class CliTestGenerated extends AbstractCliTest {
       runTest("compiler/testData/cli/jvm/useDeclarationThatWasExperimentalWithoutMarker.args");
     }
 
+    @TestMetadata("version.args")
+    public void testVersion() {
+      runTest("compiler/testData/cli/jvm/version.args");
+    }
+
     @TestMetadata("warningJdkWithNoJdk.args")
     public void testWarningJdkWithNoJdk() {
       runTest("compiler/testData/cli/jvm/warningJdkWithNoJdk.args");
@@ -1278,6 +1356,16 @@ public class CliTestGenerated extends AbstractCliTest {
     @TestMetadata("werrorWithStrongWarning.args")
     public void testWerrorWithStrongWarning() {
       runTest("compiler/testData/cli/jvm/werrorWithStrongWarning.args");
+    }
+
+    @TestMetadata("whenGuardsEnable.args")
+    public void testWhenGuardsEnable() {
+      runTest("compiler/testData/cli/jvm/whenGuardsEnable.args");
+    }
+
+    @TestMetadata("whenGuardsError.args")
+    public void testWhenGuardsError() {
+      runTest("compiler/testData/cli/jvm/whenGuardsError.args");
     }
 
     @TestMetadata("wrongAbiVersion.args")
@@ -1336,6 +1424,11 @@ public class CliTestGenerated extends AbstractCliTest {
 
     public void testAllFilesPresentInJs() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/cli/js"), Pattern.compile("^(.+)\\.args$"), null, false);
+    }
+
+    @TestMetadata("compilationErrorConstDivByZero.args")
+    public void testCompilationErrorConstDivByZero() {
+      runTest("compiler/testData/cli/js/compilationErrorConstDivByZero.args");
     }
 
     @TestMetadata("compilationErrorK2.args")
@@ -1594,6 +1687,11 @@ public class CliTestGenerated extends AbstractCliTest {
       runTest("compiler/testData/cli/metadata/anonymousObjectType.args");
     }
 
+    @TestMetadata("complexAnnotationArgument.args")
+    public void testComplexAnnotationArgument() {
+      runTest("compiler/testData/cli/metadata/complexAnnotationArgument.args");
+    }
+
     @TestMetadata("getOrDefault.args")
     public void testGetOrDefault() {
       runTest("compiler/testData/cli/metadata/getOrDefault.args");
@@ -1642,6 +1740,11 @@ public class CliTestGenerated extends AbstractCliTest {
     @TestMetadata("optionalExpectationUsage.args")
     public void testOptionalExpectationUsage() {
       runTest("compiler/testData/cli/metadata/optionalExpectationUsage.args");
+    }
+
+    @TestMetadata("unsignedDeclarationsFromStdlib.args")
+    public void testUnsignedDeclarationsFromStdlib() {
+      runTest("compiler/testData/cli/metadata/unsignedDeclarationsFromStdlib.args");
     }
   }
 }

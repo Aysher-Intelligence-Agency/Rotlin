@@ -5,54 +5,43 @@
 
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.scopeProvider
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.impl.base.test.SymbolByFqName
-import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols.AbstractSymbolByFqNameTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols.SymbolsData
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.impl.base.test.getSingleTestTargetSymbolOfType
+import org.jetbrains.kotlin.analysis.api.scopes.KaScope
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.services.TestServices
 
-abstract class AbstractMemberScopeTestBase : AbstractSymbolByFqNameTest() {
-    context(KtAnalysisSession)
-    protected abstract fun KtSymbolWithMembers.getSymbolsFromScope(): Sequence<KtDeclarationSymbol>
+abstract class AbstractMemberScopeTestBase : AbstractScopeTestBase() {
+    abstract fun KaSession.getScope(symbol: KaSymbolWithMembers): KaScope
 
-    override fun KtAnalysisSession.collectSymbols(ktFile: KtFile, testServices: TestServices): SymbolsData {
-        val symbolData = SymbolByFqName.getSymbolDataFromFile(testDataPath)
-        val symbols = with(symbolData) { toSymbols(ktFile) }
-        val symbolWithMembers = symbols.singleOrNull() as? KtSymbolWithMembers
-            ?: error("Should be a single `${KtSymbolWithMembers::class.simpleName}`, but $symbols found.")
-        return SymbolsData(symbolWithMembers.getSymbolsFromScope().toList())
-    }
+    final override fun KaSession.getScope(mainFile: KtFile, testServices: TestServices): KaScope =
+        getScope(getSingleTestTargetSymbolOfType<KaSymbolWithMembers>(mainFile, testDataPath))
 }
 
 abstract class AbstractMemberScopeTest : AbstractMemberScopeTestBase() {
-    context(KtAnalysisSession)
-    override fun KtSymbolWithMembers.getSymbolsFromScope(): Sequence<KtDeclarationSymbol> = getMemberScope().getAllSymbols()
+    override fun KaSession.getScope(symbol: KaSymbolWithMembers): KaScope = symbol.getMemberScope()
 }
 
 abstract class AbstractStaticMemberScopeTest : AbstractMemberScopeTestBase() {
-    context(KtAnalysisSession)
-    override fun KtSymbolWithMembers.getSymbolsFromScope(): Sequence<KtDeclarationSymbol> = getStaticMemberScope().getAllSymbols()
+    override fun KaSession.getScope(symbol: KaSymbolWithMembers): KaScope = symbol.getStaticMemberScope()
 }
 
 abstract class AbstractDeclaredMemberScopeTest : AbstractMemberScopeTestBase() {
-    context(KtAnalysisSession)
-    override fun KtSymbolWithMembers.getSymbolsFromScope(): Sequence<KtDeclarationSymbol> = getDeclaredMemberScope().getAllSymbols()
+    override fun KaSession.getScope(symbol: KaSymbolWithMembers): KaScope = symbol.getDeclaredMemberScope()
 }
 
 abstract class AbstractStaticDeclaredMemberScopeTest : AbstractMemberScopeTestBase() {
-    context(KtAnalysisSession)
-    override fun KtSymbolWithMembers.getSymbolsFromScope(): Sequence<KtDeclarationSymbol> = getStaticDeclaredMemberScope().getAllSymbols()
+    override fun KaSession.getScope(symbol: KaSymbolWithMembers): KaScope = symbol.getStaticDeclaredMemberScope()
 }
 
 abstract class AbstractCombinedDeclaredMemberScopeTest : AbstractMemberScopeTestBase() {
-    context(KtAnalysisSession)
-    override fun KtSymbolWithMembers.getSymbolsFromScope(): Sequence<KtDeclarationSymbol> = getCombinedDeclaredMemberScope().getAllSymbols()
+    override fun KaSession.getScope(symbol: KaSymbolWithMembers): KaScope = symbol.getCombinedDeclaredMemberScope()
 }
 
 abstract class AbstractDelegateMemberScopeTest : AbstractMemberScopeTestBase() {
-    context(KtAnalysisSession)
-    override fun KtSymbolWithMembers.getSymbolsFromScope(): Sequence<KtDeclarationSymbol> = getDelegatedMemberScope().getCallableSymbols()
+    override fun KaSession.getScope(symbol: KaSymbolWithMembers): KaScope = symbol.getDelegatedMemberScope()
+
+    override fun KaSession.getSymbolsFromScope(scope: KaScope): Sequence<KaDeclarationSymbol> = scope.getCallableSymbols()
 }

@@ -509,6 +509,36 @@ public class FirIdeDependentAnalysisScriptSourceModuleReferenceResolveTestGenera
   }
 
   @Nested
+  @TestMetadata("analysis/analysis-api/testData/referenceResolve/typeAlias")
+  @TestDataPath("$PROJECT_ROOT")
+  public class TypeAlias {
+    @Test
+    public void testAllFilesPresentInTypeAlias() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/referenceResolve/typeAlias"), Pattern.compile("^(.+)\\.kts$"), null, true);
+    }
+
+    @Nested
+    @TestMetadata("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency")
+    @TestDataPath("$PROJECT_ROOT")
+    public class MissingDependency {
+      @Test
+      public void testAllFilesPresentInMissingDependency() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/referenceResolve/typeAlias/missingDependency"), Pattern.compile("^(.+)\\.kts$"), null, true);
+      }
+    }
+
+    @Nested
+    @TestMetadata("analysis/analysis-api/testData/referenceResolve/typeAlias/withErrors")
+    @TestDataPath("$PROJECT_ROOT")
+    public class WithErrors {
+      @Test
+      public void testAllFilesPresentInWithErrors() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/referenceResolve/typeAlias/withErrors"), Pattern.compile("^(.+)\\.kts$"), null, true);
+      }
+    }
+  }
+
+  @Nested
   @TestMetadata("analysis/analysis-api/testData/referenceResolve/typeArgument")
   @TestDataPath("$PROJECT_ROOT")
   public class TypeArgument {

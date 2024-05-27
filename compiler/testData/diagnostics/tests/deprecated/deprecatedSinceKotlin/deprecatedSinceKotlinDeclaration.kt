@@ -1,4 +1,4 @@
-// !SKIP_JAVAC
+// SKIP_JAVAC
 package kotlin.sub
 
 @Deprecated("", ReplaceWith(""))
@@ -43,3 +43,9 @@ fun fooDefault() {}
 @Deprecated("")
 @DeprecatedSinceKotlin("1.1", "1.1", "1.1")
 fun fooEqual() {}
+
+@Deprecated("")
+@DeprecatedSinceKotlin("1.1", "1.1", "1.1")
+class Foo
+
+val foo: <!DEPRECATION_ERROR!>Foo<!> = <!DEPRECATION_ERROR!>Foo<!>()

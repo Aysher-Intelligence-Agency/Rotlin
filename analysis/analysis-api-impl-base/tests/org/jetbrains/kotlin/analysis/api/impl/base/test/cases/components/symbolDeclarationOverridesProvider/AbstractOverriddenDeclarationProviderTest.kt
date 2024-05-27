@@ -5,29 +5,29 @@
 
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.symbolDeclarationOverridesProvider
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.impl.base.test.getSingleTestTargetSymbolOfType
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
+import org.jetbrains.kotlin.analysis.test.framework.project.structure.KtTestModule
 import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerProvider
 import org.jetbrains.kotlin.analysis.test.framework.utils.executeOnPooledThreadInReadAction
-import org.jetbrains.kotlin.analysis.utils.printer.parentsOfType
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
 import org.jetbrains.kotlin.types.Variance
 
 abstract class AbstractOverriddenDeclarationProviderTest : AbstractAnalysisApiBasedTest() {
-    override fun doTestByMainFile(mainFile: KtFile, mainModule: TestModule, testServices: TestServices) {
-        val declaration = testServices.expressionMarkerProvider.getElementOfTypeAtCaret<KtDeclaration>(mainFile)
-
+    override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
         val actual = executeOnPooledThreadInReadAction {
-            analyseForTest(declaration) {
-                val symbol = declaration.getSymbol() as KtCallableSymbol
+            analyseForTest(mainFile) {
+                val symbol = getCallableSymbol(mainFile, testServices)
                 val allOverriddenSymbols = symbol.getAllOverriddenSymbols().map { renderSignature(it) }
                 val directlyOverriddenSymbols = symbol.getDirectlyOverriddenSymbols().map { renderSignature(it) }
                 buildString {
@@ -41,14 +41,22 @@ abstract class AbstractOverriddenDeclarationProviderTest : AbstractAnalysisApiBa
         testServices.assertions.assertEqualsToTestDataFileSibling(actual)
     }
 
-    private fun KtAnalysisSession.renderSignature(symbol: KtCallableSymbol): String = buildString {
-        append(getPath(symbol))
-        if (symbol is KtFunctionSymbol) {
+    private fun KaSession.getCallableSymbol(mainFile: KtFile, testServices: TestServices): KaCallableSymbol {
+        val declaration = testServices.expressionMarkerProvider.getElementOfTypeAtCaretOrNull<KtDeclaration>(mainFile)
+        if (declaration != null) {
+            return declaration.getSymbol() as KaCallableSymbol
+        }
+        return getSingleTestTargetSymbolOfType<KaCallableSymbol>(mainFile, testDataPath)
+    }
+
+    private fun KaSession.renderSignature(symbol: KaCallableSymbol): String = buildString {
+        append(renderDeclarationQualifiedName(symbol))
+        if (symbol is KaFunctionSymbol) {
             append("(")
             symbol.valueParameters.forEachIndexed { index, parameter ->
                 append(parameter.name.identifier)
                 append(": ")
-                append(parameter.returnType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
+                append(parameter.returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
                 if (index != symbol.valueParameters.lastIndex) {
                     append(", ")
                 }
@@ -56,24 +64,34 @@ abstract class AbstractOverriddenDeclarationProviderTest : AbstractAnalysisApiBa
             append(")")
         }
         append(": ")
-        append(symbol.returnType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
+        append(symbol.returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
     }
 
-    @Suppress("unused")
-    private fun KtAnalysisSession.getPath(symbol: KtCallableSymbol): String = when (symbol) {
-        is KtSyntheticJavaPropertySymbol -> symbol.callableIdIfNonLocal?.toString()!!
-        else -> {
-            val ktDeclaration = symbol.psi as? KtDeclaration
-            if (ktDeclaration == null) {
-                symbol.callableIdIfNonLocal?.toString()!!
-            } else {
-                ktDeclaration
-                    .parentsOfType<KtDeclaration>(withSelf = true)
-                    .map { it.name ?: "<no name>" }
-                    .toList()
-                    .asReversed()
-                    .joinToString(separator = ".")
+    private fun KaSession.renderDeclarationQualifiedName(symbol: KaCallableSymbol): String {
+        val parentsWithSelf = generateSequence<KaSymbol>(symbol) { it.getContainingSymbol() }
+            .toList()
+            .asReversed()
+
+        val chunks = mutableListOf<String>()
+
+        for ((index, parent) in parentsWithSelf.withIndex()) {
+            // Render qualified names for top-level declarations
+            if (index == 0) {
+                val qualifiedName = when (parent) {
+                    is KaClassLikeSymbol -> parent.classIdIfNonLocal?.toString()
+                    is KaCallableSymbol -> parent.callableIdIfNonLocal?.toString()
+                    else -> null
+                }
+
+                if (qualifiedName != null) {
+                    chunks += qualifiedName
+                    continue
+                }
             }
+
+            chunks += (parent as? KaNamedSymbol)?.name?.asString() ?: "<no name>"
         }
+
+        return chunks.joinToString(".")
     }
 }

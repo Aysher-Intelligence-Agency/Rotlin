@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.originalForSubstitutionOverride
+import org.jetbrains.kotlin.fir.originalOrSelf
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.scope
@@ -33,6 +34,10 @@ import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 // ---------------------------------------------- is type is a function type ----------------------------------------------
 
 fun ConeKotlinType.functionTypeKind(session: FirSession): FunctionTypeKind? {
+    return lowerBoundIfFlexible().functionTypeKind(session)
+}
+
+fun ConeSimpleKotlinType.functionTypeKind(session: FirSession): FunctionTypeKind? {
     if (this !is ConeClassLikeType) return null
     return fullyExpandedType(session).lookupTag.functionTypeKind(session)
 }
@@ -57,6 +62,11 @@ private inline fun ConeKotlinType.isFunctionTypeWithPredicate(
 // Function
 fun ConeKotlinType.isBasicFunctionType(session: FirSession): Boolean {
     return isFunctionTypeWithPredicate(session) { it == FunctionTypeKind.Function }
+}
+
+// Function, SuspendFunction, KSuspendFunction, [Custom]Function, K[Custom]Function
+fun ConeKotlinType.isNonKFunctionType(session: FirSession): Boolean {
+    return isFunctionTypeWithPredicate(session) { it != FunctionTypeKind.KFunction }
 }
 
 // SuspendFunction, KSuspendFunction
@@ -108,11 +118,16 @@ fun ConeKotlinType.customFunctionTypeToSimpleFunctionType(session: FirSession): 
     return createFunctionTypeWithNewKind(session, newKind)
 }
 
-private fun ConeKotlinType.createFunctionTypeWithNewKind(session: FirSession, kind: FunctionTypeKind): ConeClassLikeType {
+fun ConeKotlinType.createFunctionTypeWithNewKind(
+    session: FirSession,
+    kind: FunctionTypeKind,
+    updateTypeArguments: (Array<out ConeTypeProjection>.() -> Array<out ConeTypeProjection>)? = null,
+): ConeClassLikeType {
     val expandedType = fullyExpandedType(session)
     val functionTypeId = ClassId(kind.packageFqName, kind.numberedClassName(expandedType.typeArguments.size - 1))
+    val typeArguments = expandedType.typeArguments
     return functionTypeId.toLookupTag().constructClassType(
-        expandedType.typeArguments,
+        updateTypeArguments?.let { typeArguments.updateTypeArguments() } ?: typeArguments,
         isNullable = expandedType.isNullable,
         attributes = expandedType.attributes
     )
@@ -220,7 +235,19 @@ fun ConeKotlinType.findContributedInvokeSymbol(
                 overriddenInvoke = functionSymbol
                 ProcessorAction.STOP
             } else {
-                ProcessorAction.NEXT
+                val dispatchReceiverType = functionSymbol.originalOrSelf().dispatchReceiverType
+                val dispatchReceiverFunctionKind = (dispatchReceiverType as? ConeClassLikeType)?.functionTypeKind(session)
+                val expectedFunctionKind = expectedFunctionType.functionTypeKind(session)
+                if (dispatchReceiverFunctionKind == null || !dispatchReceiverFunctionKind.isBasicFunctionOrKFunction ||
+                    expectedFunctionKind?.isBasicFunctionOrKFunction == true ||
+                    expectedFunctionKind?.isReflectType != dispatchReceiverFunctionKind.isReflectType
+                ) {
+                    ProcessorAction.NEXT
+                } else {
+                    // Suspend (or other) conversion should be applied
+                    overriddenInvoke = functionSymbol
+                    ProcessorAction.STOP
+                }
             }
         }
     }

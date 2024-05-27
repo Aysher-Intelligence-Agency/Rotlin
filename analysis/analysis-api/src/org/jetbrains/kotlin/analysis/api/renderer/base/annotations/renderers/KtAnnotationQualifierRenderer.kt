@@ -5,38 +5,59 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtAnnotationRenderer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationApplication
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaAnnotationRenderer
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.renderer.render
 
-public interface KtAnnotationQualifierRenderer {
-    context(KtAnalysisSession, KtAnnotationRenderer)
-    public fun renderQualifier(annotation: KtAnnotationApplication, owner: KtAnnotated, printer: PrettyPrinter)
+public interface KaAnnotationQualifierRenderer {
+    public fun renderQualifier(
+        analysisSession: KaSession,
+        annotation: KaAnnotationApplication,
+        owner: KaAnnotated,
+        annotationRenderer: KaAnnotationRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object WITH_QUALIFIED_NAMES : KtAnnotationQualifierRenderer {
-        context(KtAnalysisSession, KtAnnotationRenderer)
-        override fun renderQualifier(annotation: KtAnnotationApplication, owner: KtAnnotated, printer: PrettyPrinter): Unit = printer {
-            val classId = annotation.classId
-            if (classId != null) {
-                append(classId.asSingleFqName().render())
-            } else {
-                append("ERROR_ANNOTATION")
+    public object WITH_QUALIFIED_NAMES : KaAnnotationQualifierRenderer {
+        override fun renderQualifier(
+            analysisSession: KaSession,
+            annotation: KaAnnotationApplication,
+            owner: KaAnnotated,
+            annotationRenderer: KaAnnotationRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                val classId = annotation.classId
+                if (classId != null) {
+                    append(classId.asSingleFqName().render())
+                } else {
+                    append("ERROR_ANNOTATION")
+                }
             }
         }
     }
 
-    public object WITH_SHORT_NAMES : KtAnnotationQualifierRenderer {
-        context(KtAnalysisSession, KtAnnotationRenderer)
-        override fun renderQualifier(annotation: KtAnnotationApplication, owner: KtAnnotated, printer: PrettyPrinter): Unit = printer {
-            val classId = annotation.classId
-            if (classId != null) {
-                printer.append(classId.shortClassName.render())
-            } else {
-                printer.append("ERROR_ANNOTATION")
+    public object WITH_SHORT_NAMES : KaAnnotationQualifierRenderer {
+        override fun renderQualifier(
+            analysisSession: KaSession,
+            annotation: KaAnnotationApplication,
+            owner: KaAnnotated,
+            annotationRenderer: KaAnnotationRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                val classId = annotation.classId
+                if (classId != null) {
+                    printer.append(classId.shortClassName.render())
+                } else {
+                    printer.append("ERROR_ANNOTATION")
+                }
             }
         }
     }
 }
+
+public typealias KtAnnotationQualifierRenderer = KaAnnotationQualifierRenderer

@@ -139,14 +139,6 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
         return transformElementWithResolveState(elementWithResolveState, data)
     }
 
-    open fun transformFileAnnotationsContainer(fileAnnotationsContainer: FirFileAnnotationsContainer, data: D): FirFileAnnotationsContainer {
-        return transformElement(fileAnnotationsContainer, data)
-    }
-
-    final override fun visitFileAnnotationsContainer(fileAnnotationsContainer: FirFileAnnotationsContainer, data: D): FirFileAnnotationsContainer {
-        return transformFileAnnotationsContainer(fileAnnotationsContainer, data)
-    }
-
     open fun transformDeclaration(declaration: FirDeclaration, data: D): FirDeclaration {
         return transformElement(declaration, data)
     }
@@ -555,11 +547,11 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
         return transformTryExpression(tryExpression, data)
     }
 
-    open fun <T> transformLiteralExpression(literalExpression: FirLiteralExpression<T>, data: D): FirStatement {
+    open fun transformLiteralExpression(literalExpression: FirLiteralExpression, data: D): FirStatement {
         return transformElement(literalExpression, data)
     }
 
-    final override fun <T> visitLiteralExpression(literalExpression: FirLiteralExpression<T>, data: D): FirStatement {
+    final override fun visitLiteralExpression(literalExpression: FirLiteralExpression, data: D): FirStatement {
         return transformLiteralExpression(literalExpression, data)
     }
 
@@ -659,12 +651,12 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
         return transformTypeOperatorCall(typeOperatorCall, data)
     }
 
-    open fun transformAssignmentOperatorStatement(assignmentOperatorStatement: FirAssignmentOperatorStatement, data: D): FirStatement {
-        return transformElement(assignmentOperatorStatement, data)
+    open fun transformAugmentedAssignment(augmentedAssignment: FirAugmentedAssignment, data: D): FirStatement {
+        return transformElement(augmentedAssignment, data)
     }
 
-    final override fun visitAssignmentOperatorStatement(assignmentOperatorStatement: FirAssignmentOperatorStatement, data: D): FirStatement {
-        return transformAssignmentOperatorStatement(assignmentOperatorStatement, data)
+    final override fun visitAugmentedAssignment(augmentedAssignment: FirAugmentedAssignment, data: D): FirStatement {
+        return transformAugmentedAssignment(augmentedAssignment, data)
     }
 
     open fun transformIncrementDecrementExpression(incrementDecrementExpression: FirIncrementDecrementExpression, data: D): FirStatement {
@@ -731,12 +723,12 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
         return transformArrayLiteral(arrayLiteral, data)
     }
 
-    open fun transformAugmentedArraySetCall(augmentedArraySetCall: FirAugmentedArraySetCall, data: D): FirStatement {
-        return transformElement(augmentedArraySetCall, data)
+    open fun transformIndexedAccessAugmentedAssignment(indexedAccessAugmentedAssignment: FirIndexedAccessAugmentedAssignment, data: D): FirStatement {
+        return transformElement(indexedAccessAugmentedAssignment, data)
     }
 
-    final override fun visitAugmentedArraySetCall(augmentedArraySetCall: FirAugmentedArraySetCall, data: D): FirStatement {
-        return transformAugmentedArraySetCall(augmentedArraySetCall, data)
+    final override fun visitIndexedAccessAugmentedAssignment(indexedAccessAugmentedAssignment: FirIndexedAccessAugmentedAssignment, data: D): FirStatement {
+        return transformIndexedAccessAugmentedAssignment(indexedAccessAugmentedAssignment, data)
     }
 
     open fun transformClassReferenceExpression(classReferenceExpression: FirClassReferenceExpression, data: D): FirStatement {
@@ -931,14 +923,6 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
         return transformWrappedArgumentExpression(wrappedArgumentExpression, data)
     }
 
-    open fun transformLambdaArgumentExpression(lambdaArgumentExpression: FirLambdaArgumentExpression, data: D): FirStatement {
-        return transformElement(lambdaArgumentExpression, data)
-    }
-
-    final override fun visitLambdaArgumentExpression(lambdaArgumentExpression: FirLambdaArgumentExpression, data: D): FirStatement {
-        return transformLambdaArgumentExpression(lambdaArgumentExpression, data)
-    }
-
     open fun transformSpreadArgumentExpression(spreadArgumentExpression: FirSpreadArgumentExpression, data: D): FirStatement {
         return transformElement(spreadArgumentExpression, data)
     }
@@ -1081,14 +1065,6 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
 
     final override fun visitErrorNamedReference(errorNamedReference: FirErrorNamedReference, data: D): FirReference {
         return transformErrorNamedReference(errorNamedReference, data)
-    }
-
-    open fun transformFromMissingDependenciesNamedReference(fromMissingDependenciesNamedReference: FirFromMissingDependenciesNamedReference, data: D): FirReference {
-        return transformElement(fromMissingDependenciesNamedReference, data)
-    }
-
-    final override fun visitFromMissingDependenciesNamedReference(fromMissingDependenciesNamedReference: FirFromMissingDependenciesNamedReference, data: D): FirReference {
-        return transformFromMissingDependenciesNamedReference(fromMissingDependenciesNamedReference, data)
     }
 
     open fun transformSuperReference(superReference: FirSuperReference, data: D): FirReference {

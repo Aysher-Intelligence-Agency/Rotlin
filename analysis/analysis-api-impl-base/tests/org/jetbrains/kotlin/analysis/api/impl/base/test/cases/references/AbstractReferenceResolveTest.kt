@@ -5,14 +5,15 @@
 
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.references
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.references.TestReferenceResolveResultRenderer.renderResolvedTo
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForDebug
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtPropertyAccessorsRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForDebug
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.test.framework.AnalysisApiTestDirectives
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
+import org.jetbrains.kotlin.analysis.test.framework.project.structure.KtTestModule
 import org.jetbrains.kotlin.analysis.test.framework.services.CaretMarker
 import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerProvider
 import org.jetbrains.kotlin.analysis.test.framework.utils.unwrapMultiReferences
@@ -22,7 +23,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.directives.ConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.model.SimpleDirectivesContainer
-import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
 
@@ -46,12 +46,12 @@ abstract class AbstractReferenceResolveTest : AbstractAnalysisApiBasedTest() {
         }
     }
 
-    override fun doTestByMainFile(mainFile: KtFile, mainModule: TestModule, testServices: TestServices) {
+    override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
         val caretPositions = testServices.expressionMarkerProvider.getAllCarets(mainFile)
         doTestByFileStructure(mainFile, caretPositions, mainModule, testServices)
     }
 
-    protected fun doTestByFileStructure(ktFile: KtFile, carets: List<CaretMarker>, mainModule: TestModule, testServices: TestServices) {
+    protected fun doTestByFileStructure(ktFile: KtFile, carets: List<CaretMarker>, mainModule: KtTestModule, testServices: TestServices) {
         if (carets.isEmpty()) {
             testServices.assertions.fail { "No carets were specified for resolve test" }
         }
@@ -76,7 +76,7 @@ abstract class AbstractReferenceResolveTest : AbstractAnalysisApiBasedTest() {
     private fun renderResolvedReferencesForCaretPosition(
         ktFile: KtFile,
         caret: CaretMarker,
-        mainModule: TestModule,
+        mainModule: KtTestModule,
         testServices: TestServices,
     ): String {
         val ktReferences = findReferencesAtCaret(ktFile, caret.offset)
@@ -86,18 +86,21 @@ abstract class AbstractReferenceResolveTest : AbstractAnalysisApiBasedTest() {
 
         val resolvedTo = analyzeReferenceElement(ktReferences.first().element, mainModule) {
             val symbols = ktReferences.flatMap { it.resolveToSymbols() }
-            val renderPsiClassName = Directives.RENDER_PSI_CLASS_NAME in mainModule.directives
+            val symbolsAgain = ktReferences.flatMap { it.resolveToSymbols() }
+            testServices.assertions.assertEquals(symbols, symbolsAgain)
+
+            val renderPsiClassName = Directives.RENDER_PSI_CLASS_NAME in mainModule.testModule.directives
             renderResolvedTo(symbols, renderPsiClassName, renderingOptions) { getAdditionalSymbolInfo(it) }
         }
 
         return resolvedTo
     }
 
-    protected open fun <R> analyzeReferenceElement(element: KtElement, mainModule: TestModule, action: KtAnalysisSession.() -> R): R {
+    protected open fun <R> analyzeReferenceElement(element: KtElement, mainModule: KtTestModule, action: KaSession.() -> R): R {
         return analyseForTest(element) { action() }
     }
 
-    open fun KtAnalysisSession.getAdditionalSymbolInfo(symbol: KtSymbol): String? = null
+    open fun KaSession.getAdditionalSymbolInfo(symbol: KaSymbol): String? = null
 
     private fun findReferencesAtCaret(mainKtFile: KtFile, caretPosition: Int): List<KtReference> =
         mainKtFile.findReferenceAt(caretPosition)?.unwrapMultiReferences().orEmpty().filterIsInstance<KtReference>()
@@ -108,11 +111,11 @@ abstract class AbstractReferenceResolveTest : AbstractAnalysisApiBasedTest() {
         )
     }
 
-    private val renderingOptions = KtDeclarationRendererForDebug.WITH_QUALIFIED_NAMES.with {
+    private val renderingOptions = KaDeclarationRendererForDebug.WITH_QUALIFIED_NAMES.with {
         annotationRenderer = annotationRenderer.with {
-            annotationFilter = KtRendererAnnotationsFilter.NONE
+            annotationFilter = KaRendererAnnotationsFilter.NONE
         }
-        propertyAccessorsRenderer = KtPropertyAccessorsRenderer.NONE
+        propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
     }
 
 }
