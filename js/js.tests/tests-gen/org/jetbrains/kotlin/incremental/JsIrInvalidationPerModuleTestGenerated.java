@@ -9,7 +9,6 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -575,6 +574,12 @@ public class JsIrInvalidationPerModuleTestGenerated extends AbstractJsIrInvalida
   @TestMetadata("unicodeSerializationAndDeserialization")
   public void testUnicodeSerializationAndDeserialization() {
     runTest("js/js.translator/testData/incremental/invalidation/unicodeSerializationAndDeserialization/");
+  }
+
+  @Test
+  @TestMetadata("unstableIrReproducer")
+  public void testUnstableIrReproducer() {
+    runTest("js/js.translator/testData/incremental/invalidation/unstableIrReproducer/");
   }
 
   @Test

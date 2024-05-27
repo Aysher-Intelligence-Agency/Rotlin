@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.isResolved
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
-import org.jetbrains.kotlin.fir.visitors.transformSingle
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
@@ -128,7 +127,13 @@ private class LLFirBodyTargetResolver(target: LLFirResolveTarget) : LLFirAbstrac
                 if (target.resolvePhase >= resolverPhase) return true
 
                 // resolve class CFG graph here, to do this we need to have property & init blocks resoled
-                resolveMembersForControlFlowGraph(target)
+                resolveMembersForControlFlowGraph(
+                    declarationWithMembers = target,
+                    withDeclaration = this::withRegularClass,
+                    declarationsProvider = FirRegularClass::declarations,
+                    isUsedInControlFlowBuilder = FirDeclaration::isUsedInClassControlFlowGraphBuilder,
+                )
+
                 performCustomResolveUnderLock(target) {
                     calculateControlFlowGraph(target)
                 }
@@ -139,10 +144,14 @@ private class LLFirBodyTargetResolver(target: LLFirResolveTarget) : LLFirAbstrac
             is FirFile -> {
                 if (target.resolvePhase >= resolverPhase) return true
 
-                target.annotationsContainer?.lazyResolveToPhase(resolverPhase)
-
                 // resolve file CFG graph here, to do this we need to have property blocks resoled
-                resolveMembersForControlFlowGraph(target)
+                resolveMembersForControlFlowGraph(
+                    declarationWithMembers = target,
+                    withDeclaration = this::withFile,
+                    declarationsProvider = FirFile::declarations,
+                    isUsedInControlFlowBuilder = FirDeclaration::isUsedInFileControlFlowGraphBuilder,
+                )
+
                 performCustomResolveUnderLock(target) {
                     calculateControlFlowGraph(target)
                 }
@@ -153,10 +162,16 @@ private class LLFirBodyTargetResolver(target: LLFirResolveTarget) : LLFirAbstrac
             is FirScript -> {
                 if (target.resolvePhase >= resolverPhase) return true
 
-                // resolve properties so they are available for CFG building in resolveScript
-                resolveMembersForControlFlowGraph(target)
+                // resolve properties so they are available for CFG building
+                resolveMembersForControlFlowGraph(
+                    declarationWithMembers = target,
+                    withDeclaration = this::withScript,
+                    declarationsProvider = FirScript::declarations,
+                    isUsedInControlFlowBuilder = FirDeclaration::isUsedInScriptControlFlowGraphBuilder,
+                )
+
                 performCustomResolveUnderLock(target) {
-                    resolve(target, BodyStateKeepers.SCRIPT)
+                    calculateControlFlowGraph(target)
                 }
 
                 return true
@@ -193,12 +208,20 @@ private class LLFirBodyTargetResolver(target: LLFirResolveTarget) : LLFirAbstrac
         target.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(controlFlowGraph))
     }
 
-    private fun resolveMembersForControlFlowGraph(target: FirRegularClass) {
-        withRegularClass(target) {
-            for (member in target.declarations) {
-                if (member is FirControlFlowGraphOwner && member.isUsedInControlFlowGraphBuilderForClass) {
-                    member.lazyResolveToPhase(resolverPhase.previous)
-                    performResolve(member)
+    private inline fun <T : FirElementWithResolveState> resolveMembersForControlFlowGraph(
+        declarationWithMembers: T,
+        withDeclaration: (T, () -> Unit) -> Unit,
+        declarationsProvider: (T) -> List<FirDeclaration>,
+        crossinline isUsedInControlFlowBuilder: (FirDeclaration) -> Boolean,
+    ) {
+        val declarations = declarationsProvider(declarationWithMembers)
+        if (declarations.none(isUsedInControlFlowBuilder)) return
+
+        withDeclaration(declarationWithMembers) {
+            for (declaration in declarations) {
+                if (isUsedInControlFlowBuilder(declaration)) {
+                    declaration.lazyResolveToPhase(resolverPhase.previous)
+                    performResolve(declaration)
                 }
             }
         }
@@ -222,17 +245,6 @@ private class LLFirBodyTargetResolver(target: LLFirResolveTarget) : LLFirAbstrac
         target.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(controlFlowGraph))
     }
 
-    private fun resolveMembersForControlFlowGraph(target: FirFile) {
-        withFile(target) {
-            for (member in target.declarations) {
-                if (member is FirControlFlowGraphOwner && member.isUsedInControlFlowGraphBuilderForFile) {
-                    member.lazyResolveToPhase(resolverPhase.previous)
-                    performResolve(member)
-                }
-            }
-        }
-    }
-
     private fun calculateControlFlowGraph(target: FirScript) {
         checkWithAttachment(
             target.controlFlowGraphReference == null,
@@ -249,17 +261,6 @@ private class LLFirBodyTargetResolver(target: LLFirResolveTarget) : LLFirAbstrac
             }
 
         target.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(controlFlowGraph))
-    }
-
-    private fun resolveMembersForControlFlowGraph(target: FirScript) {
-        withScript(target) {
-            for (member in target.declarations) {
-                if (member is FirControlFlowGraphOwner && member.isUsedInControlFlowGraphBuilderForScript) {
-                    member.lazyResolveToPhase(resolverPhase.previous)
-                    performResolve(member)
-                }
-            }
-        }
     }
 
     private fun resolveCodeFragmentContext(firCodeFragment: FirCodeFragment) {
@@ -311,7 +312,6 @@ private class LLFirBodyTargetResolver(target: LLFirResolveTarget) : LLFirAbstrac
             is FirVariable -> resolve(target, BodyStateKeepers.VARIABLE)
             is FirAnonymousInitializer -> resolve(target, BodyStateKeepers.ANONYMOUS_INITIALIZER)
             is FirDanglingModifierList,
-            is FirFileAnnotationsContainer,
             is FirTypeAlias,
             -> {
                 // No bodies here
@@ -321,31 +321,13 @@ private class LLFirBodyTargetResolver(target: LLFirResolveTarget) : LLFirAbstrac
     }
 
     override fun rawResolve(target: FirElementWithResolveState) {
-        when (target) {
-            is FirScript -> {
-                resolveScript(target)
-                calculateControlFlowGraph(target)
-            }
-
-            else -> super.rawResolve(target)
-        }
+        super.rawResolve(target)
 
         LLFirDeclarationModificationService.bodyResolved(target, resolverPhase)
-    }
-
-    private fun resolveScript(script: FirScript) {
-        transformer.declarationsTransformer.withScript(script) {
-            script.parameters.forEach { it.transformSingle(transformer, ResolutionMode.ContextIndependent) }
-            script
-        }
     }
 }
 
 internal object BodyStateKeepers {
-    val SCRIPT: StateKeeper<FirScript, FirDesignation> = stateKeeper { _, _ ->
-        add(FirScript::controlFlowGraphReference, FirScript::replaceControlFlowGraphReference)
-    }
-
     val CODE_FRAGMENT: StateKeeper<FirCodeFragment, FirDesignation> = stateKeeper { _, _ ->
         add(FirCodeFragment::block, FirCodeFragment::replaceBlock, ::blockGuard)
     }
@@ -533,3 +515,12 @@ private class LLFirCodeFragmentContext(
     override val towerDataContext: FirTowerDataContext,
     override val smartCasts: Map<RealVariable, Set<ConeKotlinType>>,
 ) : FirCodeFragmentContext
+
+private val FirDeclaration.isUsedInFileControlFlowGraphBuilder: Boolean
+    get() = this is FirControlFlowGraphOwner && isUsedInControlFlowGraphBuilderForFile
+
+private val FirDeclaration.isUsedInScriptControlFlowGraphBuilder: Boolean
+    get() = this is FirControlFlowGraphOwner && isUsedInControlFlowGraphBuilderForScript
+
+private val FirDeclaration.isUsedInClassControlFlowGraphBuilder: Boolean
+    get() = this is FirControlFlowGraphOwner && isUsedInControlFlowGraphBuilderForClass

@@ -1,22 +1,29 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.backend.common.actualizer
 
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
+import org.jetbrains.kotlin.ir.expressions.IrMemberAccessExpression
+import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.IrSimpleType
-import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.util.DeepCopyIrTreeWithSymbols
+import org.jetbrains.kotlin.ir.util.SymbolRemapper
+import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.utils.memoryOptimizedMap
 
 internal class ActualizerSymbolRemapper(private val expectActualMap: Map<IrSymbol, IrSymbol>) : SymbolRemapper {
     override fun getDeclaredClass(symbol: IrClassSymbol) = symbol
 
+    override fun getDeclaredAnonymousInitializer(symbol: IrAnonymousInitializerSymbol) = symbol
+
     override fun getDeclaredScript(symbol: IrScriptSymbol) = symbol
 
-    override fun getDeclaredFunction(symbol: IrSimpleFunctionSymbol) = symbol
+    override fun getDeclaredSimpleFunction(symbol: IrSimpleFunctionSymbol) = symbol
 
     override fun getDeclaredProperty(symbol: IrPropertySymbol) = symbol
 
@@ -40,11 +47,11 @@ internal class ActualizerSymbolRemapper(private val expectActualMap: Map<IrSymbo
 
     override fun getDeclaredTypeAlias(symbol: IrTypeAliasSymbol) = symbol
 
+    override fun getDeclaredReturnableBlock(symbol: IrReturnableBlockSymbol): IrReturnableBlockSymbol = symbol
+
     override fun getReferencedClass(symbol: IrClassSymbol) = symbol.actualizeSymbol()
 
     override fun getReferencedScript(symbol: IrScriptSymbol) = symbol.actualizeSymbol()
-
-    override fun getReferencedClassOrNull(symbol: IrClassSymbol?) = symbol?.actualizeSymbol()
 
     override fun getReferencedEnumEntry(symbol: IrEnumEntrySymbol) = symbol.actualizeSymbol()
 
@@ -58,24 +65,32 @@ internal class ActualizerSymbolRemapper(private val expectActualMap: Map<IrSymbo
 
     override fun getReferencedValue(symbol: IrValueSymbol) = symbol.actualizeSymbol()
 
+    override fun getReferencedValueParameter(symbol: IrValueParameterSymbol) = symbol.actualizeSymbol<IrValueSymbol>()
+
     override fun getReferencedFunction(symbol: IrFunctionSymbol) = symbol.actualizeSymbol()
 
     override fun getReferencedProperty(symbol: IrPropertySymbol) = symbol.actualizeSymbol()
 
     override fun getReferencedSimpleFunction(symbol: IrSimpleFunctionSymbol) = symbol.actualizeSymbol()
 
-    override fun getReferencedReturnableBlock(symbol: IrReturnableBlockSymbol) = symbol.actualizeSymbol()
-
     override fun getReferencedClassifier(symbol: IrClassifierSymbol) = symbol.actualizeSymbol()
+
+    override fun getReferencedTypeParameter(symbol: IrTypeParameterSymbol) = symbol.actualizeSymbol<IrClassifierSymbol>()
+
+    override fun getReferencedReturnTarget(symbol: IrReturnTargetSymbol) = symbol.actualizeSymbol()
+
+    override fun getReferencedReturnableBlock(symbol: IrReturnableBlockSymbol) = symbol.actualizeSymbol<IrReturnTargetSymbol>()
 
     override fun getReferencedTypeAlias(symbol: IrTypeAliasSymbol) = symbol.actualizeSymbol()
 
-    private inline fun <reified S : IrSymbol> S.actualizeSymbol(): S = (expectActualMap[this] as? S) ?: this
+    private inline fun <reified S : IrSymbol> S.actualizeSymbol(): S {
+        val actualSymbol = expectActualMap[this] ?: return this
+        return actualSymbol as? S
+            ?: error("Unexpected type of actual symbol. Expected: ${S::class.java.simpleName}, got ${actualSymbol.javaClass.simpleName}")
+    }
 }
 
-internal open class ActualizerVisitor(private val symbolRemapper: SymbolRemapper, typeRemapper: TypeRemapper) :
-    DeepCopyIrTreeWithSymbols(symbolRemapper, typeRemapper, SymbolRenamer.DEFAULT) {
-
+internal open class ActualizerVisitor(private val symbolRemapper: SymbolRemapper) : DeepCopyIrTreeWithSymbols(symbolRemapper) {
     // We shouldn't touch attributes, because Fir2Ir wouldn't set them to anything meaningful anyway.
     // So it would be better to have them as is, i.e. referring to `this`, not some random node removed from the tree
     override fun <D : IrAttributeContainer> D.processAttributes(other: IrAttributeContainer?): D = this
@@ -186,4 +201,59 @@ internal open class ActualizerVisitor(private val symbolRemapper: SymbolRemapper
             it.transformChildren(this, null)
             it.transformAnnotations(declaration)
         }
+
+    // FIXME(KT-67752): This is copied verbatim from DeepCopyIrTreeWithSymbols
+    // We could make the method in DeepCopyIrTreeWithSymbols protected instead of private, but that will break compilation of
+    // the Compose plugin
+    private fun <T : IrMemberAccessExpression<*>> T.transformReceiverArguments(original: T): T =
+        apply {
+            dispatchReceiver = original.dispatchReceiver?.transform()
+            extensionReceiver = original.extensionReceiver?.transform()
+        }
+
+    // FIXME(KT-67752): This is copied verbatim from DeepCopyIrTreeWithSymbols
+    // We could make the method in DeepCopyIrTreeWithSymbols protected instead of private, but that will break compilation of
+    // the Compose plugin
+    private fun IrMemberAccessExpression<*>.copyRemappedTypeArgumentsFrom(other: IrMemberAccessExpression<*>) {
+        assert(typeArgumentsCount == other.typeArgumentsCount) {
+            "Mismatching type arguments: $typeArgumentsCount vs ${other.typeArgumentsCount} "
+        }
+        for (i in 0 until typeArgumentsCount) {
+            putTypeArgument(i, other.getTypeArgument(i)?.remapType())
+        }
+    }
+
+    // FIXME(KT-67752): This is copied verbatim from DeepCopyIrTreeWithSymbols
+    // We could make the method in DeepCopyIrTreeWithSymbols protected instead of private, but that will break compilation of
+    // the Compose plugin
+    private fun <T : IrMemberAccessExpression<*>> T.transformValueArguments(original: T) {
+        transformReceiverArguments(original)
+        for (i in 0 until original.valueArgumentsCount) {
+            putValueArgument(i, original.getValueArgument(i)?.transform())
+        }
+    }
+
+    override fun visitConstructorCall(expression: IrConstructorCall): IrConstructorCall {
+        val constructorSymbol = symbolRemapper.getReferencedConstructor(expression.symbol)
+
+        // This is a hack to allow actualizing annotation constructors without parameters with constructors with default arguments.
+        // Without it, attempting to call such a constructor in common code will result in either a backend exception or in linkage error.
+        // See KT-67488 for details.
+        val valueArgumentsCount =
+            if (constructorSymbol.isBound) constructorSymbol.owner.valueParameters.size else expression.valueArgumentsCount
+
+        return IrConstructorCallImpl(
+            expression.startOffset,
+            expression.endOffset,
+            expression.type.remapType(),
+            constructorSymbol,
+            expression.typeArgumentsCount,
+            expression.constructorTypeArgumentsCount,
+            valueArgumentsCount,
+            mapStatementOrigin(expression.origin),
+        ).apply {
+            copyRemappedTypeArgumentsFrom(expression)
+            transformValueArguments(expression)
+        }.processAttributes(expression)
+    }
 }

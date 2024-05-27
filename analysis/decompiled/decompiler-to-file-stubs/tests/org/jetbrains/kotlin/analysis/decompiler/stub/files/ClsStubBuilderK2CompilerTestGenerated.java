@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.analysis.decompiler.stub.files;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -280,6 +279,12 @@ public class ClsStubBuilderK2CompilerTestGenerated extends AbstractClsStubBuilde
   @TestMetadata("TopLevelMembersKt")
   public void testTopLevelMembersKt() {
     runTest("analysis/decompiled/decompiler-to-file-stubs/testData/clsFileStubBuilder/TopLevelMembersKt/");
+  }
+
+  @Test
+  @TestMetadata("TypeAliasExpansion")
+  public void testTypeAliasExpansion() {
+    runTest("analysis/decompiled/decompiler-to-file-stubs/testData/clsFileStubBuilder/TypeAliasExpansion/");
   }
 
   @Test

@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.assignment.plugin.AbstractAssignmentPluginDiagnostic
 import org.jetbrains.kotlin.assignment.plugin.AbstractFirLightTreeBlackBoxCodegenTestForAssignmentPlugin
 import org.jetbrains.kotlin.assignment.plugin.AbstractFirPsiAssignmentPluginDiagnosticTest
 import org.jetbrains.kotlin.assignment.plugin.AbstractIrBlackBoxCodegenTestAssignmentPlugin
+import org.jetbrains.kotlin.compiler.plugins.AbstractPluginInteractionFirBlackBoxCodegenTest
 import org.jetbrains.kotlin.fir.plugin.runners.AbstractFirLightTreePluginBlackBoxCodegenTest
 import org.jetbrains.kotlin.fir.plugin.runners.AbstractFirLoadK2CompiledWithPluginJsKotlinTest
 import org.jetbrains.kotlin.fir.plugin.runners.AbstractFirLoadK2CompiledWithPluginJvmKotlinTest
@@ -56,12 +57,10 @@ private class ExcludePattern {
         private const val MEMBER_ALIAS = "(^removeMemberTypeAlias)|(^addMemberTypeAlias)"
 
         private const val ALL_EXPECT = "(^.*Expect.*)"
-        private const val COMPANION_CONSTANT = "(^companionConstantChanged)"
 
         internal val forK2 = listOf(
             ALL_EXPECT, // KT-63125 - Partially related to single-module expect-actual tests, but regexp is really wide
             MEMBER_ALIAS, // KT-55195 - Invalid for K2
-            COMPANION_CONSTANT // KT-56242 - Work in progress
         ).joinToString("|")
     }
 }
@@ -252,6 +251,10 @@ fun main(args: Array<String>) {
                 model("codegen")
             }
 
+            testClass<AbstractFirParcelizeBytecodeListingTest> {
+                model("codegen")
+            }
+
             testClass<AbstractParcelizeDiagnosticTest> {
                 model("diagnostics", excludedPattern = excludedFirTestdataPattern)
             }
@@ -434,6 +437,12 @@ fun main(args: Array<String>) {
             }
             testClass<AbstractFirLightTreeBlackBoxCodegenTestForAssignmentPlugin> {
                 model("codegen", excludedPattern = excludedFirTestdataPattern)
+            }
+        }
+
+        testGroup("plugins/plugins-interactions-testing/tests-gen", "plugins/plugins-interactions-testing/testData") {
+            testClass<AbstractPluginInteractionFirBlackBoxCodegenTest> {
+                model("box", excludedPattern = excludedFirTestdataPattern)
             }
         }
     }

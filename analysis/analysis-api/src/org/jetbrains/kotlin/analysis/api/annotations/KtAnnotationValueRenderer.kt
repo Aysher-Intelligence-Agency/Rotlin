@@ -5,58 +5,95 @@
 
 package org.jetbrains.kotlin.analysis.api.annotations
 
+import org.jetbrains.kotlin.analysis.api.KaStarTypeProjection
+import org.jetbrains.kotlin.analysis.api.KaTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.renderer.render
 
-internal object KtAnnotationValueRenderer {
-    fun render(value: KtAnnotationValue): String = buildString {
+internal object KaAnnotationValueRenderer {
+    fun render(value: KaAnnotationValue): String = buildString {
         renderConstantValue(value)
     }
 
-    private fun StringBuilder.renderConstantValue(value: KtAnnotationValue) {
+    private fun StringBuilder.renderConstantValue(value: KaAnnotationValue) {
         when (value) {
-            is KtAnnotationApplicationValue -> {
+            is KaAnnotationApplicationValue -> {
                 renderAnnotationConstantValue(value)
             }
-            is KtArrayAnnotationValue -> {
+            is KaArrayAnnotationValue -> {
                 renderArrayConstantValue(value)
             }
-            is KtEnumEntryAnnotationValue -> {
+            is KaEnumEntryAnnotationValue -> {
                 renderEnumEntryConstantValue(value)
             }
-            is KtConstantAnnotationValue -> {
+            is KaConstantAnnotationValue -> {
                 renderConstantAnnotationValue(value)
             }
-            KtUnsupportedAnnotationValue -> {
+            is KaUnsupportedAnnotationValue -> {
                 append("error(\"non-annotation value\")")
             }
-            is KtKClassAnnotationValue -> {
+            is KaKClassAnnotationValue -> {
                 renderKClassAnnotationValue(value)
             }
         }
     }
 
-    private fun StringBuilder.renderKClassAnnotationValue(value: KtKClassAnnotationValue) {
-        when (value) {
-            is KtKClassAnnotationValue.KtErrorClassAnnotationValue -> append("UNRESOLVED_CLASS")
-            is KtKClassAnnotationValue.KtLocalKClassAnnotationValue -> append(value.ktClass.nameAsName?.render())
-            is KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue -> append(value.classId.asSingleFqName().render())
-        }
+    private fun StringBuilder.renderKClassAnnotationValue(value: KaKClassAnnotationValue) {
+        renderType(value.type)
         append("::class")
     }
 
-    private fun StringBuilder.renderConstantAnnotationValue(value: KtConstantAnnotationValue) {
+    private fun StringBuilder.renderType(type: KaType) {
+        if (type.annotations.isNotEmpty()) {
+            for (annotation in type.annotations) {
+                append('@')
+                renderAnnotationApplication(annotation)
+                append(' ')
+            }
+        }
+
+        when (type) {
+            is KaUsualClassType -> {
+                val classId = type.classId
+                if (classId.isLocal) {
+                    append(classId.shortClassName.render())
+                } else {
+                    append(classId.asSingleFqName().render())
+                }
+
+                if (type.ownTypeArguments.isNotEmpty()) {
+                    append('<')
+                    renderWithSeparator(type.ownTypeArguments, ", ") { typeProjection ->
+                        when (typeProjection) {
+                            is KaStarTypeProjection -> append('*')
+                            is KaTypeArgumentWithVariance -> renderType(typeProjection.type)
+                        }
+                    }
+                    append('>')
+                }
+            }
+            is KaClassErrorType -> {
+                append("UNRESOLVED_CLASS")
+            }
+            else -> {
+                append(type.asStringForDebugging())
+            }
+        }
+    }
+
+    private fun StringBuilder.renderConstantAnnotationValue(value: KaConstantAnnotationValue) {
         append(value.constantValue.renderAsKotlinConstant())
     }
 
-    private fun StringBuilder.renderEnumEntryConstantValue(value: KtEnumEntryAnnotationValue) {
+    private fun StringBuilder.renderEnumEntryConstantValue(value: KaEnumEntryAnnotationValue) {
         append(value.callableId?.asSingleFqName()?.asString())
     }
 
-    private fun StringBuilder.renderAnnotationConstantValue(application: KtAnnotationApplicationValue) {
+    private fun StringBuilder.renderAnnotationConstantValue(application: KaAnnotationApplicationValue) {
         renderAnnotationApplication(application.annotationValue)
     }
 
-    private fun StringBuilder.renderAnnotationApplication(value: KtAnnotationApplicationWithArgumentsInfo) {
+    private fun StringBuilder.renderAnnotationApplication(value: KaAnnotationApplicationWithArgumentsInfo) {
         append(value.classId)
         if (value.arguments.isNotEmpty()) {
             append("(")
@@ -65,19 +102,19 @@ internal object KtAnnotationValueRenderer {
         }
     }
 
-    private fun StringBuilder.renderArrayConstantValue(value: KtArrayAnnotationValue) {
+    private fun StringBuilder.renderArrayConstantValue(value: KaArrayAnnotationValue) {
         append("[")
         renderConstantValueList(value.values)
         append("]")
     }
 
-    private fun StringBuilder.renderConstantValueList(list: Collection<KtAnnotationValue>) {
+    private fun StringBuilder.renderConstantValueList(list: Collection<KaAnnotationValue>) {
         renderWithSeparator(list, ", ") { constantValue ->
             renderConstantValue(constantValue)
         }
     }
 
-    private fun StringBuilder.renderNamedConstantValueList(list: Collection<KtNamedAnnotationValue>) {
+    private fun StringBuilder.renderNamedConstantValueList(list: Collection<KaNamedAnnotationValue>) {
         renderWithSeparator(list, ", ") { namedValue ->
             append(namedValue.name)
             append(" = ")

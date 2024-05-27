@@ -5,39 +5,39 @@
 
 package org.jetbrains.kotlin.fir.backend
 
+import org.jetbrains.kotlin.backend.common.IrSpecialAnnotationsProvider
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.generators.*
+import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
-import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrLock
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.linkage.IrProvider
-import org.jetbrains.kotlin.ir.overrides.IrFakeOverrideBuilder
 import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.SymbolTable
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 class Fir2IrComponentsStorage(
     override val session: FirSession,
     override val scopeSession: ScopeSession,
+    val fir: List<FirFile>,
     override val irFactory: IrFactory,
     override val extensions: Fir2IrExtensions,
     override val configuration: Fir2IrConfiguration,
     override val visibilityConverter: Fir2IrVisibilityConverter,
-    irFakeOverrideBuilderProvider: (IrBuiltIns) -> IrFakeOverrideBuilder,
-    moduleDescriptor: FirModuleDescriptor,
     commonMemberStorage: Fir2IrCommonMemberStorage,
     irMangler: KotlinMangler.IrMangler,
-    specialSymbolProvider: Fir2IrSpecialSymbolProvider,
-    initializedIrBuiltIns: IrBuiltInsOverFir?
+    kotlinBuiltIns: KotlinBuiltIns,
+    override val specialAnnotationsProvider: IrSpecialAnnotationsProvider?,
+    override val firProvider: FirProviderWithGeneratedFiles,
+    syntheticIrBuiltinsSymbolsContainer: Fir2IrSyntheticIrBuiltinsSymbolsContainer,
 ) : Fir2IrComponents {
-    override val firProvider: FirProviderWithGeneratedFiles = FirProviderWithGeneratedFiles(
-        session,
-        commonMemberStorage.previousFirProviders
-    )
+    override val filesBeingCompiled: Set<FirFile>? = runIf(configuration.allowNonCachedDeclarations) { fir.toSet() }
 
-    override val signatureComposer: FirBasedSignatureComposer = commonMemberStorage.firSignatureComposer
+    val moduleDescriptor: FirModuleDescriptor = FirModuleDescriptor.createSourceModuleDescriptor(session, kotlinBuiltIns)
+
     override val symbolTable: SymbolTable = commonMemberStorage.symbolTable
 
     private val conversionScope = Fir2IrConversionScope(configuration)
@@ -50,13 +50,10 @@ class Fir2IrComponentsStorage(
     override val callablesGenerator: Fir2IrCallableDeclarationsGenerator = Fir2IrCallableDeclarationsGenerator(this)
     override val classifiersGenerator: Fir2IrClassifiersGenerator = Fir2IrClassifiersGenerator(this)
     override val lazyDeclarationsGenerator: Fir2IrLazyDeclarationsGenerator = Fir2IrLazyDeclarationsGenerator(this)
+    override val dataClassMembersGenerator: Fir2IrDataClassMembersGenerator = Fir2IrDataClassMembersGenerator(this, commonMemberStorage)
 
     // builtins should go after storages and generators, because they use them during initialization
-    override val irBuiltIns: IrBuiltInsOverFir = initializedIrBuiltIns ?: IrBuiltInsOverFir(
-        this, configuration.languageVersionSettings, moduleDescriptor, irMangler
-    )
-    override val builtIns: Fir2IrBuiltIns = Fir2IrBuiltIns(this, specialSymbolProvider)
-    override val fakeOverrideBuilder: IrFakeOverrideBuilder = irFakeOverrideBuilderProvider(irBuiltIns)
+    override val builtins: Fir2IrBuiltinSymbolsContainer = Fir2IrBuiltinSymbolsContainer(this, syntheticIrBuiltinsSymbolsContainer)
 
     override val irProviders: List<IrProvider> = emptyList()
 
@@ -66,8 +63,8 @@ class Fir2IrComponentsStorage(
 
     override val annotationGenerator: AnnotationGenerator = AnnotationGenerator(this)
     override val callGenerator: CallAndReferenceGenerator = CallAndReferenceGenerator(this, fir2IrVisitor, conversionScope)
-    @FirBasedFakeOverrideGenerator
-    override val fakeOverrideGenerator: FakeOverrideGenerator = FakeOverrideGenerator(this, conversionScope)
+
+    override val lazyFakeOverrideGenerator: Fir2IrLazyFakeOverrideGenerator = Fir2IrLazyFakeOverrideGenerator(this)
     override val delegatedMemberGenerator: DelegatedMemberGenerator = DelegatedMemberGenerator(this)
     override val symbolsMappingForLazyClasses: Fir2IrSymbolsMappingForLazyClasses = Fir2IrSymbolsMappingForLazyClasses()
 
@@ -81,6 +78,6 @@ class Fir2IrComponentsStorage(
             get() = irMangler
 
         override val firMangler: FirMangler
-            get() = commonMemberStorage.firSignatureComposer.mangler
+            get() = commonMemberStorage.mangler
     }
 }

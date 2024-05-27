@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisS
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiMode;
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.expressionTypeProvider.AbstractExpectedExpressionTypeTest;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -80,6 +79,18 @@ public class Fe10IdeNormalAnalysisSourceModuleExpectedExpressionTypeTestGenerate
   @TestMetadata("arrayAccessExpressionSetWithTypeParameters.kt")
   public void testArrayAccessExpressionSetWithTypeParameters() {
     runTest("analysis/analysis-api/testData/components/expressionTypeProvider/expectedExpressionType/arrayAccessExpressionSetWithTypeParameters.kt");
+  }
+
+  @Test
+  @TestMetadata("callableReference_consumer.kt")
+  public void testCallableReference_consumer() {
+    runTest("analysis/analysis-api/testData/components/expressionTypeProvider/expectedExpressionType/callableReference_consumer.kt");
+  }
+
+  @Test
+  @TestMetadata("callableReference_function.kt")
+  public void testCallableReference_function() {
+    runTest("analysis/analysis-api/testData/components/expressionTypeProvider/expectedExpressionType/callableReference_function.kt");
   }
 
   @Test

@@ -54,6 +54,7 @@ import org.jetbrains.kotlin.library.impl.BuiltInsPlatform
 import org.jetbrains.kotlin.library.impl.buildKotlinLibrary
 import org.jetbrains.kotlin.library.metadata.KlibMetadataFactories
 import org.jetbrains.kotlin.library.metadata.KlibMetadataVersion
+import org.jetbrains.kotlin.platform.wasm.WasmTarget
 import org.jetbrains.kotlin.progress.IncrementalNextRoundException
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
 import org.jetbrains.kotlin.psi.KtFile
@@ -103,6 +104,7 @@ fun generateKLib(
     moduleFragment: IrModuleFragment,
     diagnosticReporter: DiagnosticReporter,
     builtInsPlatform: BuiltInsPlatform = BuiltInsPlatform.JS,
+    wasmTarget: WasmTarget? = null,
 ) {
     val configuration = depsDescriptors.compilerConfiguration
     val allDependencies = depsDescriptors.allDependencies
@@ -122,6 +124,7 @@ fun generateKLib(
         abiVersion,
         jsOutputName,
         builtInsPlatform,
+        wasmTarget,
     )
 }
 
@@ -615,6 +618,7 @@ fun serializeModuleIntoKlib(
     abiVersion: KotlinAbiVersion,
     jsOutputName: String?,
     builtInsPlatform: BuiltInsPlatform = BuiltInsPlatform.JS,
+    wasmTarget: WasmTarget? = null,
 ) {
     val moduleExportedNames = moduleFragment.collectExportedNames()
     val incrementalResultsConsumer = configuration.get(JSConfigurationKeys.INCREMENTAL_RESULTS_CONSUMER)
@@ -681,7 +685,6 @@ fun serializeModuleIntoKlib(
 
     val versions = KotlinLibraryVersioning(
         abiVersion = abiVersion,
-        libraryVersion = null,
         compilerVersion = KotlinCompilerVersion.VERSION,
         metadataVersion = KlibMetadataVersion.INSTANCE.toString(),
     )
@@ -689,6 +692,10 @@ fun serializeModuleIntoKlib(
     val properties = Properties().also { p ->
         if (jsOutputName != null) {
             p.setProperty(KLIB_PROPERTY_JS_OUTPUT_NAME, jsOutputName)
+        }
+        val wasmTargets = listOfNotNull(/* in the future there might be multiple WASM targets */ wasmTarget)
+        if (wasmTargets.isNotEmpty()) {
+            p.setProperty(KLIB_PROPERTY_WASM_TARGETS, wasmTargets.joinToString(" ") { it.alias })
         }
         if (containsErrorCode) {
             p.setProperty(KLIB_PROPERTY_CONTAINS_ERROR_CODE, "true")

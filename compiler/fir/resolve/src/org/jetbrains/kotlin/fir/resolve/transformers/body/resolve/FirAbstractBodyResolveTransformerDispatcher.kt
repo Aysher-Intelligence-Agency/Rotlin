@@ -217,13 +217,13 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
         FirExpressionsResolveTransformer::transformTypeOperatorCall,
     )
 
-    override fun transformAssignmentOperatorStatement(
-        assignmentOperatorStatement: FirAssignmentOperatorStatement,
+    override fun transformAugmentedAssignment(
+        augmentedAssignment: FirAugmentedAssignment,
         data: ResolutionMode,
     ): FirStatement = expressionTransformation(
-        assignmentOperatorStatement,
+        augmentedAssignment,
         data,
-        FirExpressionsResolveTransformer::transformAssignmentOperatorStatement,
+        FirExpressionsResolveTransformer::transformAugmentedAssignment,
     )
 
     override fun transformIncrementDecrementExpression(
@@ -298,8 +298,8 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
         FirDeclarationsResolveTransformer::transformWrappedDelegateExpression,
     )
 
-    override fun <T> transformLiteralExpression(
-        literalExpression: FirLiteralExpression<T>,
+    override fun transformLiteralExpression(
+        literalExpression: FirLiteralExpression,
         data: ResolutionMode,
     ): FirStatement = expressionTransformation(
         literalExpression,
@@ -360,13 +360,13 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
         FirExpressionsResolveTransformer::transformDelegatedConstructorCall,
     )
 
-    override fun transformAugmentedArraySetCall(
-        augmentedArraySetCall: FirAugmentedArraySetCall,
+    override fun transformIndexedAccessAugmentedAssignment(
+        indexedAccessAugmentedAssignment: FirIndexedAccessAugmentedAssignment,
         data: ResolutionMode,
     ): FirStatement = expressionTransformation(
-        augmentedArraySetCall,
+        indexedAccessAugmentedAssignment,
         data,
-        FirExpressionsResolveTransformer::transformAugmentedArraySetCall,
+        FirExpressionsResolveTransformer::transformIndexedAccessAugmentedAssignment,
     )
 
     override fun transformSafeCallExpression(
@@ -455,15 +455,6 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
         danglingModifierList,
         data,
         FirDeclarationsResolveTransformer::transformDanglingModifierList,
-    )
-
-    override fun transformFileAnnotationsContainer(
-        fileAnnotationsContainer: FirFileAnnotationsContainer,
-        data: ResolutionMode,
-    ): FirFileAnnotationsContainer = declarationTransformation(
-        fileAnnotationsContainer,
-        data,
-        FirDeclarationsResolveTransformer::transformFileAnnotationsContainer,
     )
 
     override fun transformProperty(

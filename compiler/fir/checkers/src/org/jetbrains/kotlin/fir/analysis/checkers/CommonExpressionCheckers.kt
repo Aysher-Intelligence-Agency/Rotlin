@@ -67,6 +67,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
             FirConventionFunctionCallChecker,
             FirDivisionByZeroChecker,
             FirConstructorCallChecker,
+            FirDataClassCopyUsageWillBecomeInaccessibleChecker,
             FirSpreadOfNullableChecker,
             FirAssignmentOperatorCallChecker,
             FirNamedVarargChecker,
@@ -101,6 +102,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
             FirWhenSubjectChecker,
             FirCommaInWhenConditionChecker,
             FirConfusingWhenBranchSyntaxChecker,
+            FirWhenGuardChecker,
         )
 
     override val loopExpressionCheckers: Set<FirLoopExpressionChecker>
@@ -154,7 +156,6 @@ object CommonExpressionCheckers : ExpressionCheckers() {
 
     override val typeOperatorCallCheckers: Set<FirTypeOperatorCallChecker>
         get() = setOf(
-            FirUselessTypeOperationCallChecker,
             FirCastOperatorsChecker
         )
 
@@ -188,5 +189,10 @@ object CommonExpressionCheckers : ExpressionCheckers() {
         get() = setOf(
             FirTypeArgumentsOfQualifierOfCallableReferenceChecker,
             FirCustomEnumEntriesMigrationReferenceChecker,
+        )
+
+    override val stringConcatenationCallCheckers: Set<FirStringConcatenationCallChecker>
+        get() = setOf(
+            FirMultiDollarInterpolationChecker,
         )
 }

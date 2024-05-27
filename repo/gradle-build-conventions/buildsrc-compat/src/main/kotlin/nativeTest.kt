@@ -2,7 +2,10 @@ import TestProperty.*
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.tasks.Sync
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.testing.Test
+import org.gradle.kotlin.dsl.environment
 import org.gradle.kotlin.dsl.project
 import java.io.File
 
@@ -28,7 +31,9 @@ private enum class TestProperty(shortName: String) {
     EXECUTION_TIMEOUT("executionTimeout"),
     SANITIZER("sanitizer"),
     SHARED_TEST_EXECUTION("sharedTestExecution"),
-    TEAMCITY("teamcity");
+    EAGER_GROUP_CREATION("eagerGroupCreation"),
+    TEAMCITY("teamcity"),
+    LATEST_RELEASED_COMPILER_PATH("latestReleasedCompilerPath");
 
     val fullName = "kotlin.internal.native.test.$shortName"
 }
@@ -89,6 +94,7 @@ private fun Test.ComputedTestProperties(init: ComputedTestProperties.() -> Unit)
  *   along with Kotlin/Native stdlib KLIB and Kotlin/Native platform KLIBs (the latter only if [requirePlatformLibs] is `true`).
  * @param compilerPluginDependencies The [Configuration]s that provide compiler plugins to be enabled for the Kotlin/Native compiler
  *   for the duration of test execution.
+ * @param allowParallelExecution if false, force junit to execute test sequentially
  */
 fun Project.nativeTest(
     taskName: String,
@@ -97,11 +103,15 @@ fun Project.nativeTest(
     customCompilerDependencies: List<Configuration> = emptyList(),
     customTestDependencies: List<Configuration> = emptyList(),
     compilerPluginDependencies: List<Configuration> = emptyList(),
+    allowParallelExecution: Boolean = true,
+    releasedCompilerDist: TaskProvider<Sync>? = null,
+    maxMetaspaceSizeMb: Int = 512,
     body: Test.() -> Unit = {},
 ) = projectTest(
     taskName,
     jUnitMode = JUnitMode.JUnit5,
-    maxHeapSizeMb = 3072 // Extra heap space for Kotlin/Native compiler.
+    maxHeapSizeMb = 3072, // Extra heap space for Kotlin/Native compiler.
+    maxMetaspaceSizeMb = maxMetaspaceSizeMb
 ) {
     group = "verification"
 
@@ -122,7 +132,7 @@ fun Project.nativeTest(
         // additional stack frames more compared to the old one because of another launcher, etc. and it turns out this is not enough.
         jvmArgs("-Xss2m")
 
-        val availableCpuCores: Int = Runtime.getRuntime().availableProcessors()
+        val availableCpuCores: Int = if (allowParallelExecution) Runtime.getRuntime().availableProcessors() else 1
         if (!kotlinBuildProperties.isTeamcityBuild
             && minOf(kotlinBuildProperties.junit5NumberOfThreadsForParallelExecution ?: 16, availableCpuCores) > 4
         ) {
@@ -197,6 +207,14 @@ fun Project.nativeTest(
             compute(EXECUTION_TIMEOUT)
             compute(SANITIZER)
             compute(SHARED_TEST_EXECUTION)
+            compute(EAGER_GROUP_CREATION)
+
+            computeLazy(LATEST_RELEASED_COMPILER_PATH) {
+                if (releasedCompilerDist != null) dependsOn(releasedCompilerDist)
+                lazy {
+                    releasedCompilerDist?.get()?.destinationDir?.absolutePath
+                }
+            }
 
             // Pass whether tests are running at TeamCity.
             computePrivate(TEAMCITY) { kotlinBuildProperties.isTeamcityBuild.toString() }
@@ -207,6 +225,10 @@ fun Project.nativeTest(
 
         useJUnitPlatform {
             tag?.let { includeTags(it) }
+        }
+
+        if (!allowParallelExecution) {
+            systemProperty("junit.jupiter.execution.parallel.enabled", "false")
         }
 
         doFirst {
@@ -234,5 +256,15 @@ fun Project.nativeTest(
                 """.trimIndent()
             )
         }
+
+    // This environment variable is here for two reasons:
+    // 1. It is also used for the cinterop tool itself. So it is good to have it here as well,
+    //    just to make the tests match the production as closely as possible.
+    // 2. It disables a certain machinery in libclang that is known to cause troubles.
+    //    (see e.g. https://youtrack.jetbrains.com/issue/KT-61299 for more details).
+    //    Strictly speaking, it is not necessary since we beat them by other means,
+    //    but it is still nice to have it as a failsafe.
+    environment("LIBCLANG_DISABLE_CRASH_RECOVERY" to "1")
+
     body()
 }

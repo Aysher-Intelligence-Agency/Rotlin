@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -9,16 +9,11 @@ import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.cli.AbstractCliTest
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.konan.test.blackbox.support.ClassLevelProperty
-import org.jetbrains.kotlin.konan.test.blackbox.support.EnforcedProperty
-import org.jetbrains.kotlin.konan.test.blackbox.support.LoggedData
-import org.jetbrains.kotlin.konan.test.blackbox.support.TestCompilerArgs
-import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.LibraryCompilation
-import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.ObjCFrameworkCompilation
-import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationArtifact
-import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationResult
+import org.jetbrains.kotlin.konan.test.blackbox.support.*
+import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationResult.Companion.assertSuccess
 import org.jetbrains.kotlin.konan.test.blackbox.support.group.FirPipeline
+import org.jetbrains.kotlin.konan.test.blackbox.support.settings.CacheMode
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.PipelineType
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.Settings
 import org.jetbrains.kotlin.test.KotlinTestUtils
@@ -27,6 +22,7 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 abstract class CompilerOutputTestBase : AbstractNativeSimpleTest() {
     @Test
@@ -101,6 +97,84 @@ abstract class CompilerOutputTestBase : AbstractNativeSimpleTest() {
         KotlinTestUtils.assertEqualsToFile(goldenData, compilationResult.toOutput())
     }
 
+    @Test
+    fun testLoggingWarningWithDistCache() {
+        val rootDir = File("native/native.tests/testData/compilerOutput/runtimeLogging")
+        val testCase = generateTestCaseWithSingleFile(
+            rootDir.resolve("main.kt"),
+            freeCompilerArgs = TestCompilerArgs("-Xruntime-logs=gc=info"),
+            extras = TestCase.NoTestRunnerExtras("main"),
+            testKind = TestKind.STANDALONE_NO_TR,
+        )
+        val expectedArtifact = TestCompilationArtifact.Executable(buildDir.resolve("logging_warning_with_cache"))
+        val compilation = ExecutableCompilation(
+            testRunSettings,
+            freeCompilerArgs = testCase.freeCompilerArgs,
+            sourceModules = testCase.modules,
+            extras = testCase.extras,
+            dependencies = emptyList(),
+            expectedArtifact = expectedArtifact,
+        )
+        val compilationResult = compilation.result
+        val goldenData = rootDir.resolve(
+            if (testRunSettings.get<CacheMode>().useStaticCacheForDistributionLibraries) "logging_cache_warning.txt" else "empty.txt"
+        )
+
+        KotlinTestUtils.assertEqualsToFile(goldenData, compilationResult.toOutput())
+    }
+
+    @Test
+    fun testLoggingInvalid() {
+        Assumptions.assumeFalse(testRunSettings.get<CacheMode>().useStaticCacheForDistributionLibraries)
+        val rootDir = File("native/native.tests/testData/compilerOutput/runtimeLogging")
+        val testCase = generateTestCaseWithSingleFile(
+            rootDir.resolve("main.kt"),
+            freeCompilerArgs = TestCompilerArgs("-Xruntime-logs=invalid=unknown,logging=debug"),
+            extras = TestCase.NoTestRunnerExtras("main"),
+            testKind = TestKind.STANDALONE_NO_TR,
+        )
+        val expectedArtifact = TestCompilationArtifact.Executable(buildDir.resolve("logging_invalid"))
+        val compilation = ExecutableCompilation(
+            testRunSettings,
+            freeCompilerArgs = testCase.freeCompilerArgs,
+            sourceModules = testCase.modules,
+            extras = testCase.extras,
+            dependencies = emptyList(),
+            expectedArtifact = expectedArtifact,
+        )
+        val compilationResult = compilation.result
+        val goldenData = rootDir.resolve("logging_invalid_error.txt")
+
+        KotlinTestUtils.assertEqualsToFile(goldenData, compilationResult.toOutput())
+    }
+
+    @Test
+    fun testPhaseVerboseLogging() {
+        val rootDir = File("native/native.tests/testData/compilerOutput/phaseVerboseLogging")
+        val testCase = generateTestCaseWithSingleFile(
+            rootDir.resolve("main.kt"),
+            freeCompilerArgs = TestCompilerArgs("-Xverbose-phases=Linker"),
+            extras = TestCase.NoTestRunnerExtras("main"),
+            testKind = TestKind.STANDALONE_NO_TR,
+        )
+        val expectedArtifact = TestCompilationArtifact.Executable(buildDir.resolve("phase_verbose_logging"))
+        val compilation = ExecutableCompilation(
+            testRunSettings,
+            freeCompilerArgs = testCase.freeCompilerArgs,
+            sourceModules = testCase.modules,
+            extras = testCase.extras,
+            dependencies = emptyList(),
+            expectedArtifact = expectedArtifact,
+        )
+        val compilationResult = compilation.result
+
+        val output = compilationResult.toOutput()
+        assertTrue(
+            Regex("^info: ", RegexOption.MULTILINE).containsMatchIn(output),
+            "compiler output should contain lines that start with 'info: '.\nActual output:\n$output"
+        )
+    }
+
     private fun doBuildObjCFrameworkWithNameCollisions(rootDir: File, additionalOptions: List<String>): TestCompilationResult<out TestCompilationArtifact.ObjCFramework> {
         Assumptions.assumeTrue(targets.hostTarget.family.isAppleFamily)
 
@@ -124,65 +198,56 @@ abstract class CompilerOutputTestBase : AbstractNativeSimpleTest() {
             expectedArtifact
         ).result
     }
-
-    internal fun compileLibrary(
-        settings: Settings,
-        source: File,
-        freeCompilerArgs: List<String> = emptyList(),
-        dependencies: List<TestCompilationArtifact.KLIB> = emptyList(),
-    ): TestCompilationResult<out TestCompilationArtifact.KLIB> {
-        val testCase = generateTestCaseWithSingleModule(source, TestCompilerArgs(freeCompilerArgs))
-        val compilation = LibraryCompilation(
-            settings = settings,
-            freeCompilerArgs = testCase.freeCompilerArgs,
-            sourceModules = testCase.modules,
-            dependencies = dependencies.map { it.asLibraryDependency() },
-            expectedArtifact = getLibraryArtifact(testCase, buildDir)
-        )
-        return compilation.result
-    }
-
-    internal fun TestCompilationResult<*>.toOutput(): String {
-        check(this is TestCompilationResult.ImmediateResult<*>) { this }
-        val loggedData = this.loggedData
-
-        // Debug output for KT-64822 investigation
-        println("Compiler logged data:\n$loggedData")
-
-        check(loggedData is LoggedData.CompilationToolCall) { loggedData::class }
-        return normalizeOutput(loggedData.toolOutput, loggedData.exitCode)
-    }
-
-    private fun normalizeOutput(output: String, exitCode: ExitCode): String {
-        val dir = "compiler/testData/compileKotlinAgainstCustomBinaries/"
-        return AbstractCliTest.getNormalizedCompilerOutput(
-            output,
-            exitCode,
-            dir,
-            dir
-        )
-    }
 }
 
+@Suppress("JUnitTestCaseWithNoTests")
 @TestDataPath("\$PROJECT_ROOT")
 @EnforcedProperty(ClassLevelProperty.COMPILER_OUTPUT_INTERCEPTOR, "NONE")
 class ClassicCompilerOutputTest : CompilerOutputTestBase()
 
+@Suppress("JUnitTestCaseWithNoTests")
 @FirPipeline
 @Tag("frontend-fir")
 @TestDataPath("\$PROJECT_ROOT")
 @EnforcedProperty(ClassLevelProperty.COMPILER_OUTPUT_INTERCEPTOR, "NONE")
-class FirCompilerOutputTest : CompilerOutputTestBase() {
+class FirCompilerOutputTest : CompilerOutputTestBase()
 
-    @Test
-    fun testSignatureClashDiagnostics() {
-        // TODO: use the Compiler Core test infrastructure for testing these diagnostics (KT-64393)
-        val rootDir = File("native/native.tests/testData/compilerOutput/SignatureClashDiagnostics")
-        val settings = testRunSettings
-        val lib = compileLibrary(settings, rootDir.resolve("lib.kt")).assertSuccess().resultingArtifact
-        val compilationResult = compileLibrary(settings, rootDir.resolve("main.kt"), dependencies = listOf(lib))
-        val goldenData = rootDir.resolve("output.txt")
+internal fun TestCompilationResult<*>.toOutput(): String {
+    check(this is TestCompilationResult.ImmediateResult<*>) { this }
+    val loggedData = this.loggedData
 
-        KotlinTestUtils.assertEqualsToFile(goldenData, compilationResult.toOutput())
-    }
+    // Debug output for KT-64822 investigation
+    println("Compiler logged data:\n$loggedData")
+
+    check(loggedData is LoggedData.CompilationToolCall) { loggedData::class }
+    return normalizeOutput(loggedData.toolOutput, loggedData.exitCode)
+}
+
+private fun normalizeOutput(output: String, exitCode: ExitCode): String {
+    val dir = "compiler/testData/compileKotlinAgainstCustomBinaries/"
+    return AbstractCliTest.getNormalizedCompilerOutput(
+        output,
+        exitCode,
+        dir,
+        dir
+    )
+}
+
+internal fun AbstractNativeSimpleTest.compileLibrary(
+    settings: Settings,
+    source: File,
+    freeCompilerArgs: List<String> = emptyList(),
+    dependencies: List<TestCompilationArtifact.KLIB> = emptyList(),
+    packed: Boolean = true,
+): TestCompilationResult<out TestCompilationArtifact.KLIB> {
+    val testCompilerArgs = if (packed) TestCompilerArgs(freeCompilerArgs) else TestCompilerArgs(freeCompilerArgs + "-nopack")
+    val testCase = generateTestCaseWithSingleModule(source, testCompilerArgs)
+    val compilation = LibraryCompilation(
+        settings = settings,
+        freeCompilerArgs = testCase.freeCompilerArgs,
+        sourceModules = testCase.modules,
+        dependencies = dependencies.map { it.asLibraryDependency() },
+        expectedArtifact = getLibraryArtifact(testCase, buildDir, packed)
+    )
+    return compilation.result
 }

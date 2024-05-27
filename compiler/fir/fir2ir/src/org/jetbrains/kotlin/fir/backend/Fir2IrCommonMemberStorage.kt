@@ -5,9 +5,7 @@
 
 package org.jetbrains.kotlin.fir.backend
 
-import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.symbols.*
@@ -21,10 +19,8 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * See `/docs/fir/k2_kmp.md`
  */
-class Fir2IrCommonMemberStorage(firMangler: FirMangler) {
-    val firSignatureComposer = FirBasedSignatureComposer(firMangler)
-
-    val symbolTable = SymbolTable(signaturer = null, irFactory = IrFactoryImpl)
+class Fir2IrCommonMemberStorage(val mangler: FirMangler) {
+    val symbolTable: SymbolTable = SymbolTable(signaturer = null, irFactory = IrFactoryImpl)
 
     val classCache: MutableMap<FirRegularClass, IrClassSymbol> = mutableMapOf()
 
@@ -35,10 +31,10 @@ class Fir2IrCommonMemberStorage(firMangler: FirMangler) {
     val localClassCache: MutableMap<FirClass, IrClass> = mutableMapOf()
 
     val functionCache: ConcurrentHashMap<FirFunction, IrSimpleFunctionSymbol> = ConcurrentHashMap()
+    val dataClassGeneratedFunctionsCache: ConcurrentHashMap<FirClass, Fir2IrDeclarationStorage.DataClassGeneratedFunctionsStorage> =
+        ConcurrentHashMap()
 
     val constructorCache: ConcurrentHashMap<FirConstructor, IrConstructorSymbol> = ConcurrentHashMap()
-
-    val fieldCache: ConcurrentHashMap<FirField, IrFieldSymbol> = ConcurrentHashMap()
 
     val propertyCache: ConcurrentHashMap<FirProperty, IrPropertySymbol> = ConcurrentHashMap()
     val syntheticPropertyCache: ConcurrentHashMap<FirFunction, IrPropertySymbol> = ConcurrentHashMap()
@@ -48,17 +44,18 @@ class Fir2IrCommonMemberStorage(firMangler: FirMangler) {
     val propertyForBackingFieldCache: ConcurrentHashMap<IrFieldSymbol, IrPropertySymbol> = ConcurrentHashMap()
     val delegateVariableForPropertyCache: ConcurrentHashMap<IrLocalDelegatedPropertySymbol, IrVariableSymbol> = ConcurrentHashMap()
 
-    val fakeOverridesInClass: MutableMap<IrClass, MutableMap<Fir2IrDeclarationStorage.FirOverrideKey, FirCallableDeclaration>> = mutableMapOf()
-
     val irForFirSessionDependantDeclarationMap: MutableMap<Fir2IrDeclarationStorage.FakeOverrideIdentifier, IrSymbol> = mutableMapOf()
 
-    fun registerFirProvider(moduleData: FirModuleData, firProvider: FirProviderWithGeneratedFiles) {
-        require(moduleData !in _previousFirProviders) { "FirProvider for $moduleData already registered"}
-        _previousFirProviders[moduleData] = firProvider
-    }
+    /**
+     * Contains information about synthetic methods generated for data and value classes
+     * It will be used to generate bodies of those methods after fir2ir conversion is over
+     */
+    val generatedDataValueClassSyntheticFunctions: MutableMap<IrClass, DataValueClassGeneratedMembersInfo> = mutableMapOf()
 
-    val previousFirProviders: Map<FirModuleData, FirProviderWithGeneratedFiles>
-        get() = _previousFirProviders
-
-    private val _previousFirProviders: MutableMap<FirModuleData, FirProviderWithGeneratedFiles> = mutableMapOf()
+    data class DataValueClassGeneratedMembersInfo(
+        val components: Fir2IrComponents,
+        val firClass: FirRegularClass,
+        val origin: IrDeclarationOrigin,
+        val generatedFunctions: MutableList<IrSimpleFunction>
+    )
 }

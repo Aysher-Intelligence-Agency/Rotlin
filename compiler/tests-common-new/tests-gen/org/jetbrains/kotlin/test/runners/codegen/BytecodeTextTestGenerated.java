@@ -230,15 +230,9 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
   }
 
   @Test
-  @TestMetadata("javaFieldsWithIntersectionTypes_k1.kt")
-  public void testJavaFieldsWithIntersectionTypes_k1() {
-    runTest("compiler/testData/codegen/bytecodeText/javaFieldsWithIntersectionTypes_k1.kt");
-  }
-
-  @Test
-  @TestMetadata("javaFields_k1.kt")
-  public void testJavaFields_k1() {
-    runTest("compiler/testData/codegen/bytecodeText/javaFields_k1.kt");
+  @TestMetadata("javaFieldsWithIntersectionTypes.kt")
+  public void testJavaFieldsWithIntersectionTypes() {
+    runTest("compiler/testData/codegen/bytecodeText/javaFieldsWithIntersectionTypes.kt");
   }
 
   @Test
@@ -3323,6 +3317,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
     }
 
     @Test
+    @TestMetadata("syntheticPropertyReference.kt")
+    public void testSyntheticPropertyReference() {
+      runTest("compiler/testData/codegen/bytecodeText/inline/syntheticPropertyReference.kt");
+    }
+
+    @Test
     @TestMetadata("whenMappingOnCallSite.kt")
     public void testWhenMappingOnCallSite() {
       runTest("compiler/testData/codegen/bytecodeText/inline/whenMappingOnCallSite.kt");
@@ -5560,6 +5560,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
     @TestMetadata("inlineConstValsInsideWhen.kt")
     public void testInlineConstValsInsideWhen() {
       runTest("compiler/testData/codegen/bytecodeText/when/inlineConstValsInsideWhen.kt");
+    }
+
+    @Test
+    @TestMetadata("innerWhenEnumTableSwitch.kt")
+    public void testInnerWhenEnumTableSwitch() {
+      runTest("compiler/testData/codegen/bytecodeText/when/innerWhenEnumTableSwitch.kt");
     }
 
     @Test

@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisS
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiMode;
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.symbolDeclarationRenderer.AbstractSymbolRenderingByReferenceTest;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -68,5 +67,17 @@ public class Fe10IdeNormalAnalysisSourceModuleSymbolRenderingByReferenceTestGene
   @TestMetadata("javaMethodWithTypeParametersBound.kt")
   public void testJavaMethodWithTypeParametersBound() {
     runTest("analysis/analysis-api/testData/components/symbolDeclarationRenderer/symbolRenderingByReference/javaMethodWithTypeParametersBound.kt");
+  }
+
+  @Test
+  @TestMetadata("jsrAnnotation.kt")
+  public void testJsrAnnotation() {
+    runTest("analysis/analysis-api/testData/components/symbolDeclarationRenderer/symbolRenderingByReference/jsrAnnotation.kt");
+  }
+
+  @Test
+  @TestMetadata("jsrAnnotationInsideLibrary.kt")
+  public void testJsrAnnotationInsideLibrary() {
+    runTest("analysis/analysis-api/testData/components/symbolDeclarationRenderer/symbolRenderingByReference/jsrAnnotationInsideLibrary.kt");
   }
 }

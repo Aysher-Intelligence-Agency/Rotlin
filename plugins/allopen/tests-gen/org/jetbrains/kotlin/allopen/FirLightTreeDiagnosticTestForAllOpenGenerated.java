@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.allopen;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -25,6 +24,12 @@ public class FirLightTreeDiagnosticTestForAllOpenGenerated extends AbstractFirLi
   }
 
   @Test
+  @TestMetadata("allOpenOnAnnotation.kt")
+  public void testAllOpenOnAnnotation() {
+    runTest("plugins/allopen/testData/diagnostics/allOpenOnAnnotation.kt");
+  }
+
+  @Test
   @TestMetadata("kt54260.kt")
   public void testKt54260() {
     runTest("plugins/allopen/testData/diagnostics/kt54260.kt");
@@ -34,6 +39,12 @@ public class FirLightTreeDiagnosticTestForAllOpenGenerated extends AbstractFirLi
   @TestMetadata("kt60448.kt")
   public void testKt60448() {
     runTest("plugins/allopen/testData/diagnostics/kt60448.kt");
+  }
+
+  @Test
+  @TestMetadata("redundantModality.kt")
+  public void testRedundantModality() {
+    runTest("plugins/allopen/testData/diagnostics/redundantModality.kt");
   }
 
   @Test

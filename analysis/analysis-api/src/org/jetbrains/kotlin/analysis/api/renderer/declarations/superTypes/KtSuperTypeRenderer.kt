@@ -5,21 +5,36 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.types.Variance
 
-public interface KtSuperTypeRenderer {
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    public fun renderSuperType(type: KtType, symbol: KtClassOrObjectSymbol, printer: PrettyPrinter)
+public interface KaSuperTypeRenderer {
+    public fun renderSuperType(
+        analysisSession: KaSession,
+        type: KaType,
+        symbol: KaClassOrObjectSymbol,
+        declarationRenderer: KaDeclarationRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object WITH_OUT_APPROXIMATION : KtSuperTypeRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderSuperType(type: KtType, symbol: KtClassOrObjectSymbol, printer: PrettyPrinter) {
-            typeRenderer.renderType(declarationTypeApproximator.approximateType(type, Variance.OUT_VARIANCE), printer)
+    public object WITH_OUT_APPROXIMATION : KaSuperTypeRenderer {
+        override fun renderSuperType(
+            analysisSession: KaSession,
+            type: KaType,
+            symbol: KaClassOrObjectSymbol,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ) {
+            val approximatedType = declarationRenderer.declarationTypeApproximator
+                .approximateType(analysisSession, type, Variance.OUT_VARIANCE)
+
+            declarationRenderer.typeRenderer.renderType(analysisSession, approximatedType, printer)
         }
     }
 }
+
+public typealias KtSuperTypeRenderer = KaSuperTypeRenderer

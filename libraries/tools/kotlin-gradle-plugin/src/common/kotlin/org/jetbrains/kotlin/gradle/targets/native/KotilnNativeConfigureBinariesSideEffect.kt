@@ -16,9 +16,9 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinPluginLifecycle
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.launchInStage
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
-import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XcodeVersionTask
-import org.jetbrains.kotlin.gradle.plugin.mpp.apple.version
+import org.jetbrains.kotlin.gradle.plugin.statistics.NativeLinkTaskMetrics
 import org.jetbrains.kotlin.gradle.targets.KotlinTargetSideEffect
+import org.jetbrains.kotlin.gradle.targets.native.toolchain.KotlinNativeProvider
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 import org.jetbrains.kotlin.gradle.tasks.dependsOn
 import org.jetbrains.kotlin.gradle.tasks.locateOrRegisterTask
@@ -77,7 +77,7 @@ private fun Project.createLinkTask(binary: NativeBinary) {
     // this afterEvaluate comes from NativeCompilerOptions
     @Suppress("DEPRECATION") val compilationCompilerOptions = binary.compilation.compilerOptions
     val konanPropertiesBuildService = KonanPropertiesBuildService.registerIfAbsent(project)
-    val xcodeVersionTask = XcodeVersionTask.locateOrRegister(project)
+
     val linkTask = registerTask<KotlinNativeLink>(
         binary.linkTaskName, listOf(binary)
     ) { task ->
@@ -87,13 +87,16 @@ private fun Project.createLinkTask(binary: NativeBinary) {
         task.description = "Links ${binary.outputKind.description} '${binary.name}' for a target '${target.name}'."
         task.dependsOn(compilation.compileTaskProvider)
 
-        task.enabled = binary.konanTarget.enabledOnCurrentHost
+        task.enabled = binary.konanTarget.enabledOnCurrentHostForBinariesCompilation()
         task.konanPropertiesService.set(konanPropertiesBuildService)
         task.usesService(konanPropertiesBuildService)
         task.toolOptions.freeCompilerArgs.value(compilationCompilerOptions.options.freeCompilerArgs)
         task.toolOptions.freeCompilerArgs.addAll(providers.provider { PropertiesProvider(project).nativeLinkArgs })
         task.runViaBuildToolsApi.value(false).disallowChanges() // K/N is not yet supported
-        task.xcodeVersion.set(xcodeVersionTask.version)
+
+        task.kotlinNativeProvider.set(project.provider {
+            KotlinNativeProvider(project, task.konanTarget, task.kotlinNativeBundleBuildService)
+        })
 
         // Frameworks actively uses symlinks.
         // Gradle build cache transforms symlinks into regular files https://guides.gradle.org/using-build-cache/#symbolic_links
@@ -104,6 +107,7 @@ private fun Project.createLinkTask(binary: NativeBinary) {
         task.disallowSourceChanges()
     }
 
+    NativeLinkTaskMetrics.collectMetrics(this)
 
     if (binary !is TestExecutable) {
         tasks.named(binary.compilation.target.artifactsTaskName).dependsOn(linkTask)

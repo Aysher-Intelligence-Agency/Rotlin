@@ -5,10 +5,15 @@
 
 package org.jetbrains.kotlin.analysis.api.annotations
 
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.types.KaClassErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -21,111 +26,130 @@ import org.jetbrains.kotlin.psi.KtElement
  *   * other annotation types, and
  *   * array of aforementioned types
  *
- *  [KtConstantAnnotationValue]  covers first two kinds;
- *  [KtEnumEntryAnnotationValue] corresponds to enum types;
- *  [KtAnnotationApplicationValue] represents annotation types (with annotation fq name and arguments); and
- *  [KtArrayAnnotationValue] abstracts an array of [KtAnnotationValue]s.
+ *  [KaConstantAnnotationValue]  covers first two kinds;
+ *  [KaEnumEntryAnnotationValue] corresponds to enum types;
+ *  [KaAnnotationApplicationValue] represents annotation types (with annotation fq name and arguments); and
+ *  [KaArrayAnnotationValue] abstracts an array of [KaAnnotationValue]s.
  */
-public sealed class KtAnnotationValue {
+public sealed class KaAnnotationValue(override val token: KaLifetimeToken) : KaLifetimeOwner {
     public abstract val sourcePsi: KtElement?
 }
 
+public typealias KtAnnotationValue = KaAnnotationValue
 
 /**
  * This represents an unsupported expression used as an annotation value.
  */
-public object KtUnsupportedAnnotationValue : KtAnnotationValue() {
-    override val sourcePsi: KtElement? get() = null
+public class KaUnsupportedAnnotationValue @KaAnalysisApiInternals constructor(
+    token: KaLifetimeToken
+) : KaAnnotationValue(token) {
+    override val sourcePsi: KtElement?
+        get() = withValidityAssertion { null }
 }
+
+public typealias KtUnsupportedAnnotationValue = KaUnsupportedAnnotationValue
 
 /**
  * Array of annotation values. E.g: `@A([1, 2])`
  */
-public class KtArrayAnnotationValue(
-    public val values: Collection<KtAnnotationValue>,
-    override val sourcePsi: KtElement?,
-) : KtAnnotationValue()
+public class KaArrayAnnotationValue @KaAnalysisApiInternals constructor(
+    values: Collection<KaAnnotationValue>,
+    sourcePsi: KtElement?,
+    token: KaLifetimeToken
+) : KaAnnotationValue(token) {
+    public val values: Collection<KaAnnotationValue> = values
+        get() = withValidityAssertion { field }
+
+    override val sourcePsi: KtElement? = sourcePsi
+        get() = withValidityAssertion { field }
+}
+
+public typealias KtArrayAnnotationValue = KaArrayAnnotationValue
 
 /**
  * Other annotation used as argument. E.g: `@A(B)` where `B` is annotation too
  */
-public class KtAnnotationApplicationValue(
-    public val annotationValue: KtAnnotationApplicationWithArgumentsInfo,
-) : KtAnnotationValue() {
-    override val sourcePsi: KtElement? get() = annotationValue.psi
+public class KaAnnotationApplicationValue @KaAnalysisApiInternals constructor(
+    annotationValue: KaAnnotationApplicationWithArgumentsInfo,
+    token: KaLifetimeToken
+) : KaAnnotationValue(token) {
+    public val annotationValue: KaAnnotationApplicationWithArgumentsInfo = annotationValue
+        get() = withValidityAssertion { field }
+
+    override val sourcePsi: KtElement?
+        get() = withValidityAssertion { annotationValue.psi }
 }
 
+public typealias KtAnnotationApplicationValue = KaAnnotationApplicationValue
 
 /**
  * Class reference used as annotation argument. E.g: `@A(String::class)`
  */
-public sealed class KtKClassAnnotationValue : KtAnnotationValue() {
+public open class KaKClassAnnotationValue(
+    type: KaType,
+    classId: ClassId?,
+    sourcePsi: KtElement?,
+    token: KaLifetimeToken
+) : KaAnnotationValue(token) {
     /**
-     * Non-local Class reference used as annotation value. E.g: `@A(String::class)`
+     * The referenced [ClassId], if available.
+     * The property is useful for error handling, as [KaClassErrorType] currently does not provide a [ClassId].
      */
-    public class KtNonLocalKClassAnnotationValue(
-        /**
-         * Fully qualified name of the class used
-         */
-        public val classId: ClassId,
-        override val sourcePsi: KtElement?,
-    ) : KtKClassAnnotationValue()
+    public val classId: ClassId? = classId
+        get() = withValidityAssertion { field }
 
     /**
-     * Non-local class reference used as annotation argument.
-     *
-     * E.g:
-     * ```
-     * fun x() {
-     *    class Y
-     *
-     *    @A(B::class)
-     *    fun foo() {}
-     * }
-     * ```
+     * The class reference type, e.g. `Array<String>` for the `Array<String>::class` literal.
      */
-    public class KtLocalKClassAnnotationValue(
-        /**
-         * [PsiElement] of the class used. As we can get non-local class only for sources, it is always present.
-         */
-        public val ktClass: KtClassOrObject,
-        override val sourcePsi: KtElement?,
-    ) : KtKClassAnnotationValue()
+    public val type: KaType = type
+        get() = withValidityAssertion { field }
 
-    /**
-     * Non-existing class reference used as annotation argument. E.g: `@A(NON_EXISTING_CLASS::class)`
-     */
-    public class KtErrorClassAnnotationValue(
-        override val sourcePsi: KtElement?,
-        public val unresolvedQualifierName: String?,
-    ) : KtKClassAnnotationValue()
+    override val sourcePsi: KtElement? = sourcePsi
+        get() = withValidityAssertion { field }
 }
+
+public typealias KtKClassAnnotationValue = KaKClassAnnotationValue
 
 /**
  * Some enum entry (enum constant) used as annotation argument. E.g: `@A(Color.RED)`
  */
-public class KtEnumEntryAnnotationValue(
+public class KaEnumEntryAnnotationValue @KaAnalysisApiInternals constructor(
     /**
      * Fully qualified name of used enum entry.
      */
-    public val callableId: CallableId?,
-    override val sourcePsi: KtElement?,
-) : KtAnnotationValue()
+    callableId: CallableId?,
+    sourcePsi: KtElement?,
+    token: KaLifetimeToken
+) : KaAnnotationValue(token) {
+    public val callableId: CallableId? = callableId
+        get() = withValidityAssertion { field }
+
+    override val sourcePsi: KtElement? = sourcePsi
+        get() = withValidityAssertion { field }
+}
+
+public typealias KtEnumEntryAnnotationValue = KaEnumEntryAnnotationValue
 
 /**
  * Some constant value (which may be used as initializer of `const val`) used as annotation argument. It may be String literal, number literal or some simple expression.
- * E.g: `@A(1 +2, "a" + "b")` -- both arguments here are [KtConstantAnnotationValue]
- * @see [KtConstantValue]
+ * E.g: `@A(1 +2, "a" + "b")` -- both arguments here are [KaConstantAnnotationValue]
+ * @see [KaConstantValue]
  */
-public class KtConstantAnnotationValue(
-    public val constantValue: KtConstantValue,
-) : KtAnnotationValue() {
-    override val sourcePsi: KtElement? get() = constantValue.sourcePsi
+public class KaConstantAnnotationValue @KaAnalysisApiInternals constructor(
+    constantValue: KaConstantValue,
+    token: KaLifetimeToken
+) : KaAnnotationValue(token) {
+    public val constantValue: KaConstantValue = constantValue
+        get() = withValidityAssertion { field }
+
+    override val sourcePsi: KtElement?
+        get() = withValidityAssertion { constantValue.sourcePsi }
 }
 
+public typealias KtConstantAnnotationValue = KaConstantAnnotationValue
 
 /**
  * Render annotation value, resulted string is a valid Kotlin source code.
  */
-public fun KtAnnotationValue.renderAsSourceCode(): String =
-    KtAnnotationValueRenderer.render(this)
+public fun KaAnnotationValue.renderAsSourceCode(): String =
+    KaAnnotationValueRenderer.render(this)

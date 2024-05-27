@@ -1,10 +1,12 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.generators.tree
 
+import org.jetbrains.kotlin.generators.tree.imports.ImportCollecting
+import org.jetbrains.kotlin.generators.tree.imports.Importable
 import org.jetbrains.kotlin.generators.tree.printer.braces
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.joinToWithBuffer
@@ -21,10 +23,9 @@ interface TypeRef {
 
     /**
      * Prints this type to [appendable] with all its arguments and question marks, while recursively collecting
-     * `this` and other referenced types into the import collector passed as context.
+     * `this` and other referenced types into [importCollector].
      */
-    context(ImportCollector)
-    fun renderTo(appendable: Appendable)
+    fun renderTo(appendable: Appendable, importCollector: ImportCollecting)
 
     object Star : TypeRef {
 
@@ -32,19 +33,11 @@ interface TypeRef {
 
         override fun toString(): String = "*"
 
-        context(ImportCollector)
-        override fun renderTo(appendable: Appendable) {
+        override fun renderTo(appendable: Appendable, importCollector: ImportCollecting) {
             appendable.append(toString())
         }
     }
 }
-
-/**
- * Prints this type as a string with all its arguments and question marks, while recursively collecting
- * `this` and other referenced types into the import collector passed as context.
- */
-context(ImportCollector)
-fun TypeRef.render(): String = buildString { renderTo(this) }
 
 sealed interface ClassOrElementRef : TypeRefWithNullability, Importable
 
@@ -83,11 +76,10 @@ class ClassRef<P : TypeParameterRef> private constructor(
     override val typeName: String
         get() = simpleNames.joinToString(separator = ".")
 
-    context(ImportCollector)
-    override fun renderTo(appendable: Appendable) {
-        addImport(this)
+    override fun renderTo(appendable: Appendable, importCollector: ImportCollecting) {
+        importCollector.addImport(this)
         simpleNames.joinTo(appendable, separator = ".")
-        renderArgsTo(appendable)
+        renderArgsTo(appendable, importCollector)
         renderNullabilityTo(appendable)
     }
 
@@ -115,25 +107,27 @@ class ClassRef<P : TypeParameterRef> private constructor(
  */
 data class TypeRefWithVariance<out T : TypeRef>(val variance: Variance, val typeRef: T) : TypeRef {
 
-    context(ImportCollector)
-    override fun renderTo(appendable: Appendable) {
+    override fun renderTo(appendable: Appendable, importCollector: ImportCollecting) {
         if (variance != Variance.INVARIANT) {
             appendable.append(variance.label)
             appendable.append(' ')
         }
-        typeRef.renderTo(appendable)
+        typeRef.renderTo(appendable, importCollector)
     }
 
     override fun substitute(map: TypeParameterSubstitutionMap): TypeRefWithVariance<*> =
         TypeRefWithVariance(variance, typeRef.substitute(map))
 }
 
-interface ElementOrRef<Element> : ParametrizedTypeRef<ElementOrRef<Element>, NamedTypeParameterRef>, ClassOrElementRef
+sealed interface ElementOrRef<Element> : ParametrizedTypeRef<ElementOrRef<Element>, NamedTypeParameterRef>, ClassOrElementRef
         where Element : AbstractElement<Element, *, *> {
     val element: Element
 
     override fun copy(nullable: Boolean): ElementRef<Element>
 }
+
+fun <Element : AbstractElement<Element, *, *>> ElementOrRef<Element>.toRef(): ElementRef<Element> =
+    ElementRef(element, args, nullable)
 
 data class ElementRef<Element : AbstractElement<Element, *, *>>(
     override val element: Element,
@@ -149,11 +143,10 @@ data class ElementRef<Element : AbstractElement<Element, *, *>>(
     override val packageName: String
         get() = element.packageName
 
-    context(ImportCollector)
-    override fun renderTo(appendable: Appendable) {
-        addImport(element)
+    override fun renderTo(appendable: Appendable, importCollector: ImportCollecting) {
+        importCollector.addImport(element)
         appendable.append(element.typeName)
-        renderArgsTo(appendable)
+        renderArgsTo(appendable, importCollector)
         renderNullabilityTo(appendable)
     }
 
@@ -182,15 +175,14 @@ data class Lambda(
             nullable,
         )
 
-    context(ImportCollector)
-    override fun renderTo(appendable: Appendable) {
+    override fun renderTo(appendable: Appendable, importCollector: ImportCollecting) {
         if (nullable) appendable.append("(")
         receiver?.let {
-            it.renderTo(appendable)
+            it.renderTo(appendable, importCollector)
             appendable.append('.')
         }
-        parameterTypes.joinToWithBuffer(appendable, prefix = "(", postfix = ") -> ") { it.renderTo(this) }
-        returnType.renderTo(appendable)
+        parameterTypes.joinToWithBuffer(appendable, prefix = "(", postfix = ") -> ") { it.renderTo(this, importCollector) }
+        returnType.renderTo(appendable, importCollector)
         if (nullable) appendable.append(")?")
     }
 
@@ -207,8 +199,7 @@ data class PositionTypeParameterRef(
 ) : TypeParameterRef {
     override fun toString() = index.toString()
 
-    context(ImportCollector)
-    override fun renderTo(appendable: Appendable) {
+    override fun renderTo(appendable: Appendable, importCollector: ImportCollecting) {
         renderingIsNotSupported()
     }
 
@@ -229,8 +220,7 @@ open class NamedTypeParameterRef(
 
     override fun toString() = name
 
-    context(ImportCollector)
-    override fun renderTo(appendable: Appendable) {
+    override fun renderTo(appendable: Appendable, importCollector: ImportCollecting) {
         appendable.append(name)
         renderNullabilityTo(appendable)
     }
@@ -259,11 +249,10 @@ interface ParametrizedTypeRef<Self : ParametrizedTypeRef<Self, P>, P : TypeParam
         copy(args.mapValues { it.value.substitute(map) })
 }
 
-context(ImportCollector)
-fun ParametrizedTypeRef<*, *>.renderArgsTo(appendable: Appendable) {
+private fun ParametrizedTypeRef<*, *>.renderArgsTo(appendable: Appendable, importCollector: ImportCollecting) {
     if (args.isNotEmpty()) {
         args.values.joinTo(appendable, prefix = "<", postfix = ">") {
-            it.renderTo(appendable)
+            it.renderTo(appendable, importCollector)
             ""
         }
     }

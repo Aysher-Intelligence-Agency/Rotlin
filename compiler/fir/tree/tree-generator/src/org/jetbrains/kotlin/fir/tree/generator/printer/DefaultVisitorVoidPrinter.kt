@@ -9,10 +9,11 @@ import org.jetbrains.kotlin.fir.tree.generator.firVisitorVoidType
 import org.jetbrains.kotlin.fir.tree.generator.model.Element
 import org.jetbrains.kotlin.fir.tree.generator.model.Field
 import org.jetbrains.kotlin.generators.tree.*
-import org.jetbrains.kotlin.utils.SmartPrinter
+import org.jetbrains.kotlin.generators.tree.printer.ImportCollectingPrinter
+import org.jetbrains.kotlin.generators.tree.printer.printBlock
 
 internal class DefaultVisitorVoidPrinter(
-    printer: SmartPrinter,
+    printer: ImportCollectingPrinter,
     override val visitorType: ClassRef<*>,
 ) : AbstractVisitorPrinter<Element, Field>(printer) {
 
@@ -30,7 +31,6 @@ internal class DefaultVisitorVoidPrinter(
     override val allowTypeParametersInVisitorMethods: Boolean
         get() = true
 
-    context(ImportCollector)
     override fun printMethodsForElement(element: Element) {
         val parentInVisitor = element.parentInVisitor ?: return
         printer.run {
@@ -39,7 +39,9 @@ internal class DefaultVisitorVoidPrinter(
                 hasDataParameter = false,
                 override = true,
             )
-            println(" = ", parentInVisitor.visitFunctionName, "(", element.visitorParameterName, ")")
+            printBlock {
+                println(parentInVisitor.visitFunctionName, "(", element.visitorParameterName, ")")
+            }
             println()
         }
     }

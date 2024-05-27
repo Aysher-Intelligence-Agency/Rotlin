@@ -5,27 +5,37 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderAnnotationsModifiersAndContextReceivers
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySetterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySetterSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.lexer.KtTokens
 
-public interface KtPropertySetterSymbolRenderer {
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    public fun renderSymbol(symbol: KtPropertySetterSymbol, printer: PrettyPrinter)
+public interface KaPropertySetterSymbolRenderer {
+    public fun renderSymbol(
+        analysisSession: KaSession,
+        symbol: KaPropertySetterSymbol,
+        declarationRenderer: KaDeclarationRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object AS_SOURCE : KtPropertySetterSymbolRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderSymbol(symbol: KtPropertySetterSymbol, printer: PrettyPrinter): Unit = printer {
+    public object AS_SOURCE : KaPropertySetterSymbolRenderer {
+        override fun renderSymbol(
+            analysisSession: KaSession,
+            symbol: KaPropertySetterSymbol,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ): Unit = printer {
             " ".separated(
                 {
-                    renderAnnotationsModifiersAndContextReceivers(symbol, printer, KtTokens.SET_KEYWORD)
-                    valueParametersRenderer.renderValueParameters(symbol, printer)
+                    renderAnnotationsModifiersAndContextReceivers(analysisSession, symbol, declarationRenderer, printer, KtTokens.SET_KEYWORD)
+                    declarationRenderer.valueParametersRenderer.renderValueParameters(analysisSession, symbol, declarationRenderer, printer)
                 },
-                { accessorBodyRenderer.renderBody(symbol, printer) },
+                { declarationRenderer.accessorBodyRenderer.renderBody(analysisSession, symbol, printer) },
             )
         }
     }
 }
+
+public typealias KtPropertySetterSymbolRenderer = KaPropertySetterSymbolRenderer

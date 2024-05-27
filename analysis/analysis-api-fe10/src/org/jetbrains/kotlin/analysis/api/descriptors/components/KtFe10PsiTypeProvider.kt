@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8,18 +8,20 @@ package org.jetbrains.kotlin.analysis.api.descriptors.components
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.SyntheticElement
 import com.intellij.psi.impl.cache.TypeInfo
 import com.intellij.psi.impl.compiled.ClsTypeElementImpl
 import com.intellij.psi.impl.compiled.SignatureParsing
 import com.intellij.psi.impl.compiled.StubBuildingVisitor
-import org.jetbrains.kotlin.analysis.api.components.KtPsiTypeProvider
-import org.jetbrains.kotlin.analysis.api.descriptors.KtFe10AnalysisSession
-import org.jetbrains.kotlin.analysis.api.descriptors.components.base.Fe10KtAnalysisSessionComponent
-import org.jetbrains.kotlin.analysis.api.descriptors.types.base.KtFe10Type
-import org.jetbrains.kotlin.analysis.api.descriptors.utils.KtFe10JvmTypeMapperContext
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.components.KaPsiTypeProvider
+import org.jetbrains.kotlin.analysis.api.descriptors.KaFe10Session
+import org.jetbrains.kotlin.analysis.api.descriptors.components.base.KaFe10SessionComponent
+import org.jetbrains.kotlin.analysis.api.descriptors.types.base.KaFe10Type
+import org.jetbrains.kotlin.analysis.api.descriptors.utils.KaFe10JvmTypeMapperContext
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
+import org.jetbrains.kotlin.asJava.classes.annotateByKotlinType
 import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.load.kotlin.getOptimalModeForReturnType
@@ -32,22 +34,24 @@ import org.jetbrains.kotlin.types.model.SimpleTypeMarker
 import java.lang.UnsupportedOperationException
 import java.text.StringCharacterIterator
 
-internal class KtFe10PsiTypeProvider(
-    override val analysisSession: KtFe10AnalysisSession
-) : KtPsiTypeProvider(), Fe10KtAnalysisSessionComponent {
-    override val token: KtLifetimeToken
+internal class KaFe10PsiTypeProvider(
+    override val analysisSession: KaFe10Session
+) : KaPsiTypeProvider(), KaFe10SessionComponent {
+    override val token: KaLifetimeToken
         get() = analysisSession.token
 
-    private val typeMapper by lazy { KtFe10JvmTypeMapperContext(analysisContext.resolveSession) }
+    private val typeMapper by lazy { KaFe10JvmTypeMapperContext(analysisContext.resolveSession) }
 
-    override fun asPsiTypeElement(
-        type: KtType,
+    override fun asPsiType(
+        type: KaType,
         useSitePosition: PsiElement,
-        mode: KtTypeMappingMode,
+        allowErrorTypes: Boolean,
+        mode: KaTypeMappingMode,
         isAnnotationMethod: Boolean,
-        allowErrorTypes: Boolean
-    ): PsiTypeElement? {
-        val kotlinType = (type as KtFe10Type).fe10Type
+        suppressWildcards: Boolean?,
+        preserveAnnotations: Boolean,
+    ): PsiType? {
+        val kotlinType = (type as KaFe10Type).fe10Type
 
         with(typeMapper.typeContext) {
             if (kotlinType.contains { it.isError() }) {
@@ -57,22 +61,46 @@ internal class KtFe10PsiTypeProvider(
 
         if (!analysisSession.useSiteModule.platform.has<JvmPlatform>()) return null
 
-        return asPsiTypeElement(simplifyType(kotlinType), useSitePosition, mode.toTypeMappingMode(type, isAnnotationMethod))
+        val typeElement = asPsiTypeElement(
+            simplifyType(kotlinType),
+            useSitePosition,
+            mode.toTypeMappingMode(type, isAnnotationMethod, suppressWildcards),
+        )
+
+        val psiType = typeElement?.type ?: return null
+        if (!preserveAnnotations) return psiType
+
+        return annotateByKotlinType(psiType, kotlinType, typeElement, inferNullability = true)
     }
 
-    private fun KtTypeMappingMode.toTypeMappingMode(type: KtType, isAnnotationMethod: Boolean): TypeMappingMode {
-        require(type is KtFe10Type)
+    private fun KaTypeMappingMode.toTypeMappingMode(
+        type: KaType,
+        isAnnotationMethod: Boolean,
+        suppressWildcards: Boolean?,
+    ): TypeMappingMode {
+        require(type is KaFe10Type)
         return when (this) {
-            KtTypeMappingMode.DEFAULT -> TypeMappingMode.DEFAULT
-            KtTypeMappingMode.DEFAULT_UAST -> TypeMappingMode.DEFAULT_UAST
-            KtTypeMappingMode.GENERIC_ARGUMENT -> TypeMappingMode.GENERIC_ARGUMENT
-            KtTypeMappingMode.SUPER_TYPE -> TypeMappingMode.SUPER_TYPE
-            KtTypeMappingMode.SUPER_TYPE_KOTLIN_COLLECTIONS_AS_IS -> TypeMappingMode.SUPER_TYPE_KOTLIN_COLLECTIONS_AS_IS
-            KtTypeMappingMode.RETURN_TYPE_BOXED -> TypeMappingMode.RETURN_TYPE_BOXED
-            KtTypeMappingMode.RETURN_TYPE ->
+            KaTypeMappingMode.DEFAULT -> TypeMappingMode.DEFAULT
+            KaTypeMappingMode.DEFAULT_UAST -> TypeMappingMode.DEFAULT_UAST
+            KaTypeMappingMode.GENERIC_ARGUMENT -> TypeMappingMode.GENERIC_ARGUMENT
+            KaTypeMappingMode.SUPER_TYPE -> TypeMappingMode.SUPER_TYPE
+            KaTypeMappingMode.SUPER_TYPE_KOTLIN_COLLECTIONS_AS_IS -> TypeMappingMode.SUPER_TYPE_KOTLIN_COLLECTIONS_AS_IS
+            KaTypeMappingMode.RETURN_TYPE_BOXED -> TypeMappingMode.RETURN_TYPE_BOXED
+            KaTypeMappingMode.RETURN_TYPE ->
                 typeMapper.typeContext.getOptimalModeForReturnType(type.fe10Type, isAnnotationMethod)
-            KtTypeMappingMode.VALUE_PARAMETER ->
+            KaTypeMappingMode.VALUE_PARAMETER ->
                 typeMapper.typeContext.getOptimalModeForValueParameter(type.fe10Type)
+        }.let { typeMappingMode ->
+            // Otherwise, i.e., if we won't skip type with no type arguments, flag overriding might bother a case like:
+            // @JvmSuppressWildcards(false) Long -> java.lang.Long, not long, even though it should be no-op!
+            if (type.fe10Type.arguments.isEmpty())
+                typeMappingMode
+            else
+                typeMappingMode.updateArgumentModeFromAnnotations(
+                    type.fe10Type,
+                    typeMapper.typeContext,
+                    suppressWildcards,
+                )
         }
     }
 
@@ -106,13 +134,15 @@ internal class KtFe10PsiTypeProvider(
         val typeInfo = TypeInfo.fromString(javaType, false)
         val typeText = TypeInfo.createTypeText(typeInfo) ?: return null
 
-        return ClsTypeElementImpl(useSitePosition, typeText, '\u0000')
+        return SyntheticTypeElement(useSitePosition, typeText)
     }
 
-    override fun asKtType(
+    override fun asKaType(
         psiType: PsiType,
         useSitePosition: PsiElement,
-    ): KtType? {
+    ): KaType? {
         throw UnsupportedOperationException("Conversion to KtType is not supported in K1 implementation")
     }
 }
+
+private class SyntheticTypeElement(parent: PsiElement, typeText: String) : ClsTypeElementImpl(parent, typeText, '\u0000'), SyntheticElement

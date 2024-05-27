@@ -236,7 +236,6 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         require(newType is ConeKotlinType)
         return when (this) {
             is ConeKotlinType -> newType
-            is ConeStarProjection -> ConeStarProjection
             is ConeKotlinTypeProjectionOut -> ConeKotlinTypeProjectionOut(newType)
             is ConeKotlinTypeProjectionIn -> ConeKotlinTypeProjectionIn(newType)
             is ConeKotlinTypeConflictingProjection -> ConeKotlinTypeConflictingProjection(newType)
@@ -311,7 +310,8 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
     }
 
     override fun TypeConstructorMarker.isClassTypeConstructor(): Boolean {
-        return this is ConeClassLikeLookupTag
+        // See KT-55383
+        return this is ConeClassLikeLookupTag || this is ConeStubTypeConstructor
     }
 
     override fun TypeConstructorMarker.isInterface(): Boolean {
@@ -463,7 +463,7 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
     }
 
     override fun SimpleTypeMarker.isStubTypeForBuilderInference(): Boolean {
-        return this is ConeStubTypeForChainInference
+        return false
     }
 
     override fun TypeConstructorMarker.unwrapStubTypeVariableConstructor(): TypeConstructorMarker {
@@ -473,44 +473,19 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         return this.variable.typeConstructor
     }
 
-    override fun intersectTypes(types: List<SimpleTypeMarker>): SimpleTypeMarker {
+    override fun intersectTypes(types: Collection<SimpleTypeMarker>): SimpleTypeMarker {
         @Suppress("UNCHECKED_CAST")
-        return ConeTypeIntersector.intersectTypes(this as ConeInferenceContext, types as List<ConeKotlinType>) as SimpleTypeMarker
+        return ConeTypeIntersector.intersectTypes(this as ConeInferenceContext, types as Collection<ConeKotlinType>) as SimpleTypeMarker
     }
 
-    override fun intersectTypes(types: List<KotlinTypeMarker>): ConeKotlinType {
+    override fun intersectTypes(types: Collection<KotlinTypeMarker>): ConeKotlinType {
         @Suppress("UNCHECKED_CAST")
-        return ConeTypeIntersector.intersectTypes(this as ConeInferenceContext, types as List<ConeKotlinType>)
+        return ConeTypeIntersector.intersectTypes(this as ConeInferenceContext, types as Collection<ConeKotlinType>)
     }
 
     override fun KotlinTypeMarker.isNullableType(): Boolean {
         require(this is ConeKotlinType)
-        if (this.isMarkedNullable)
-            return true
-
-        return when (this) {
-            is ConeFlexibleType -> this.upperBound.isNullableType()
-            is ConeTypeParameterType -> lookupTag.symbol.allBoundsAreNullableOrUnresolved()
-            // NB: There's no branch for ConeTypeVariableType, i.e. it always returns false for them
-            // And while it seems reasonable to have similar semantics as for stub types, it would make some diagnostic test failing
-            // Thus, we leave the same semantics only for stubs (similar to TypeUtils.isNullableType)
-            is ConeStubType -> {
-                val symbol = (this.constructor.variable.defaultType.typeConstructor.originalTypeParameter as? ConeTypeParameterLookupTag)?.symbol
-                symbol == null || symbol.allBoundsAreNullableOrUnresolved()
-            }
-            is ConeIntersectionType -> intersectedTypes.all { it.isNullableType() }
-            is ConeClassLikeType -> directExpansionType(session)?.isNullableType() ?: false
-            else -> false
-        }
-    }
-
-    private fun FirTypeParameterSymbol.allBoundsAreNullableOrUnresolved(): Boolean {
-        for (bound in fir.bounds) {
-            if (bound !is FirResolvedTypeRef) return true
-            if (!bound.type.isNullableType()) return false
-        }
-
-        return true
+        return canBeNull(session)
     }
 
     private fun TypeConstructorMarker.toFirRegularClass(): FirRegularClass? {
@@ -563,13 +538,18 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         val annotationCall = customAnnotations.firstOrNull {
             it.resolvedType.fullyExpandedType(session).classId?.asSingleFqName() == fqName
         } ?: return null
+
+        if (annotationCall is FirAnnotationCall) {
+            annotationCall.containingDeclarationSymbol.lazyResolveToPhase(FirResolvePhase.ANNOTATION_ARGUMENTS)
+        }
+
         val argument = when (val argument = annotationCall.argumentMapping.mapping.values.firstOrNull() ?: return null) {
             is FirVarargArgumentsExpression -> argument.arguments.firstOrNull()
             is FirArrayLiteral -> argument.arguments.firstOrNull()
             is FirNamedArgumentExpression -> argument.expression
             else -> argument
         } ?: return null
-        return (argument as? FirLiteralExpression<*>)?.value
+        return (argument as? FirLiteralExpression)?.value
     }
 
     override fun TypeConstructorMarker.getTypeParameterClassifier(): TypeParameterMarker? {

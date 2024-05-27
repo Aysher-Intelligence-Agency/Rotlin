@@ -1,43 +1,38 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.analysis.api.descriptors.signatures
 
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.KaType
 
-internal class KtFe10FunctionLikeSignature<out S : KtFunctionLikeSymbol>(
-    private val _symbol: S,
-    private val _returnType: KtType,
-    private val _receiverType: KtType?,
-    private val _valueParameters: List<KtVariableLikeSignature<KtValueParameterSymbol>>,
-) : KtFunctionLikeSignature<S>() {
-    override val token: KtLifetimeToken
-        get() = _symbol.token
-    override val symbol: S
-        get() = withValidityAssertion { _symbol }
-    override val returnType: KtType
-        get() = withValidityAssertion { _returnType }
-    override val receiverType: KtType?
-        get() = withValidityAssertion { _receiverType }
-    override val valueParameters: List<KtVariableLikeSignature<KtValueParameterSymbol>>
-        get() = withValidityAssertion { _valueParameters }
+internal class KaFe10FunctionLikeSignature<out S : KaFunctionLikeSymbol>(
+    private val backingSymbol: S,
+    private val backingReturnType: KaType,
+    private val backingReceiverType: KaType?,
+    private val backingValueParameters: List<KaVariableLikeSignature<KaValueParameterSymbol>>,
+) : KaFunctionLikeSignature<S>() {
+    override val token: KaLifetimeToken get() = backingSymbol.token
+    override val symbol: S get() = withValidityAssertion { backingSymbol }
+    override val returnType: KaType get() = withValidityAssertion { backingReturnType }
+    override val receiverType: KaType? get() = withValidityAssertion { backingReceiverType }
+    override val valueParameters: List<KaVariableLikeSignature<KaValueParameterSymbol>> get() = withValidityAssertion { backingValueParameters }
 
-    override fun substitute(substitutor: KtSubstitutor): KtFunctionLikeSignature<S> = withValidityAssertion {
-        KtFe10FunctionLikeSignature(
+    override fun substitute(substitutor: KaSubstitutor): KaFunctionLikeSignature<S> = withValidityAssertion {
+        KaFe10FunctionLikeSignature(
             symbol,
             substitutor.substitute(returnType),
             receiverType?.let { substitutor.substitute(it) },
             valueParameters.map { valueParameter ->
-                KtFe10VariableLikeSignature<KtValueParameterSymbol>(
+                KaFe10VariableLikeSignature<KaValueParameterSymbol>(
                     valueParameter.symbol,
                     substitutor.substitute(valueParameter.returnType),
                     valueParameter.receiverType?.let { substitutor.substitute(it) }
@@ -50,21 +45,21 @@ internal class KtFe10FunctionLikeSignature<out S : KtFunctionLikeSymbol>(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as KtFunctionLikeSignature<*>
+        other as KaFe10FunctionLikeSignature<*>
 
-        if (symbol != other.symbol) return false
-        if (returnType != other.returnType) return false
-        if (receiverType != other.receiverType) return false
-        if (valueParameters != other.valueParameters) return false
+        if (backingSymbol != other.backingSymbol) return false
+        if (backingReturnType != other.backingReturnType) return false
+        if (backingReceiverType != other.backingReceiverType) return false
+        if (backingValueParameters != other.backingValueParameters) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = symbol.hashCode()
-        result = 31 * result + returnType.hashCode()
-        result = 31 * result + (receiverType?.hashCode() ?: 0)
-        result = 31 * result + valueParameters.hashCode()
+        var result = backingSymbol.hashCode()
+        result = 31 * result + backingReturnType.hashCode()
+        result = 31 * result + (backingReceiverType?.hashCode() ?: 0)
+        result = 31 * result + backingValueParameters.hashCode()
         return result
     }
 }

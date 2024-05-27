@@ -1,81 +1,99 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.analysis.api.components
 
-import org.jetbrains.kotlin.analysis.api.KtTypeProjection
-import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
-import org.jetbrains.kotlin.analysis.api.lifetime.assertIsValidAndAccessible
+import org.jetbrains.kotlin.analysis.api.KaTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.KaTypeProjection
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.validityAsserted
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.types.Variance
 
-public abstract class KtTypeCreator : KtAnalysisSessionComponent() {
-    public abstract fun buildClassType(builder: KtClassTypeBuilder): KtClassType
+public abstract class KaTypeCreator : KaSessionComponent() {
+    public abstract fun buildClassType(builder: KaClassTypeBuilder): KaClassType
 
-    public abstract fun buildTypeParameterType(builder: KtTypeParameterTypeBuilder): KtTypeParameterType
+    public abstract fun buildTypeParameterType(builder: KaTypeParameterTypeBuilder): KaTypeParameterType
 }
 
-public interface KtTypeCreatorMixIn : KtAnalysisSessionMixIn
+public typealias KtTypeCreator = KaTypeCreator
 
-public inline fun KtTypeCreatorMixIn.buildClassType(
+public interface KaTypeCreatorMixIn : KaSessionMixIn
+
+public typealias KtTypeCreatorMixIn = KaTypeCreatorMixIn
+
+public inline fun KaTypeCreatorMixIn.buildClassType(
     classId: ClassId,
-    build: KtClassTypeBuilder.() -> Unit = {}
-): KtClassType =
-    analysisSession.typesCreator.buildClassType(KtClassTypeBuilder.ByClassId(classId, token).apply(build))
+    build: KaClassTypeBuilder.() -> Unit = {},
+): KaClassType =
+    analysisSession.typesCreator.buildClassType(KaClassTypeBuilder.ByClassId(classId, token).apply(build))
 
-public inline fun KtTypeCreatorMixIn.buildClassType(
-    symbol: KtClassLikeSymbol,
-    build: KtClassTypeBuilder.() -> Unit = {}
-): KtClassType =
-    analysisSession.typesCreator.buildClassType(KtClassTypeBuilder.BySymbol(symbol, token).apply(build))
+public inline fun KaTypeCreatorMixIn.buildClassType(
+    symbol: KaClassLikeSymbol,
+    build: KaClassTypeBuilder.() -> Unit = {},
+): KaClassType =
+    analysisSession.typesCreator.buildClassType(KaClassTypeBuilder.BySymbol(symbol, token).apply(build))
 
-public inline fun KtTypeCreatorMixIn.buildTypeParameterType(
-    symbol: KtTypeParameterSymbol,
-    build: KtTypeParameterTypeBuilder.() -> Unit = {}
-): KtTypeParameterType =
-    analysisSession.typesCreator.buildTypeParameterType(KtTypeParameterTypeBuilder.BySymbol(symbol, token).apply(build))
+public inline fun KaTypeCreatorMixIn.buildTypeParameterType(
+    symbol: KaTypeParameterSymbol,
+    build: KaTypeParameterTypeBuilder.() -> Unit = {},
+): KaTypeParameterType =
+    analysisSession.typesCreator.buildTypeParameterType(KaTypeParameterTypeBuilder.BySymbol(symbol, token).apply(build))
 
-public sealed class KtTypeBuilder : KtLifetimeOwner
+public sealed class KaTypeBuilder : KaLifetimeOwner
 
-public sealed class KtClassTypeBuilder : KtTypeBuilder() {
-    private val _arguments = mutableListOf<KtTypeProjection>()
+public typealias KtTypeBuilder = KaTypeBuilder
 
-    public var nullability: KtTypeNullability = KtTypeNullability.NON_NULLABLE
+public sealed class KaClassTypeBuilder : KaTypeBuilder() {
+    private val backingArguments = mutableListOf<KaTypeProjection>()
 
-    public val arguments: List<KtTypeProjection> get() = withValidityAssertion { _arguments }
+    public var nullability: KaTypeNullability = KaTypeNullability.NON_NULLABLE
+        get() = withValidityAssertion { field }
+        set(value) {
+            withValidityAssertion { field = value }
+        }
 
-    public fun argument(argument: KtTypeProjection) {
-        assertIsValidAndAccessible()
-        _arguments += argument
+    public val arguments: List<KaTypeProjection> get() = withValidityAssertion { backingArguments }
+
+    public fun argument(argument: KaTypeProjection): Unit = withValidityAssertion {
+        backingArguments += argument
     }
 
-    public fun argument(type: KtType, variance: Variance = Variance.INVARIANT)  {
-        assertIsValidAndAccessible()
-        _arguments += KtTypeArgumentWithVariance(type, variance, type.token)
+    public fun argument(type: KaType, variance: Variance = Variance.INVARIANT): Unit = withValidityAssertion {
+        backingArguments += KaTypeArgumentWithVariance(type, variance, type.token)
     }
 
-    public class ByClassId(public val classId: ClassId, override val token: KtLifetimeToken) : KtClassTypeBuilder()
-    public class BySymbol(private val _symbol: KtClassLikeSymbol, override val token: KtLifetimeToken) : KtClassTypeBuilder() {
-        public val symbol: KtClassLikeSymbol get() = withValidityAssertion { _symbol }
+    public class ByClassId(classId: ClassId, override val token: KaLifetimeToken) : KaClassTypeBuilder() {
+        public val classId: ClassId by validityAsserted(classId)
+    }
+
+    public class BySymbol(symbol: KaClassLikeSymbol, override val token: KaLifetimeToken) : KaClassTypeBuilder() {
+        public val symbol: KaClassLikeSymbol by validityAsserted(symbol)
     }
 }
 
-public sealed class KtTypeParameterTypeBuilder : KtTypeBuilder() {
-    public var nullability: KtTypeNullability = KtTypeNullability.NULLABLE
+public typealias KtClassTypeBuilder = KaClassTypeBuilder
 
-    public class BySymbol(private val _symbol: KtTypeParameterSymbol, override val token: KtLifetimeToken) : KtTypeParameterTypeBuilder() {
-        public val symbol: KtTypeParameterSymbol get() = withValidityAssertion { _symbol }
+public sealed class KaTypeParameterTypeBuilder : KaTypeBuilder() {
+    public var nullability: KaTypeNullability = KaTypeNullability.NULLABLE
+        get() = withValidityAssertion { field }
+        set(value) {
+            withValidityAssertion { field = value }
+        }
+
+    public class BySymbol(symbol: KaTypeParameterSymbol, override val token: KaLifetimeToken) : KaTypeParameterTypeBuilder() {
+        public val symbol: KaTypeParameterSymbol by validityAsserted(symbol)
     }
 }
 
+public typealias KtTypeParameterTypeBuilder = KaTypeParameterTypeBuilder

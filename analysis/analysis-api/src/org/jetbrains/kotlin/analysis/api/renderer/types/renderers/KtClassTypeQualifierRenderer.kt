@@ -5,53 +5,83 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.types.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
-import org.jetbrains.kotlin.analysis.api.types.KtClassType
-import org.jetbrains.kotlin.analysis.api.types.KtClassTypeQualifier
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
+import org.jetbrains.kotlin.analysis.api.types.KaNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.renderer.render
 
-public interface KtClassTypeQualifierRenderer {
-    context(KtAnalysisSession, KtTypeRenderer)
-    public fun renderClassTypeQualifier(type: KtClassType, printer: PrettyPrinter)
+public interface KaClassTypeQualifierRenderer {
+    public fun renderClassTypeQualifier(
+        analysisSession: KaSession,
+        type: KaClassType,
+        typeRenderer: KaTypeRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object WITH_SHORT_NAMES : KtClassTypeQualifierRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderClassTypeQualifier(type: KtClassType, printer: PrettyPrinter) {
-            type.qualifiers.last().render(type, printer)
+    public object WITH_SHORT_NAMES : KaClassTypeQualifierRenderer {
+        override fun renderClassTypeQualifier(
+            analysisSession: KaSession,
+            type: KaClassType,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
+            type.qualifiers.last().render(analysisSession, type, typeRenderer, printer)
         }
     }
 
-    public object WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS : KtClassTypeQualifierRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderClassTypeQualifier(type: KtClassType, printer: PrettyPrinter): Unit = printer {
-            printCollection(type.qualifiers, separator = ".") { qualifier -> qualifier.render(type, printer) }
+    public object WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS : KaClassTypeQualifierRenderer {
+        override fun renderClassTypeQualifier(
+            analysisSession: KaSession,
+            type: KaClassType,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                printCollection(type.qualifiers, separator = ".") { qualifier ->
+                    qualifier.render(analysisSession, type, typeRenderer, printer)
+                }
+            }
         }
     }
 
-    public object WITH_QUALIFIED_NAMES : KtClassTypeQualifierRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderClassTypeQualifier(type: KtClassType, printer: PrettyPrinter): Unit = printer {
-            ".".separated(
-                {
-                    if (type is KtNonErrorClassType && type.classId.packageFqName != CallableId.PACKAGE_FQ_NAME_FOR_LOCAL) {
-                        append(type.classId.packageFqName.render())
-                    }
-                },
-                { WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS.renderClassTypeQualifier(type, printer) },
-            )
+    public object WITH_QUALIFIED_NAMES : KaClassTypeQualifierRenderer {
+        override fun renderClassTypeQualifier(
+            analysisSession: KaSession,
+            type: KaClassType,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                ".".separated(
+                    {
+                        if (type is KaNonErrorClassType && type.classId.packageFqName != CallableId.PACKAGE_FQ_NAME_FOR_LOCAL) {
+                            append(type.classId.packageFqName.render())
+                        }
+                    },
+                    { WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS.renderClassTypeQualifier(analysisSession, type, typeRenderer, printer) },
+                )
+            }
         }
     }
 }
 
-context(KtAnalysisSession, KtTypeRenderer)
-private fun KtClassTypeQualifier.render(type: KtType, printer: PrettyPrinter) = printer {
-    typeNameRenderer.renderName(name, type, printer)
-    printCollectionIfNotEmpty(typeArguments, prefix = "<", postfix = ">") {
-        typeProjectionRenderer.renderTypeProjection(it, this)
+public typealias KtClassTypeQualifierRenderer = KaClassTypeQualifierRenderer
+
+private fun KaClassTypeQualifier.render(
+    analysisSession: KaSession,
+    type: KaType,
+    typeRenderer: KaTypeRenderer,
+    printer: PrettyPrinter,
+) {
+    printer {
+        typeRenderer.typeNameRenderer.renderName(analysisSession, name, type, typeRenderer, printer)
+        printCollectionIfNotEmpty(typeArguments, prefix = "<", postfix = ">") {
+            typeRenderer.typeProjectionRenderer.renderTypeProjection(analysisSession, it, typeRenderer, this)
+        }
     }
 }

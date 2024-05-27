@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.isSynthetic
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.ConeIntersectionType
@@ -74,6 +75,7 @@ val FirCallableDeclaration.isSubstitutionOverride: Boolean get() = origin is Fir
 val FirCallableDeclaration.isSubstitutionOrIntersectionOverride: Boolean get() = isSubstitutionOverride || isIntersectionOverride
 val FirCallableDeclaration.isDelegated: Boolean get() = origin == FirDeclarationOrigin.Delegated
 val FirCallableDeclaration.isCopyCreatedInScope: Boolean get() = isSubstitutionOrIntersectionOverride || isDelegated
+val FirCallableDeclaration.canHaveDeferredReturnTypeCalculation: Boolean get() = isCopyCreatedInScope || origin == FirDeclarationOrigin.Enhancement || origin == FirDeclarationOrigin.Synthetic.JavaProperty
 
 val FirCallableSymbol<*>.isIntersectionOverride: Boolean get() = origin == FirDeclarationOrigin.IntersectionOverride
 val FirCallableSymbol<*>.isSubstitutionOverride: Boolean get() = origin is FirDeclarationOrigin.SubstitutionOverride
@@ -177,7 +179,7 @@ private object InitialSignatureKey : FirDeclarationDataKey()
  *
  * When the receiver is a mapped declaration with a Kotlin signature, this property returns the declaration with the initial Java signature.
  */
-var FirCallableDeclaration.initialSignatureAttr: FirCallableDeclaration? by FirDeclarationDataRegistry.data(InitialSignatureKey)
+var FirCallableDeclaration.initialSignatureAttr: FirNamedFunctionSymbol? by FirDeclarationDataRegistry.data(InitialSignatureKey)
 
 private object MatchingParameterFunctionTypeKey : FirDeclarationDataKey()
 
@@ -235,5 +237,5 @@ class DelegatedWrapperData<D : FirCallableDeclaration>(
 var <D : FirCallableDeclaration>
         D.delegatedWrapperData: DelegatedWrapperData<D>? by FirDeclarationDataRegistry.data(DelegatedWrapperDataKey)
 
-val <D : FirCallableDeclaration> FirCallableSymbol<out D>.delegatedWrapperData: DelegatedWrapperData<D>?
+val <D : FirCallableDeclaration> FirCallableSymbol<D>.delegatedWrapperData: DelegatedWrapperData<D>?
     get() = fir.delegatedWrapperData

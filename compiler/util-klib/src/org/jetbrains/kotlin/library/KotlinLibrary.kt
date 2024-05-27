@@ -20,8 +20,13 @@ const val KLIB_PROPERTY_IR_SIGNATURE_VERSIONS = "ir_signature_versions"
  * [org.jetbrains.kotlin.library.metadata.KlibMetadataVersion]
  */
 const val KLIB_PROPERTY_METADATA_VERSION = "metadata_version"
+
+@Deprecated(DEPRECATED_LIBRARY_AND_DEPENDENCY_VERSIONS)
 const val KLIB_PROPERTY_DEPENDENCY_VERSION = "dependency_version"
+
+@Deprecated(DEPRECATED_LIBRARY_AND_DEPENDENCY_VERSIONS)
 const val KLIB_PROPERTY_LIBRARY_VERSION = "library_version"
+
 const val KLIB_PROPERTY_UNIQUE_NAME = "unique_name"
 const val KLIB_PROPERTY_SHORT_NAME = "short_name"
 const val KLIB_PROPERTY_DEPENDS = "depends"
@@ -31,6 +36,7 @@ const val KLIB_PROPERTY_CONTAINS_ERROR_CODE = "contains_error_code"
 
 // Native-specific:
 const val KLIB_PROPERTY_INTEROP = "interop"
+const val KLIB_PROPERTY_HEADER = "header"
 const val KLIB_PROPERTY_EXPORT_FORWARD_DECLARATIONS = "exportForwardDeclarations"
 const val KLIB_PROPERTY_INCLUDED_FORWARD_DECLARATIONS = "includedForwardDeclarations"
 const val KLIB_PROPERTY_IR_PROVIDER = "ir_provider"
@@ -39,6 +45,7 @@ const val KLIB_PROPERTY_IR_PROVIDER = "ir_provider"
  * Copy-pasted to `kotlin-native/build-tools/src/main/kotlin/org/jetbrains/kotlin/Utils.kt`
  */
 const val KLIB_PROPERTY_NATIVE_TARGETS = "native_targets"
+const val KLIB_PROPERTY_WASM_TARGETS = "wasm_targets"
 
 // Commonizer-specific:
 /**
@@ -114,7 +121,7 @@ val BaseKotlinLibrary.unresolvedDependencies: List<RequiredUnresolvedLibrary>
 
 fun BaseKotlinLibrary.unresolvedDependencies(lenient: Boolean = false): List<UnresolvedLibrary> =
     manifestProperties.propertyList(KLIB_PROPERTY_DEPENDS, escapeInQuotes = true)
-        .map { UnresolvedLibrary(it, manifestProperties.getProperty("dependency_version_$it"), lenient = lenient) }
+        .map { UnresolvedLibrary(it, lenient = lenient) }
 
 val BaseKotlinLibrary.hasDependencies: Boolean
     get() = !manifestProperties.getProperty(KLIB_PROPERTY_DEPENDS).isNullOrBlank()
@@ -124,6 +131,9 @@ interface KotlinLibrary : BaseKotlinLibrary, MetadataLibrary, IrLibrary
 // TODO: should we move the below ones to Native?
 val KotlinLibrary.isInterop: Boolean
     get() = manifestProperties.getProperty(KLIB_PROPERTY_INTEROP) == "true"
+
+val KotlinLibrary.isHeader: Boolean
+    get() = manifestProperties.getProperty(KLIB_PROPERTY_HEADER) == "true"
 
 val KotlinLibrary.packageFqName: String?
     get() = manifestProperties.getProperty(KLIB_PROPERTY_PACKAGE)
@@ -139,6 +149,9 @@ val BaseKotlinLibrary.irProviderName: String?
 
 val BaseKotlinLibrary.nativeTargets: List<String>
     get() = manifestProperties.propertyList(KLIB_PROPERTY_NATIVE_TARGETS)
+
+val BaseKotlinLibrary.wasmTargets: List<String>
+    get() = manifestProperties.propertyList(KLIB_PROPERTY_WASM_TARGETS)
 
 val KotlinLibrary.containsErrorCode: Boolean
     get() = manifestProperties.getProperty(KLIB_PROPERTY_CONTAINS_ERROR_CODE) == "true"
@@ -157,3 +170,5 @@ val BaseKotlinLibrary.commonizerNativeTargets: List<String>?
     get() = if (manifestProperties.containsKey(KLIB_PROPERTY_COMMONIZER_NATIVE_TARGETS))
         manifestProperties.propertyList(KLIB_PROPERTY_COMMONIZER_NATIVE_TARGETS, escapeInQuotes = true)
     else null
+
+const val DEPRECATED_LIBRARY_AND_DEPENDENCY_VERSIONS = "Library and dependency versions have been phased out, see KT-65834"

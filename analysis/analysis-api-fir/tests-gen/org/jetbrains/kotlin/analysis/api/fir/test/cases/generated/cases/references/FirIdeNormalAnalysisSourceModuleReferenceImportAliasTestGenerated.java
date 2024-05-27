@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisS
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiMode;
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.references.AbstractReferenceImportAliasTest;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -53,9 +52,27 @@ public class FirIdeNormalAnalysisSourceModuleReferenceImportAliasTestGenerated e
   }
 
   @Test
+  @TestMetadata("classAliasWithCompanionObject.kt")
+  public void testClassAliasWithCompanionObject() {
+    runTest("analysis/analysis-api/testData/imports/importAliases/classAliasWithCompanionObject.kt");
+  }
+
+  @Test
+  @TestMetadata("constructorAlias.kt")
+  public void testConstructorAlias() {
+    runTest("analysis/analysis-api/testData/imports/importAliases/constructorAlias.kt");
+  }
+
+  @Test
   @TestMetadata("functionAlias.kt")
   public void testFunctionAlias() {
     runTest("analysis/analysis-api/testData/imports/importAliases/functionAlias.kt");
+  }
+
+  @Test
+  @TestMetadata("kdocReferenceAlias.kt")
+  public void testKdocReferenceAlias() {
+    runTest("analysis/analysis-api/testData/imports/importAliases/kdocReferenceAlias.kt");
   }
 
   @Test

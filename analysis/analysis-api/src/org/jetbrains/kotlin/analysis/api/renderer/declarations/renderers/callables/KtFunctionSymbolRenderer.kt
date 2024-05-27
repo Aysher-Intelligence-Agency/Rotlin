@@ -5,38 +5,63 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.lexer.KtTokens
 
-public interface KtFunctionSymbolRenderer {
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    public fun renderSymbol(symbol: KtFunctionSymbol, printer: PrettyPrinter)
+public interface KaFunctionSymbolRenderer {
+    public fun renderSymbol(
+        analysisSession: KaSession,
+        symbol: KaFunctionSymbol,
+        declarationRenderer: KaDeclarationRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object AS_SOURCE : KtFunctionSymbolRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderSymbol(symbol: KtFunctionSymbol, printer: PrettyPrinter) {
-            callableSignatureRenderer.renderCallableSignature(symbol, KtTokens.FUN_KEYWORD, printer)
-            functionLikeBodyRenderer.renderBody(symbol, printer)
+    public object AS_SOURCE : KaFunctionSymbolRenderer {
+        override fun renderSymbol(
+            analysisSession: KaSession,
+            symbol: KaFunctionSymbol,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ) {
+            declarationRenderer.callableSignatureRenderer
+                .renderCallableSignature(analysisSession, symbol, KtTokens.FUN_KEYWORD, declarationRenderer, printer)
+
+            declarationRenderer.functionLikeBodyRenderer.renderBody(analysisSession, symbol, printer)
         }
     }
 
-    public object AS_RAW_SIGNATURE : KtFunctionSymbolRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderSymbol(symbol: KtFunctionSymbol, printer: PrettyPrinter) {
+    public object AS_RAW_SIGNATURE : KaFunctionSymbolRenderer {
+        override fun renderSymbol(
+            analysisSession: KaSession,
+            symbol: KaFunctionSymbol,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ) {
             printer {
                 val receiverSymbol = symbol.receiverParameter
                 if (receiverSymbol != null) {
-                    withSuffix(".") { callableReceiverRenderer.renderReceiver(receiverSymbol, printer) }
+                    withSuffix(".") {
+                        declarationRenderer.callableReceiverRenderer
+                            .renderReceiver(analysisSession, receiverSymbol, declarationRenderer, printer)
+                    }
                 }
-                nameRenderer.renderName(symbol, printer)
+
+                declarationRenderer.nameRenderer.renderName(analysisSession, symbol, declarationRenderer, printer)
+
                 printer.printCollection(symbol.valueParameters, prefix = "(", postfix = ")") {
-                    typeRenderer.renderType(it.returnType, printer)
+                    declarationRenderer.typeRenderer.renderType(analysisSession, it.returnType, printer)
                 }
-                withPrefix(": ") { returnTypeRenderer.renderReturnType(symbol, printer) }
+
+                withPrefix(": ") {
+                    declarationRenderer.returnTypeRenderer
+                        .renderReturnType(analysisSession, symbol, declarationRenderer, printer)
+                }
             }
         }
     }
 }
+
+public typealias KtFunctionSymbolRenderer = KaFunctionSymbolRenderer

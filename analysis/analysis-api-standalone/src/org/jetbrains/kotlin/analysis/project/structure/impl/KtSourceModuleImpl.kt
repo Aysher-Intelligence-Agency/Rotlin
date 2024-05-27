@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.computeTransitiveDependsOnDependencies
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 
 internal class KtSourceModuleImpl(
     override val directRegularDependencies: List<KtModule>,
@@ -26,6 +25,8 @@ internal class KtSourceModuleImpl(
     override val languageVersionSettings: LanguageVersionSettings,
     internal val sourceRoots: List<PsiFileSystemItem>,
 ) : KtSourceModule, KtModuleWithPlatform {
-    override val transitiveDependsOnDependencies: List<KtModule> by lazy { computeTransitiveDependsOnDependencies(directDependsOnDependencies) }
-    override val analyzerServices: PlatformDependentAnalyzerServices = super.analyzerServices
+    override val stableModuleName: String? get() = moduleName
+    override val transitiveDependsOnDependencies: List<KtModule> by lazy {
+        computeTransitiveDependsOnDependencies(directDependsOnDependencies)
+    }
 }

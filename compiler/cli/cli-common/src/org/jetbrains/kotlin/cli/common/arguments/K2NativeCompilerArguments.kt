@@ -47,7 +47,12 @@ class K2NativeCompilerArguments : CommonCompilerArguments() {
     @Argument(value = "-library", shortName = "-l", valueDescription = "<path>", description = "Link with the given library.", delimiter = Argument.Delimiters.none)
     var libraries: Array<String>? = null
 
-    @Argument(value = "-library-version", shortName = "-lv", valueDescription = "<version>", description = "Set the library version.")
+    @Argument(
+        value = "-library-version",
+        shortName = "-lv",
+        valueDescription = "<version>",
+        description = "The library version.\nNote: This option is deprecated and will be removed in one of the future releases."
+    )
     var libraryVersion: String? = null
 
     @Argument(value = "-list-targets", deprecatedName = "-list_targets", description = "List available hardware targets.")
@@ -467,6 +472,12 @@ The default value is 1."""
 
     @Argument(value = "-Xkonan-data-dir", description = "Custom path to the location of konan distributions.")
     var konanDataDir: String? = null
+
+    @Argument(
+        value = "-Xmanifest-native-targets",
+        description = "Comma-separated list that will be written as the value of 'native_targets' property in the .klib manifest. Unknown values are discarded."
+    )
+    var manifestNativeTargets: Array<String>? = null
 
     override fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> =
         super.configureAnalysisFlags(collector, languageVersion).also {

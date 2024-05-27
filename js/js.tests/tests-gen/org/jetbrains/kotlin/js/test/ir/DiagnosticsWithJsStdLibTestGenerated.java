@@ -38,9 +38,21 @@ public class DiagnosticsWithJsStdLibTestGenerated extends AbstractDiagnosticsTes
   }
 
   @Test
+  @TestMetadata("excludedDefaultImports.kt")
+  public void testExcludedDefaultImports() {
+    runTest("compiler/testData/diagnostics/testsWithJsStdLib/excludedDefaultImports.kt");
+  }
+
+  @Test
   @TestMetadata("externalInterfaceClassLiteral.kt")
   public void testExternalInterfaceClassLiteral() {
     runTest("compiler/testData/diagnostics/testsWithJsStdLib/externalInterfaceClassLiteral.kt");
+  }
+
+  @Test
+  @TestMetadata("externalTypeInheritsExternalTypeViaTypeAlias.kt")
+  public void testExternalTypeInheritsExternalTypeViaTypeAlias() {
+    runTest("compiler/testData/diagnostics/testsWithJsStdLib/externalTypeInheritsExternalTypeViaTypeAlias.kt");
   }
 
   @Test
@@ -71,6 +83,12 @@ public class DiagnosticsWithJsStdLibTestGenerated extends AbstractDiagnosticsTes
   @TestMetadata("jsExternalSuperclassWithoutArguments.kt")
   public void testJsExternalSuperclassWithoutArguments() {
     runTest("compiler/testData/diagnostics/testsWithJsStdLib/jsExternalSuperclassWithoutArguments.kt");
+  }
+
+  @Test
+  @TestMetadata("jsStatic.kt")
+  public void testJsStatic() {
+    runTest("compiler/testData/diagnostics/testsWithJsStdLib/jsStatic.kt");
   }
 
   @Test
@@ -499,6 +517,12 @@ public class DiagnosticsWithJsStdLibTestGenerated extends AbstractDiagnosticsTes
     }
 
     @Test
+    @TestMetadata("promiseUnit.kt")
+    public void testPromiseUnit() {
+      runTest("compiler/testData/diagnostics/testsWithJsStdLib/export/promiseUnit.kt");
+    }
+
+    @Test
     @TestMetadata("secondaryConstructorWithoutJsName.kt")
     public void testSecondaryConstructorWithoutJsName() {
       runTest("compiler/testData/diagnostics/testsWithJsStdLib/export/secondaryConstructorWithoutJsName.kt");
@@ -508,6 +532,12 @@ public class DiagnosticsWithJsStdLibTestGenerated extends AbstractDiagnosticsTes
     @TestMetadata("secondaryConstructorWithoutJsNameInExportedFile.kt")
     public void testSecondaryConstructorWithoutJsNameInExportedFile() {
       runTest("compiler/testData/diagnostics/testsWithJsStdLib/export/secondaryConstructorWithoutJsNameInExportedFile.kt");
+    }
+
+    @Test
+    @TestMetadata("typeAliasInValueParameter.kt")
+    public void testTypeAliasInValueParameter() {
+      runTest("compiler/testData/diagnostics/testsWithJsStdLib/export/typeAliasInValueParameter.kt");
     }
 
     @Test
@@ -987,6 +1017,18 @@ public class DiagnosticsWithJsStdLibTestGenerated extends AbstractDiagnosticsTes
     }
 
     @Test
+    @TestMetadata("inlineClassAsParameterOrReturnTypeWhenPropertyParametersAllowed.kt.kt")
+    public void testInlineClassAsParameterOrReturnTypeWhenPropertyParametersAllowed_kt() {
+      runTest("compiler/testData/diagnostics/testsWithJsStdLib/native/inlineClassAsParameterOrReturnTypeWhenPropertyParametersAllowed.kt.kt");
+    }
+
+    @Test
+    @TestMetadata("inlineClassAsParameterOrReturnTypeWithPropertyParameters_allowed.kt.kt")
+    public void testInlineClassAsParameterOrReturnTypeWithPropertyParameters_allowed_kt() {
+      runTest("compiler/testData/diagnostics/testsWithJsStdLib/native/inlineClassAsParameterOrReturnTypeWithPropertyParameters_allowed.kt.kt");
+    }
+
+    @Test
     @TestMetadata("inlineClassAsParameterOrReturnType_allowed.kt.kt")
     public void testInlineClassAsParameterOrReturnType_allowed_kt() {
       runTest("compiler/testData/diagnostics/testsWithJsStdLib/native/inlineClassAsParameterOrReturnType_allowed.kt.kt");
@@ -996,6 +1038,12 @@ public class DiagnosticsWithJsStdLibTestGenerated extends AbstractDiagnosticsTes
     @TestMetadata("inlineClassAsParameterOrReturnType.kt.kt")
     public void testInlineClassAsParameterOrReturnType_kt() {
       runTest("compiler/testData/diagnostics/testsWithJsStdLib/native/inlineClassAsParameterOrReturnType.kt.kt");
+    }
+
+    @Test
+    @TestMetadata("inlineClassWithAllowedPropertyParameter.kt")
+    public void testInlineClassWithAllowedPropertyParameter() {
+      runTest("compiler/testData/diagnostics/testsWithJsStdLib/native/inlineClassWithAllowedPropertyParameter.kt");
     }
 
     @Test
@@ -1038,6 +1086,12 @@ public class DiagnosticsWithJsStdLibTestGenerated extends AbstractDiagnosticsTes
     @TestMetadata("propertyParameter.kt")
     public void testPropertyParameter() {
       runTest("compiler/testData/diagnostics/testsWithJsStdLib/native/propertyParameter.kt");
+    }
+
+    @Test
+    @TestMetadata("propertyParameterWhenItsAllowed.kt")
+    public void testPropertyParameterWhenItsAllowed() {
+      runTest("compiler/testData/diagnostics/testsWithJsStdLib/native/propertyParameterWhenItsAllowed.kt");
     }
 
     @Test

@@ -5,59 +5,81 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtAnnotationRenderer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationApplication
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaAnnotationRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 
-public interface KtAnnotationUseSiteTargetRenderer {
-    context(KtAnalysisSession, KtAnnotationRenderer)
-    public fun renderUseSiteTarget(annotation: KtAnnotationApplication, owner: KtAnnotated, printer: PrettyPrinter)
+public interface KaAnnotationUseSiteTargetRenderer {
+    public fun renderUseSiteTarget(
+        analysisSession: KaSession,
+        annotation: KaAnnotationApplication,
+        owner: KaAnnotated,
+        annotationRenderer: KaAnnotationRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object WITHOUT_USE_SITE : KtAnnotationUseSiteTargetRenderer {
-        context(KtAnalysisSession, KtAnnotationRenderer)
-        override fun renderUseSiteTarget(annotation: KtAnnotationApplication, owner: KtAnnotated, printer: PrettyPrinter) {
-        }
+    public object WITHOUT_USE_SITE : KaAnnotationUseSiteTargetRenderer {
+        override fun renderUseSiteTarget(
+            analysisSession: KaSession,
+            annotation: KaAnnotationApplication,
+            owner: KaAnnotated,
+            annotationRenderer: KaAnnotationRenderer,
+            printer: PrettyPrinter,
+        ) {}
     }
 
-    public object WITH_USES_SITE : KtAnnotationUseSiteTargetRenderer {
-        context(KtAnalysisSession, KtAnnotationRenderer)
-        override fun renderUseSiteTarget(annotation: KtAnnotationApplication, owner: KtAnnotated, printer: PrettyPrinter) {
+    public object WITH_USES_SITE : KaAnnotationUseSiteTargetRenderer {
+        override fun renderUseSiteTarget(
+            analysisSession: KaSession,
+            annotation: KaAnnotationApplication,
+            owner: KaAnnotated,
+            annotationRenderer: KaAnnotationRenderer,
+            printer: PrettyPrinter,
+        ) {
             val useSite = annotation.useSiteTarget ?: return
             printer.append(useSite.renderName)
             printer.append(':')
         }
     }
 
-    public object WITH_NON_DEFAULT_USE_SITE : KtAnnotationUseSiteTargetRenderer {
-        context(KtAnalysisSession, KtAnnotationRenderer)
-        override fun renderUseSiteTarget(annotation: KtAnnotationApplication, owner: KtAnnotated, printer: PrettyPrinter) {
+    public object WITH_NON_DEFAULT_USE_SITE : KaAnnotationUseSiteTargetRenderer {
+        override fun renderUseSiteTarget(
+            analysisSession: KaSession,
+            annotation: KaAnnotationApplication,
+            owner: KaAnnotated,
+            annotationRenderer: KaAnnotationRenderer,
+            printer: PrettyPrinter,
+        ) {
             val print = when (owner) {
-                is KtReceiverParameterSymbol -> true
-                !is KtCallableSymbol -> return
-                is KtAnonymousFunctionSymbol -> true
-                is KtConstructorSymbol -> true
-                is KtFunctionSymbol -> true
-                is KtPropertyGetterSymbol -> annotation.useSiteTarget != AnnotationUseSiteTarget.PROPERTY_GETTER
-                is KtPropertySetterSymbol -> annotation.useSiteTarget != AnnotationUseSiteTarget.PROPERTY_SETTER
-                is KtSamConstructorSymbol -> true
-                is KtBackingFieldSymbol -> annotation.useSiteTarget != AnnotationUseSiteTarget.FIELD
-                is KtEnumEntrySymbol -> true
-                is KtValueParameterSymbol ->
-                    owner.getContainingSymbol() !is KtPropertySetterSymbol || annotation.useSiteTarget != AnnotationUseSiteTarget.SETTER_PARAMETER
-
-                is KtJavaFieldSymbol -> true
-                is KtLocalVariableSymbol -> true
-                is KtPropertySymbol -> annotation.useSiteTarget != AnnotationUseSiteTarget.PROPERTY
+                is KaReceiverParameterSymbol -> true
+                !is KaCallableSymbol -> return
+                is KaAnonymousFunctionSymbol -> true
+                is KaConstructorSymbol -> true
+                is KaFunctionSymbol -> true
+                is KaPropertyGetterSymbol -> annotation.useSiteTarget != AnnotationUseSiteTarget.PROPERTY_GETTER
+                is KaPropertySetterSymbol -> annotation.useSiteTarget != AnnotationUseSiteTarget.PROPERTY_SETTER
+                is KaSamConstructorSymbol -> true
+                is KaBackingFieldSymbol -> annotation.useSiteTarget != AnnotationUseSiteTarget.FIELD
+                is KaEnumEntrySymbol -> true
+                is KaValueParameterSymbol -> {
+                    val containingSymbol = with(analysisSession) { owner.getContainingSymbol() }
+                    containingSymbol !is KaPropertySetterSymbol || annotation.useSiteTarget != AnnotationUseSiteTarget.SETTER_PARAMETER
+                }
+                is KaJavaFieldSymbol -> true
+                is KaLocalVariableSymbol -> true
+                is KaPropertySymbol -> annotation.useSiteTarget != AnnotationUseSiteTarget.PROPERTY
                 else -> return
             }
 
             if (print) {
-                WITH_USES_SITE.renderUseSiteTarget(annotation, owner, printer)
+                WITH_USES_SITE.renderUseSiteTarget(analysisSession, annotation, owner, annotationRenderer, printer)
             }
         }
     }
 }
+
+public typealias KtAnnotationUseSiteTargetRenderer = KaAnnotationUseSiteTargetRenderer

@@ -124,6 +124,12 @@ public class SourceGetOrBuildFirTestGenerated extends AbstractSourceGetOrBuildFi
     }
 
     @Test
+    @TestMetadata("fileAnnotation2.kt")
+    public void testFileAnnotation2() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/annotations/fileAnnotation2.kt");
+    }
+
+    @Test
     @TestMetadata("jvmFieldAnnotationOnConstructorProperty.kt")
     public void testJvmFieldAnnotationOnConstructorProperty() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/annotations/jvmFieldAnnotationOnConstructorProperty.kt");
@@ -291,6 +297,18 @@ public class SourceGetOrBuildFirTestGenerated extends AbstractSourceGetOrBuildFi
     @Test
     public void testAllFilesPresentInCalls() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/low-level-api-fir/testData/getOrBuildFir/calls"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("arrayAssignOperatorAsSingleExpressionInIf.kt")
+    public void testArrayAssignOperatorAsSingleExpressionInIf() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/calls/arrayAssignOperatorAsSingleExpressionInIf.kt");
+    }
+
+    @Test
+    @TestMetadata("arrayAssignOperatorAsSingleExpressionInWhen.kt")
+    public void testArrayAssignOperatorAsSingleExpressionInWhen() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/calls/arrayAssignOperatorAsSingleExpressionInWhen.kt");
     }
 
     @Test
@@ -507,6 +525,18 @@ public class SourceGetOrBuildFirTestGenerated extends AbstractSourceGetOrBuildFi
     @TestMetadata("superType.kt")
     public void testSuperType() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/calls/superType.kt");
+    }
+
+    @Test
+    @TestMetadata("whenConditionInRange.kt")
+    public void testWhenConditionInRange() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/calls/whenConditionInRange.kt");
+    }
+
+    @Test
+    @TestMetadata("whenConditionInRangeInverted.kt")
+    public void testWhenConditionInRangeInverted() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/calls/whenConditionInRangeInverted.kt");
     }
   }
 
@@ -751,6 +781,48 @@ public class SourceGetOrBuildFirTestGenerated extends AbstractSourceGetOrBuildFi
     @TestMetadata("forExpressionVariable.kt")
     public void testForExpressionVariable() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/expressions/forExpressionVariable.kt");
+    }
+
+    @Test
+    @TestMetadata("functionWithPostDecPropertyArgument.kt")
+    public void testFunctionWithPostDecPropertyArgument() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/expressions/functionWithPostDecPropertyArgument.kt");
+    }
+
+    @Test
+    @TestMetadata("functionWithPostIncPropertyArgument.kt")
+    public void testFunctionWithPostIncPropertyArgument() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/expressions/functionWithPostIncPropertyArgument.kt");
+    }
+
+    @Test
+    @TestMetadata("functionWithPreDecArrayAccessArgument.kt")
+    public void testFunctionWithPreDecArrayAccessArgument() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/expressions/functionWithPreDecArrayAccessArgument.kt");
+    }
+
+    @Test
+    @TestMetadata("functionWithPreDecPropertyArgument.kt")
+    public void testFunctionWithPreDecPropertyArgument() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/expressions/functionWithPreDecPropertyArgument.kt");
+    }
+
+    @Test
+    @TestMetadata("functionWithPreIncArrayAccessArgument.kt")
+    public void testFunctionWithPreIncArrayAccessArgument() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/expressions/functionWithPreIncArrayAccessArgument.kt");
+    }
+
+    @Test
+    @TestMetadata("functionWithPreIncPropertyArgument.kt")
+    public void testFunctionWithPreIncPropertyArgument() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/expressions/functionWithPreIncPropertyArgument.kt");
+    }
+
+    @Test
+    @TestMetadata("functionWithPropertyArgument.kt")
+    public void testFunctionWithPropertyArgument() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/expressions/functionWithPropertyArgument.kt");
     }
 
     @Test
@@ -1018,6 +1090,12 @@ public class SourceGetOrBuildFirTestGenerated extends AbstractSourceGetOrBuildFi
     }
 
     @Test
+    @TestMetadata("longStringTemplateEntryWithTwoExpressions.kt")
+    public void testLongStringTemplateEntryWithTwoExpressions() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/invalidCode/longStringTemplateEntryWithTwoExpressions.kt");
+    }
+
+    @Test
     @TestMetadata("missedTypeArgumentsInAnnotationCall.kt")
     public void testMissedTypeArgumentsInAnnotationCall() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/invalidCode/missedTypeArgumentsInAnnotationCall.kt");
@@ -1027,6 +1105,12 @@ public class SourceGetOrBuildFirTestGenerated extends AbstractSourceGetOrBuildFi
     @TestMetadata("secondaryConstructor.kt")
     public void testSecondaryConstructor() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/invalidCode/secondaryConstructor.kt");
+    }
+
+    @Test
+    @TestMetadata("setterWithoutBodyValueParameterType.kt")
+    public void testSetterWithoutBodyValueParameterType() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/invalidCode/setterWithoutBodyValueParameterType.kt");
     }
   }
 
@@ -1300,6 +1384,12 @@ public class SourceGetOrBuildFirTestGenerated extends AbstractSourceGetOrBuildFi
     }
 
     @Test
+    @TestMetadata("fileAnnotation.kt")
+    public void testFileAnnotation() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/wholeDeclaration/fileAnnotation.kt");
+    }
+
+    @Test
     @TestMetadata("fileAnnotationList.kt")
     public void testFileAnnotationList() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/wholeDeclaration/fileAnnotationList.kt");
@@ -1321,6 +1411,12 @@ public class SourceGetOrBuildFirTestGenerated extends AbstractSourceGetOrBuildFi
     @TestMetadata("getter.kt")
     public void testGetter() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/wholeDeclaration/getter.kt");
+    }
+
+    @Test
+    @TestMetadata("incompleteFunctionTypeParemeter.kt")
+    public void testIncompleteFunctionTypeParemeter() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/wholeDeclaration/incompleteFunctionTypeParemeter.kt");
     }
 
     @Test

@@ -5,19 +5,19 @@
 
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.compileTimeConstantProvider
 
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
+import org.jetbrains.kotlin.analysis.api.components.KaConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
+import org.jetbrains.kotlin.analysis.test.framework.project.structure.KtTestModule
 import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerProvider
 import org.jetbrains.kotlin.analysis.test.framework.utils.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
 
 abstract class AbstractCompileTimeConstantEvaluatorTest : AbstractAnalysisApiBasedTest() {
-    override fun doTestByMainFile(mainFile: KtFile, mainModule: TestModule, testServices: TestServices) {
+    override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
         val element = testServices.expressionMarkerProvider.getSelectedElementOfTypeByDirective(mainFile, mainModule)
         val expression = when (element) {
             is KtExpression -> element
@@ -26,12 +26,12 @@ abstract class AbstractCompileTimeConstantEvaluatorTest : AbstractAnalysisApiBas
         } ?: testServices.assertions.fail { "Unsupported expression: $element" }
         val constantValue = executeOnPooledThreadInReadAction {
             analyseForTest(expression) {
-                expression.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
+                expression.evaluate(KaConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
             }
         }
         val constantLikeValue = executeOnPooledThreadInReadAction {
             analyseForTest(expression) {
-                expression.evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION)
+                expression.evaluate(KaConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION)
             }
         }
         val actual = buildString {

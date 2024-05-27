@@ -5,69 +5,90 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrintWithSettingsFrom
 
-public interface KtClassifierBodyRenderer {
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    public fun renderBody(symbol: KtSymbolWithMembers, printer: PrettyPrinter)
+public interface KaClassifierBodyRenderer {
+    public fun renderBody(
+        analysisSession: KaSession,
+        symbol: KaSymbolWithMembers,
+        declarationRenderer: KaDeclarationRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object NO_BODY : KtClassifierBodyRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderBody(symbol: KtSymbolWithMembers, printer: PrettyPrinter) {
-        }
+    public object NO_BODY : KaClassifierBodyRenderer {
+        override fun renderBody(
+            analysisSession: KaSession,
+            symbol: KaSymbolWithMembers,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ) {}
     }
 
-    public object EMPTY_BRACES : KtClassifierBodyRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderBody(symbol: KtSymbolWithMembers, printer: PrettyPrinter) {
+    public object EMPTY_BRACES : KaClassifierBodyRenderer {
+        override fun renderBody(
+            analysisSession: KaSession,
+            symbol: KaSymbolWithMembers,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ) {
             printer.append("{\n}")
         }
     }
 
-    public object BODY_WITH_MEMBERS : KtClassifierBodyWithMembersRenderer() {
-        override fun renderEmptyBodyForEmptyMemberScope(symbol: KtSymbolWithMembers): Boolean {
+    public object BODY_WITH_MEMBERS : KaClassifierBodyWithMembersRenderer() {
+        override fun renderEmptyBodyForEmptyMemberScope(symbol: KaSymbolWithMembers): Boolean {
             return false
         }
     }
 
-    public object BODY_WITH_MEMBERS_OR_EMPTY_BRACES : KtClassifierBodyWithMembersRenderer() {
-        override fun renderEmptyBodyForEmptyMemberScope(symbol: KtSymbolWithMembers): Boolean {
+    public object BODY_WITH_MEMBERS_OR_EMPTY_BRACES : KaClassifierBodyWithMembersRenderer() {
+        override fun renderEmptyBodyForEmptyMemberScope(symbol: KaSymbolWithMembers): Boolean {
             return true
         }
     }
 }
 
-public abstract class KtClassifierBodyWithMembersRenderer : KtClassifierBodyRenderer {
-    public abstract fun renderEmptyBodyForEmptyMemberScope(symbol: KtSymbolWithMembers): Boolean
+public typealias KtClassifierBodyRenderer = KaClassifierBodyRenderer
 
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    public override fun renderBody(symbol: KtSymbolWithMembers, printer: PrettyPrinter) {
-        val members = bodyMemberScopeProvider.getMemberScope(symbol).filter { it !is KtConstructorSymbol || !it.isPrimary }
-            .let { bodyMemberScopeSorter.sortMembers(it, symbol) }
+public abstract class KaClassifierBodyWithMembersRenderer : KaClassifierBodyRenderer {
+    public abstract fun renderEmptyBodyForEmptyMemberScope(symbol: KaSymbolWithMembers): Boolean
+
+    public override fun renderBody(
+        analysisSession: KaSession,
+        symbol: KaSymbolWithMembers,
+        declarationRenderer: KaDeclarationRenderer,
+        printer: PrettyPrinter,
+    ) {
+        val members = declarationRenderer.bodyMemberScopeProvider.getMemberScope(analysisSession, symbol)
+            .filter { it !is KaConstructorSymbol || !it.isPrimary }
+            .let { declarationRenderer.bodyMemberScopeSorter.sortMembers(analysisSession, it, symbol) }
+
         val membersToPrint = members.mapNotNull { member ->
             val rendered = prettyPrintWithSettingsFrom(printer) {
-                renderDeclaration(member, this)
+                declarationRenderer.renderDeclaration(analysisSession, member, this)
             }
             if (rendered.isNotEmpty()) member to rendered else null
         }
+
         if (membersToPrint.isEmpty() && !renderEmptyBodyForEmptyMemberScope(symbol)) return
 
         printer.withIndentInBraces {
-            var previous: KtDeclarationSymbol? = null
+            var previous: KaDeclarationSymbol? = null
             for ((member, rendered) in membersToPrint) {
                 if (previous != null) {
-                    printer.append(codeStyle.getSeparatorBetweenMembers(previous, member))
+                    printer.append(declarationRenderer.codeStyle.getSeparatorBetweenMembers(analysisSession, previous, member))
                 }
                 previous = member
                 printer.append(rendered)
             }
         }
     }
-
 }
+
+public typealias KtClassifierBodyWithMembersRenderer = KaClassifierBodyWithMembersRenderer

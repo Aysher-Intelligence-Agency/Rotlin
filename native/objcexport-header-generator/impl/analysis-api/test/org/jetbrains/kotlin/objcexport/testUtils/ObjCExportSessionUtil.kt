@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.objcexport.KtObjCExportConfiguration
 import org.jetbrains.kotlin.objcexport.KtObjCExportSession
+import org.jetbrains.kotlin.objcexport.withKtObjCExportSession
 import org.jetbrains.kotlin.psi.KtElement
 
 inline fun <T> analyzeWithObjCExport(
@@ -16,7 +17,7 @@ inline fun <T> analyzeWithObjCExport(
     configuration: KtObjCExportConfiguration = KtObjCExportConfiguration(),
     action: context(KtAnalysisSession, KtObjCExportSession) () -> T,
 ): T = analyze(useSiteKtElement) {
-    KtObjCExportSession(configuration) {
+    withKtObjCExportSession(configuration) {
         action(this@analyze, this)
     }
 }

@@ -7,10 +7,16 @@ package org.jetbrains.kotlin.gradle.native
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.testbase.*
+import org.jetbrains.kotlin.gradle.testbase.TestVersions.Kotlin.STABLE_RELEASE
+import org.jetbrains.kotlin.gradle.util.assertProcessRunResult
+import org.jetbrains.kotlin.gradle.util.runProcess
+import org.jetbrains.kotlin.konan.target.HostManager
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
+import kotlin.io.path.appendText
 
 // We temporarily disable it for windows until a proper fix is found for this issue: KT-62761
 @OsCondition(
@@ -51,8 +57,78 @@ class KotlinNativeDependenciesDownloadIT : KGPBaseTest() {
                     freeArgs = listOf("-Pkotlin.native.toolchain.enabled=false"),
                 )
             ) {
-                assertOutputContains("(KonanProperties) Downloading dependency")
+                // Only klib-compilation tasks are launched, so no dependencies should be downloaded
+                assertOutputDoesNotContain("(KonanProperties) Downloading dependency")
                 assertOutputDoesNotContain("Downloading dependency for Kotlin Native")
+            }
+        }
+    }
+
+    //This test uses internal server for native dependencies
+    @DisplayName("checks that native dependencies are not corrupted")
+    @GradleTest
+    fun testNativeDependencies(gradleVersion: GradleVersion) {
+        testNativeDependencies("native-simple-project", "assemble", gradleVersion)
+    }
+
+    @OptIn(EnvironmentalVariablesOverride::class)
+    private fun testNativeDependencies(projectName: String, task: String, gradleVersion: GradleVersion) {
+        val konanDirectory = workingDir.resolve("konan")
+        nativeProject(
+            projectName, gradleVersion,
+            environmentVariables = EnvironmentalVariables(Pair("KONAN_USE_INTERNAL_SERVER", "1")),
+            buildOptions = defaultBuildOptions.withBundledKotlinNative().copy(
+                konanDataDir = konanDirectory
+            ),
+        ) {
+            build(task) {
+                val file = projectPath.resolve("new.m").toFile().also { it.createNewFile() }
+                val dependencies = konanDirectory.resolve("dependencies").toFile()
+                assertTrue(dependencies.exists())
+                assertTrue(dependencies.listFiles() != null, "Dependencies were not downloaded")
+                dependencies.listFiles()?.filter { it.name != "cache" }?.forEach {
+                    val processRunResult =
+                        runProcess(listOf("clang", "-Werror", "-c", file.path, "-isysroot", it.absolutePath), workingDir.toFile())
+                    assertProcessRunResult(processRunResult) {
+                        assertTrue(isSuccessful)
+                    }
+                }
+            }
+        }
+    }
+
+
+    //This test uses internal server for native dependencies
+    @DisplayName("checks that macos dependencies are not corrupted")
+    @GradleTest
+    @OsCondition(supportedOn = [OS.MAC], enabledOnCI = [OS.MAC])
+    fun testMacosNativeDependencies(gradleVersion: GradleVersion) {
+        testNativeDependencies("KT-66982-macos-target", "compileKotlinMacosArm64", gradleVersion)
+    }
+
+    @DisplayName("Test kotlin native prebuilt should not override `kotlin.native.version property`")
+    @GradleTest
+    fun kotlinNativePrebuiltShouldNotOverrideNativeVersion(gradleVersion: GradleVersion) {
+        nativeProject("native-simple-project", gradleVersion) {
+
+            buildGradleKts.modify {
+                """
+                    configurations.all {
+                        resolutionStrategy.eachDependency {
+                            if (requested.name == "kotlin-native-prebuilt") {
+                                useVersion("$STABLE_RELEASE")
+                                because("override version for test")
+                            }
+                        }
+                    }    
+                    $it
+                """.trimIndent()
+            }
+
+            buildAndFail("assemble") {
+                assertOutputContains(
+                    "Kotlin Native bundle dependency was used. Please provide the corresponding version in 'kotlin.native.version' property instead of any other ways."
+                )
             }
         }
     }

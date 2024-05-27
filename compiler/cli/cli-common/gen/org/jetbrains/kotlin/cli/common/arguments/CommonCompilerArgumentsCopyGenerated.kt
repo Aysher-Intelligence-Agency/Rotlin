@@ -18,6 +18,7 @@ fun copyCommonCompilerArguments(from: CommonCompilerArguments, to: CommonCompile
     to.checkPhaseConditions = from.checkPhaseConditions
     to.checkStickyPhaseConditions = from.checkStickyPhaseConditions
     to.commonSources = from.commonSources?.copyOf()
+    to.consistentDataClassCopyVisibility = from.consistentDataClassCopyVisibility
     to.contextReceivers = from.contextReceivers
     to.disableDefaultScriptingPlugin = from.disableDefaultScriptingPlugin
     to.disablePhases = from.disablePhases?.copyOf()
@@ -30,6 +31,7 @@ fun copyCommonCompilerArguments(from: CommonCompilerArguments, to: CommonCompile
     to.expectActualClasses = from.expectActualClasses
     to.experimental = from.experimental?.copyOf()
     to.explicitApi = from.explicitApi
+    to.explicitReturnTypes = from.explicitReturnTypes
     to.extendedCompilerChecks = from.extendedCompilerChecks
     to.fragmentRefines = from.fragmentRefines?.copyOf()
     to.fragmentSources = from.fragmentSources?.copyOf()
@@ -45,6 +47,7 @@ fun copyCommonCompilerArguments(from: CommonCompilerArguments, to: CommonCompile
     to.listPhases = from.listPhases
     to.metadataKlib = from.metadataKlib
     to.metadataVersion = from.metadataVersion
+    to.multiDollarInterpolation = from.multiDollarInterpolation
     to.multiPlatform = from.multiPlatform
     to.newInference = from.newInference
     to.noCheckActual = from.noCheckActual
@@ -64,12 +67,14 @@ fun copyCommonCompilerArguments(from: CommonCompilerArguments, to: CommonCompile
     to.progressiveMode = from.progressiveMode
     to.relativePathBases = from.relativePathBases?.copyOf()
     to.renderInternalDiagnosticNames = from.renderInternalDiagnosticNames
+    to.reportAllWarnings = from.reportAllWarnings
     to.reportOutputFiles = from.reportOutputFiles
     to.reportPerf = from.reportPerf
     to.script = from.script
     to.selfUpperBoundInference = from.selfUpperBoundInference
     to.skipMetadataVersionCheck = from.skipMetadataVersionCheck
     to.skipPrereleaseCheck = from.skipPrereleaseCheck
+    to.stdlibCompilation = from.stdlibCompilation
     to.suppressApiVersionGreaterThanLanguageVersionError = from.suppressApiVersionGreaterThanLanguageVersionError
     to.suppressVersionWarnings = from.suppressVersionWarnings
     to.unrestrictedBuilderInference = from.unrestrictedBuilderInference
@@ -77,9 +82,9 @@ fun copyCommonCompilerArguments(from: CommonCompilerArguments, to: CommonCompile
     to.useFirExtendedCheckers = from.useFirExtendedCheckers
     to.useFirIC = from.useFirIC
     to.useFirLT = from.useFirLT
-    to.useIrFakeOverrideBuilder = from.useIrFakeOverrideBuilder
     to.useK2 = from.useK2
     to.verbosePhases = from.verbosePhases?.copyOf()
+    to.whenGuards = from.whenGuards
 
     return to
 }

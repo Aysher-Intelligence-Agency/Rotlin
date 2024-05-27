@@ -216,7 +216,7 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
                     when (val lookupResult = searchRoot.lookUp(given)) {
                         is LookupResult.Found -> lookupResult.library
                         is LookupResult.FoundWithWarning -> {
-                            logger.warning(lookupResult.warningText)
+                            logger.strongWarning(lookupResult.warningText)
                             lookupResult.library
                         }
                         LookupResult.NotFound -> null
@@ -231,7 +231,7 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
 
     private fun Sequence<File>.filterOutPre_1_4_libraries(): Sequence<File> = this.filter {
         if (it.isPre_1_4_Library) {
-            logger.warning("KLIB resolver: Skipping '$it'. This is a pre 1.4 library.")
+            logger.strongWarning("KLIB resolver: Skipping '$it'. This is a pre 1.4 library.")
             false
         } else {
             true
@@ -256,7 +256,7 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
                     .firstOrNull()
                     .let(::ResolvedLibrary)
             } catch (e: Throwable) {
-                logger.error("KLIB resolver: Failed to resolve Kotlin library: $givenPath")
+                logger.error("KLIB resolver: Failed to resolve Kotlin library: $givenPath, due to ${e.message}")
                 throw e
             }
         }.library
@@ -284,7 +284,7 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
 
     override fun libraryMatch(candidate: L, unresolved: UnresolvedLibrary): Boolean = true
 
-    override fun resolve(givenPath: String) = resolve(UnresolvedLibrary(givenPath, null), false)
+    override fun resolve(givenPath: String) = resolve(RequiredUnresolvedLibrary(givenPath), false)
 
     private val File.klib
         get() = File(this, "klib")
@@ -300,7 +300,7 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
                 .filter { it.name.startsWith(prefix) }
                 .filterNot { it.name.startsWith('.') }
                 .filterNot { it.name.removeSuffixIfPresent(KLIB_FILE_EXTENSION_WITH_DOT) == KOTLIN_NATIVE_STDLIB_NAME }
-                .map { UnresolvedLibrary(it.absolutePath, null) }
+                .map { RequiredUnresolvedLibrary(it.absolutePath) }
                 .map { resolve(it, isDefaultLink = true) }
         } else emptySequence()
 
@@ -309,7 +309,7 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
         val result = mutableListOf<L>()
 
         if (!noStdLib) {
-            result.add(resolve(UnresolvedLibrary(KOTLIN_NATIVE_STDLIB_NAME, null), true))
+            result.add(resolve(RequiredUnresolvedLibrary(KOTLIN_NATIVE_STDLIB_NAME), true))
         }
 
         // Endorsed libraries in distHead.
@@ -347,27 +347,18 @@ abstract class KotlinLibraryProperResolverWithAttributes<L : KotlinLibrary>(
 
         val candidateCompilerVersion = candidate.versions.compilerVersion
         val candidateAbiVersion = candidate.versions.abiVersion
-        val candidateLibraryVersion = candidate.versions.libraryVersion
 
         // Rejecting a library at this stage has disadvantages - the diagnostics are not-understandable.
         // Please, don't add checks for other versions here. For example, check for the metadata version should be
         // implemented in KlibDeserializedContainerSource.incompatibility
         if (candidateAbiVersion?.isCompatible() != true) {
-            logger.warning("KLIB resolver: Skipping '$candidatePath'. Incompatible ABI version. The current default is '${KotlinAbiVersion.CURRENT}', found '${candidateAbiVersion}'. The library was produced by '$candidateCompilerVersion' compiler.")
-            return false
-        }
-
-        if (candidateLibraryVersion != unresolved.libraryVersion &&
-            candidateLibraryVersion != null &&
-            unresolved.libraryVersion != null
-        ) {
-            logger.warning("KLIB resolver: Skipping '$candidatePath'. Library versions don't match. Expected '${unresolved.libraryVersion}', found '${candidateLibraryVersion}'.")
+            logger.strongWarning("KLIB resolver: Skipping '$candidatePath'. Incompatible ABI version. The current default is '${KotlinAbiVersion.CURRENT}', found '${candidateAbiVersion}'. The library was produced by '$candidateCompilerVersion' compiler.")
             return false
         }
 
         candidate.irProviderName?.let {
             if (it !in knownIrProviders) {
-                logger.warning("KLIB resolver: Skipping '$candidatePath'. The library requires unknown IR provider: $it")
+                logger.strongWarning("KLIB resolver: Skipping '$candidatePath'. The library requires unknown IR provider: $it")
                 return false
             }
         }

@@ -563,7 +563,7 @@ default: 'indy-with-constants' for JVM targets 9 or greater, 'inline' otherwise.
         value = "-Xjdk-release",
         valueDescription = "<version>",
         description = """Compile against the specified JDK API version, similarly to javac's '-release'. This requires JDK 9 or newer.
-The supported versions depend on the JDK used; for JDK 17+, the supported versions are 1.8 and 9–21.
+The supported versions depend on the JDK used; for JDK 17+, the supported versions are 1.8 and 9–22.
 This also sets the value of '-jvm-target' to be equal to the selected JDK version."""
     )
     var jdkRelease: String? = null
@@ -577,8 +577,9 @@ This also sets the value of '-jvm-target' to be equal to the selected JDK versio
         value = "-Xsam-conversions",
         valueDescription = "{class|indy}",
         description = """Select the code generation scheme for SAM conversions.
--Xsam-conversions=indy          Generate SAM conversions using 'invokedynamic' with 'LambdaMetafactory.metafactory'. Requires '-jvm-target 1.8' or greater.
--Xsam-conversions=class         Generate SAM conversions as explicit classes"""
+-Xsam-conversions=indy          Generate SAM conversions using 'invokedynamic' with 'LambdaMetafactory.metafactory'.
+-Xsam-conversions=class         Generate SAM conversions as explicit classes.
+The default value is 'indy'."""
     )
     var samConversions: String? = null
         set(value) {
@@ -590,9 +591,10 @@ This also sets the value of '-jvm-target' to be equal to the selected JDK versio
         value = "-Xlambdas",
         valueDescription = "{class|indy}",
         description = """Select the code generation scheme for lambdas.
--Xlambdas=indy                  Generate lambdas using 'invokedynamic' with 'LambdaMetafactory.metafactory'. This requires '-jvm-target 1.8' or greater.
+-Xlambdas=indy                  Generate lambdas using 'invokedynamic' with 'LambdaMetafactory.metafactory'.
                                 A lambda object created using 'LambdaMetafactory.metafactory' will have a different 'toString()'.
--Xlambdas=class                 Generate lambdas as explicit classes."""
+-Xlambdas=class                 Generate lambdas as explicit classes.
+The default value is 'indy' if language version is 2.0+, and 'class' otherwise."""
     )
     var lambdas: String? = null
         set(value) {
@@ -670,17 +672,6 @@ If it's not on the classpath, the compiler will attempt to load async-profiler.j
 Example: -Xprofile=<PATH_TO_ASYNC_PROFILER>/async-profiler/build/libasyncProfiler.so:event=cpu,interval=1ms,threads,start:<SNAPSHOT_DIR_PATH>"""
     )
     var profileCompilerCommand: String? = null
-        set(value) {
-            checkFrozen()
-            field = if (value.isNullOrEmpty()) null else value
-        }
-
-    @Argument(
-        value = "-Xrepeat",
-        valueDescription = "<number>",
-        description = "Debug option: Repeat module compilation <number> times."
-    )
-    var repeatCompileModules: String? = null
         set(value) {
             checkFrozen()
             field = if (value.isNullOrEmpty()) null else value
@@ -831,6 +822,16 @@ This option is deprecated and will be deleted in future versions."""
         description = "Inline functions using the IR inliner instead of the bytecode inliner."
     )
     var enableIrInliner: Boolean = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
+        value = "-Xuse-inline-scopes-numbers",
+        description = "Use inline scopes numbers for inline marker variables."
+    )
+    var useInlineScopesNumbers: Boolean = false
         set(value) {
             checkFrozen()
             field = value

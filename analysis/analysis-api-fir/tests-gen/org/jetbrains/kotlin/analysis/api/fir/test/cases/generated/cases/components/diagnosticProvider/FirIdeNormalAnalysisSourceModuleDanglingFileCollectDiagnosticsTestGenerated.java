@@ -77,6 +77,12 @@ public class FirIdeNormalAnalysisSourceModuleDanglingFileCollectDiagnosticsTestG
   }
 
   @Test
+  @TestMetadata("deprecationFromLibrary.kt")
+  public void testDeprecationFromLibrary() {
+    runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/deprecationFromLibrary.kt");
+  }
+
+  @Test
   @TestMetadata("duplicatedCallableWithImplicitType.kt")
   public void testDuplicatedCallableWithImplicitType() {
     runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/duplicatedCallableWithImplicitType.kt");
@@ -170,6 +176,12 @@ public class FirIdeNormalAnalysisSourceModuleDanglingFileCollectDiagnosticsTestG
   @TestMetadata("resolutionErrors.kt")
   public void testResolutionErrors() {
     runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/resolutionErrors.kt");
+  }
+
+  @Test
+  @TestMetadata("sameCallableIdFromDependencies.kt")
+  public void testSameCallableIdFromDependencies() {
+    runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/sameCallableIdFromDependencies.kt");
   }
 
   @Test

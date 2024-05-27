@@ -12,10 +12,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.util.lang.JavaVersion;
 import junit.framework.TestCase;
+import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.collections.CollectionsKt;
 import kotlin.jvm.functions.Function0;
@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.analyzer.AnalysisResult;
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.checkers.CompilerTestLanguageVersionSettingsKt;
-import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys;
 import org.jetbrains.kotlin.cli.common.config.ContentRootsKt;
 import org.jetbrains.kotlin.cli.common.config.KotlinSourceRoot;
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity;
@@ -53,18 +52,20 @@ import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.util.StringUtilsKt;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 import org.junit.Assert;
+import org.opentest4j.AssertionFailedError;
+import org.opentest4j.FileInfo;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.jetbrains.kotlin.test.InTextDirectivesUtils.IGNORE_BACKEND_DIRECTIVE_PREFIXES;
-import static org.jetbrains.kotlin.test.InTextDirectivesUtils.isIgnoredTarget;
+import static org.jetbrains.kotlin.test.InTextDirectivesUtils.*;
 
 public class KotlinTestUtils {
     public static String TEST_MODULE_NAME = "test-module";
@@ -127,7 +128,7 @@ public class KotlinTestUtils {
         CompilerConfiguration configuration = new CompilerConfiguration();
         configuration.put(CommonConfigurationKeys.MODULE_NAME, TEST_MODULE_NAME);
 
-        configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, new MessageCollector() {
+        configuration.put(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, new MessageCollector() {
             @Override
             public void clear() {
             }
@@ -260,7 +261,7 @@ public class KotlinTestUtils {
         assertEqualsToFile("Actual data differs from file content", expectedFile, actual, sanitizer);
     }
 
-    public static void assertEqualsToFile(@NotNull String message, @NotNull File expectedFile, @NotNull String actual, @NotNull Function1<String, String> sanitizer) {
+    public static Pair<Boolean, String> doesEqualToFile(@NotNull File expectedFile, @NotNull String actual, @NotNull Function1<String, String> sanitizer) {
         try {
             String actualText = StringUtilsKt.trimTrailingWhitespacesAndAddNewlineAtEOF(StringUtil.convertLineSeparators(actual.trim()));
 
@@ -276,13 +277,22 @@ public class KotlinTestUtils {
 
             String expectedText = StringUtilsKt.trimTrailingWhitespacesAndAddNewlineAtEOF(StringUtil.convertLineSeparators(expected.trim()));
 
-            if (!Objects.equals(sanitizer.invoke(expectedText), sanitizer.invoke(actualText))) {
-                throw new FileComparisonFailure(message + ": " + expectedFile.getName(),
-                                                expected, actual, expectedFile.getAbsolutePath());
-            }
+            return new Pair<>(Objects.equals(sanitizer.invoke(expectedText), sanitizer.invoke(actualText)), expected);
         }
         catch (IOException e) {
             throw ExceptionUtilsKt.rethrow(e);
+        }
+    }
+
+    public static void assertEqualsToFile(@NotNull String message, @NotNull File expectedFile, @NotNull String actual, @NotNull Function1<String, String> sanitizer) {
+        Pair<Boolean, String> pair = doesEqualToFile(expectedFile, actual, sanitizer);
+        String expected = pair.getSecond();
+        if (!pair.getFirst()) {
+            throw new AssertionFailedError(
+                    message + ": " + expectedFile.getName(),
+                    new FileInfo(expectedFile.getAbsolutePath(), expected.getBytes(StandardCharsets.UTF_8)),
+                    actual
+            );
         }
     }
 
@@ -475,7 +485,10 @@ public class KotlinTestUtils {
     // * sometimes, for too common/general names, it shows many variants to navigate
     // * it adds an additional step for navigation -- you must choose an exact file to navigate
     public static void runTest0(DoTest test, TargetBackend targetBackend, String testDataFilePath) {
-        runTestImpl(testWithCustomIgnoreDirective(test, targetBackend, IGNORE_BACKEND_DIRECTIVE_PREFIXES), null, testDataFilePath);
+        String[] prefixes = test.getClass().getSimpleName().startsWith("Fir")
+                            ? new String[] { IGNORE_BACKEND_DIRECTIVE_PREFIX, IGNORE_BACKEND_K2_DIRECTIVE_PREFIX }
+                            : IGNORE_BACKEND_DIRECTIVE_PREFIXES;
+        runTestImpl(testWithCustomIgnoreDirective(test, targetBackend, prefixes), null, testDataFilePath);
     }
 
     private static void runTestImpl(@NotNull DoTest test, @Nullable TestCase testCase, String testDataFilePath) {
@@ -532,10 +545,10 @@ public class KotlinTestUtils {
                     String directive = ignoreDirectives[0] + targetBackend.name() + "\n";
 
                     String newText;
-                    if (text.startsWith("// !")) {
+                    if (text.startsWith("// !") || text.startsWith("// ")) {
                         StringBuilder prefixBuilder = new StringBuilder();
                         int l = 0;
-                        while (text.startsWith("// !", l)) {
+                        while (text.startsWith("// !", l) || text.startsWith("// ", l)) {
                             int r = text.indexOf("\n", l) + 1;
                             if (r <= 0) r = text.length();
                             prefixBuilder.append(text.substring(l, r));
@@ -554,7 +567,7 @@ public class KotlinTestUtils {
                         try {
                             FileUtil.writeToFile(testDataFile, newText);
                         } catch (IOException ioException) {
-                            throw new RuntimeException(ioException);
+                            throw ExceptionUtilsKt.rethrow(e);
                         }
                     }
                 }
@@ -585,7 +598,7 @@ public class KotlinTestUtils {
                             try {
                                 FileUtil.writeToFile(testDataFile, newText);
                             } catch (IOException e) {
-                                throw new RuntimeException(e);
+                                throw ExceptionUtilsKt.rethrow(e);
                             }
                         }
                     }

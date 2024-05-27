@@ -47,15 +47,51 @@ public class FirIdeNormalAnalysisLibrarySourceModuleCompilerFacilityTestGenerate
   }
 
   @Test
+  @TestMetadata("annotationWithVararg.kt")
+  public void testAnnotationWithVararg() {
+    runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/annotationWithVararg.kt");
+  }
+
+  @Test
   @TestMetadata("classKinds.kt")
   public void testClassKinds() {
     runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/classKinds.kt");
   }
 
   @Test
+  @TestMetadata("commonUsage.kt")
+  public void testCommonUsage() {
+    runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/commonUsage.kt");
+  }
+
+  @Test
+  @TestMetadata("defaultParameterValue.kt")
+  public void testDefaultParameterValue() {
+    runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/defaultParameterValue.kt");
+  }
+
+  @Test
+  @TestMetadata("dependencyBetweenBinaryLibraries.kt")
+  public void testDependencyBetweenBinaryLibraries() {
+    runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/dependencyBetweenBinaryLibraries.kt");
+  }
+
+  @Test
   @TestMetadata("imports.kt")
   public void testImports() {
     runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/imports.kt");
+  }
+
+  @Test
+  @TestMetadata("internalUsage.kt")
+  public void testInternalUsage() {
+    runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/internalUsage.kt");
+  }
+
+  @Test
+  @TestMetadata("javaAnnotationWithVararg.kt")
+  public void testJavaAnnotationWithVararg() {
+    runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/javaAnnotationWithVararg.kt");
   }
 
   @Test
@@ -206,6 +242,12 @@ public class FirIdeNormalAnalysisLibrarySourceModuleCompilerFacilityTestGenerate
       @TestMetadata("extensionReceiverSmartCasted.kt")
       public void testExtensionReceiverSmartCasted() {
         runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/codeFragments/capturing/extensionReceiverSmartCasted.kt");
+      }
+
+      @Test
+      @TestMetadata("foreignValue.kt")
+      public void testForeignValue() {
+        runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/codeFragments/capturing/foreignValue.kt");
       }
 
       @Test

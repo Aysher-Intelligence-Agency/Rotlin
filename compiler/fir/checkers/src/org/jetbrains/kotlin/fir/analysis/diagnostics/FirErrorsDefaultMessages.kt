@@ -42,8 +42,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.REND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.REQUIRE_KOTLIN_VERSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOL
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOLS_ON_NEXT_LINES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOLS_ON_NEWLINE_WITH_INDENT
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOLS_ON_NEXT_LINES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOL_WITH_CONTAINING_DECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.VARIABLE_NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.WHEN_MISSING_CASES
@@ -122,22 +122,27 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CALLABLE_REFERENC
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_BE_IMPORTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_CHANGE_ACCESS_PRIVILEGE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_CHANGE_ACCESS_PRIVILEGE_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_CHECK_FOR_ERASED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_INFER_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_INFER_VISIBILITY
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_INFER_VISIBILITY_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_OVERRIDE_INVISIBLE_MEMBER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_WEAKEN_ACCESS_PRIVILEGE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_WEAKEN_ACCESS_PRIVILEGE_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAN_BE_REPLACED_WITH_OPERATOR_ASSIGNMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAN_BE_VAL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAPTURED_MEMBER_VAL_INITIALIZATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAPTURED_VAL_INITIALIZATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAST_NEVER_SUCCEEDS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CATCH_PARAMETER_WITH_DEFAULT_VALUE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASSIFIER_REDECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_CANNOT_BE_EXTENDED_DIRECTLY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_INHERITS_JAVA_SEALED_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_IN_SUPERTYPE_FOR_ENUM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_LITERAL_LHS_NOT_A_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMMA_IN_WHEN_CONDITION_WITH_WHEN_GUARD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPILER_REQUIRED_ANNOTATION_AMBIGUITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPONENT_FUNCTION_AMBIGUITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPONENT_FUNCTION_MISSING
@@ -167,6 +172,10 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_CONSTRUCTO
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_GENERIC_UPPER_BOUND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_INHERITANCE_HIERARCHY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DANGEROUS_CHARACTERS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_CONSISTENT_COPY_AND_EXPOSED_COPY_ARE_INCOMPATIBLE_ANNOTATIONS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_CONSISTENT_COPY_WRONG_ANNOTATION_TARGET
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_COPY_VISIBILITY_WILL_BE_CHANGED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_INVISIBLE_COPY_USAGE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_NOT_PROPERTY_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_OVERRIDE_CONFLICT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_OVERRIDE_DEFAULT_VALUES
@@ -190,6 +199,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATE_USES_EXT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATION_IN_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATION_NOT_TO_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATION_SUPER_CALL_IN_ENUM_CONSTRUCTOR
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_ACCESS_TO_ENTRIES_AS_QUALIFIER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_ACCESS_TO_ENTRIES_PROPERTY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_ACCESS_TO_ENTRY_PROPERTY_FROM_ENUM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_ACCESS_TO_ENUM_ENTRY_COMPANION_PROPERTY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_ACCESS_TO_ENUM_ENTRY_PROPERTY_AS_REFERENCE
@@ -339,6 +350,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INITIALIZATION_BE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INITIALIZER_REQUIRED_FOR_DESTRUCTURING_DECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INITIALIZER_TYPE_MISMATCH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INLINE_CLASS_CONSTRUCTOR_WRONG_PARAMETERS_SIZE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INLINE_CLASS_DEPRECATED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INLINE_PROPERTY_WITH_BACKING_FIELD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INLINE_PROPERTY_WITH_BACKING_FIELD_DEPRECATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INLINE_SUSPEND_FUNCTION_TYPE_UNSUPPORTED
@@ -386,7 +398,9 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.METHOD_OF_ANY_IMP
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISPLACED_TYPE_PARAMETER_CONSTRAINTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_CONSTRUCTOR_KEYWORD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_DEPENDENCY_CLASS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_DEPENDENCY_CLASS_IN_EXPRESSION_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_DEPENDENCY_CLASS_IN_LAMBDA_PARAMETER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_DEPENDENCY_CLASS_IN_LAMBDA_RECEIVER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_DEPENDENCY_SUPERCLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_STDLIB_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_VAL_ON_ANNOTATION_PARAMETER
@@ -449,12 +463,12 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOT_A_FUNCTION_LA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOT_A_LOOP_LABEL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOT_A_MULTIPLATFORM_COMPILATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOT_A_SUPERTYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOT_FUNCTION_AS_OPERATOR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOT_NULL_ASSERTION_ON_CALLABLE_REFERENCE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOT_NULL_ASSERTION_ON_LAMBDA_EXPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOT_SUPPORTED_INLINE_PARAMETER_IN_INLINE_PARAMETER_DEFAULT_VALUE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOT_YET_SUPPORTED_IN_INLINE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_ACTUAL_FOR_EXPECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_COMPANION_OBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_CONSTRUCTOR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_CONTEXT_RECEIVER
@@ -506,8 +520,9 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OVERRIDE_DEPRECAT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OVERRIDING_FINAL_MEMBER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OVERRIDING_FINAL_MEMBER_BY_DELEGATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PACKAGE_CANNOT_BE_IMPORTED
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PACKAGE_OR_CLASSIFIER_REDECLARATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PACKAGE_CONFLICTS_WITH_CLASSIFIER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PLATFORM_CLASS_MAPPED_TO_KOTLIN
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PLUGIN_AMBIGUOUS_INTERCEPTED_SYMBOL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.POTENTIALLY_NON_REPORTED_ANNOTATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PRE_RELEASE_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED
@@ -518,7 +533,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PRIVATE_SETTER_FO
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PRIVATE_SETTER_FOR_OPEN_PROPERTY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROPERTY_AS_OPERATOR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROPERTY_FIELD_DECLARATION_MISSING_INITIALIZER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROPERTY_INITIALIZER_IN_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROPERTY_INITIALIZER_NO_BACKING_FIELD
@@ -539,6 +553,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RECURSION_IN_IMPL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RECURSION_IN_INLINE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RECURSIVE_TYPEALIAS_EXPANSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDECLARATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_ANNOTATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_ANNOTATION_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_CALL_OF_CONVERSION_METHOD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_EXPLICIT_BACKING_FIELD
@@ -564,6 +579,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REPEATED_ANNOTATI
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REPEATED_ANNOTATION_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REPEATED_BOUND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REPEATED_MODIFIER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RESERVED_MEMBER_FROM_INTERFACE_INSIDE_VALUE_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RESERVED_MEMBER_INSIDE_VALUE_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RESOLUTION_TO_CLASSIFIER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RESOLVED_TO_UNDERSCORE_NAMED_CATCH_PARAMETER
@@ -584,14 +600,18 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SEALED_INHERITOR_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SEALED_SUPERTYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SEALED_SUPERTYPE_IN_LOCAL_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SECONDARY_CONSTRUCTOR_WITH_BODY_INSIDE_VALUE_CLASS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SELF_CALL_IN_NESTED_OBJECT_CONSTRUCTOR_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SENSELESS_COMPARISON
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SENSELESS_NULL_IN_WHEN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SETTER_PROJECTED_OUT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SETTER_VISIBILITY_INCONSISTENT_WITH_PROPERTY_VISIBILITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SINGLETON_IN_SUPERTYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SINGLE_ANONYMOUS_FUNCTION_WITH_NAME
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SINGLE_DOLLAR_INTERPOLATION_PREFIX
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SMARTCAST_IMPOSSIBLE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SMARTCAST_IMPOSSIBLE_ON_IMPLICIT_INVOKE_RECEIVER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SPREAD_OF_NULLABLE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUBCLASS_OPT_ARGUMENT_IS_NOT_MARKER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUBCLASS_OPT_IN_INAPPLICABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUBTYPING_BETWEEN_CONTEXT_RECEIVERS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE
@@ -712,6 +732,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VERSION_REQUIREME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VIRTUAL_MEMBER_HIDDEN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VOLATILE_ON_DELEGATE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VOLATILE_ON_VALUE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WHEN_GUARD_WITHOUT_SUBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_ANNOTATION_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_EXTENSION_FUNCTION_TYPE
@@ -744,7 +765,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
     // & - New diagnostic that has no analogues in the old FE
     // + - Better message required
     // # - The new diagnostic differs from the old FE's one
-    override val MAP = KtDiagnosticFactoryToRendererMap("FIR").also { map ->
+    override val MAP: KtDiagnosticFactoryToRendererMap = KtDiagnosticFactoryToRendererMap("FIR").also { map ->
         // Meta-errors
         map.put(UNSUPPORTED, "Unsupported [{0}].", TO_STRING)
         map.put(UNSUPPORTED_FEATURE, "{0}", LanguageFeatureMessageRenderer(LanguageFeatureMessageRenderer.Type.UNSUPPORTED))
@@ -793,6 +814,11 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             RENDER_TYPE,
         )
         map.put(
+            MISSING_DEPENDENCY_CLASS_IN_EXPRESSION_TYPE,
+            "Cannot access class ''{0}'' in the expression type. While it may work, this case indicates a configuration mistake and can lead to avoidable compilation errors, so it may be forbidden soon. Check your module classpath for missing or conflicting dependencies.",
+            RENDER_TYPE,
+        )
+        map.put(
             MISSING_DEPENDENCY_SUPERCLASS,
             "Cannot access ''{0}'' which is a supertype of ''{1}''. Check your module classpath for missing or conflicting dependencies.",
             RENDER_TYPE,
@@ -800,7 +826,13 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             MISSING_DEPENDENCY_CLASS_IN_LAMBDA_PARAMETER,
-            "Class ''{0}'' of the lambda parameter is inaccessible. While it may work, this case is dangerous and may be forbidden soon. Consider adding a necessary dependency to your module classpath.",
+            "Class ''{0}'' of the parameter ''{1}'' is inaccessible. While it may work, this case indicates a configuration mistake and can lead to avoidable compilation errors, so it may be forbidden soon. Check your module classpath for missing or conflicting dependencies.",
+            RENDER_TYPE,
+            NAME,
+        )
+        map.put(
+            MISSING_DEPENDENCY_CLASS_IN_LAMBDA_RECEIVER,
+            "Class ''{0}'' of the lambda receiver is inaccessible. While it may work, this case indicates a configuration mistake and can lead to avoidable compilation errors, so it may be forbidden soon. Check your module classpath for missing or conflicting dependencies.",
             RENDER_TYPE,
         )
 
@@ -837,6 +869,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             TO_STRING
         )
         map.put(MISSING_CONSTRUCTOR_KEYWORD, "Use the 'constructor' keyword after the modifiers of the primary constructor.")
+        map.put(SINGLE_DOLLAR_INTERPOLATION_PREFIX, "Single $ has no effect as interpolation prefix.")
         map.put(UNRESOLVED_REFERENCE, "Unresolved reference ''{0}''{1}.", NULLABLE_STRING, FOR_OPTIONAL_OPERATOR)
         map.put(UNRESOLVED_IMPORT, "Unresolved reference ''{0}''.", NULLABLE_STRING) // &
         map.put(DUPLICATE_PARAMETER_NAME_IN_FUNCTION_TYPE, "Duplicate parameter name in a function type.")
@@ -878,6 +911,11 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             AMBIGUOUS_ALTERED_ASSIGN,
             "Multiple extensions attempted to alter this assignment at the same time. Extensions: {0}",
+            COLLECTION(NULLABLE_STRING)
+        )
+        map.put(
+            PLUGIN_AMBIGUOUS_INTERCEPTED_SYMBOL,
+            "Multiple extensions attempted to modify this function call. Extensions: {0}",
             COLLECTION(NULLABLE_STRING)
         )
         map.put(DEPRECATED_BINARY_MOD, "Convention for ''{0}'' is prohibited. Use ''{1}''.", SYMBOL, STRING)
@@ -970,6 +1008,38 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "Explicit 'this' or 'super' call is required. There is no constructor in the superclass that can be called without arguments."
         )
         map.put(SEALED_CLASS_CONSTRUCTOR_CALL, "Sealed types cannot be instantiated.")
+        map.put(
+            DATA_CLASS_COPY_VISIBILITY_WILL_BE_CHANGED,
+            """
+                Non-public primary constructor is exposed via the generated 'copy()' method of the 'data' class.
+
+                The generated 'copy()' will change its visibility in future releases.
+
+                To suppress the warning do one of the following:
+                - Annotate the data class with the '@ConsistentCopyVisibility' annotation.
+                - Use the '-Xconsistent-data-class-copy-visibility' compiler flag.
+                - Annotate the data class with the '@ExposedCopyVisibility' annotation 
+                  (Discouraged, but can be used to keep binary compatibility).
+
+                To learn more, see the documentation of the '@ConsistentCopyVisibility' and '@ExposedCopyVisibility' annotations.
+
+
+            """.trimIndent() // Two empty lines at the end to append "This will become an error in" message
+        )
+        map.put(
+            DATA_CLASS_INVISIBLE_COPY_USAGE,
+            "This 'copy()' exposes the non-public primary constructor of a 'data class'. Please migrate the usage. " +
+                    "See the appropriate 'data class' documentation " +
+                    "or contact the 'data class' author for migration guidance."
+        )
+        map.put(
+            DATA_CLASS_CONSISTENT_COPY_AND_EXPOSED_COPY_ARE_INCOMPATIBLE_ANNOTATIONS,
+            "'@ConsistentCopyVisibility' and '@ExposedCopyVisibility' are incompatible."
+        )
+        map.put(
+            DATA_CLASS_CONSISTENT_COPY_WRONG_ANNOTATION_TARGET,
+            "'@ConsistentCopyVisibility' and '@ExposedCopyVisibility' can only be applied to data classes."
+        )
         map.put(DATA_CLASS_WITHOUT_PARAMETERS, "Data class must have at least one primary constructor parameter.")
         map.put(DATA_CLASS_VARARG_PARAMETER, "Primary constructor vararg parameters are prohibited for data classes.")
         map.put(DATA_CLASS_NOT_PROPERTY_PARAMETER, "Primary constructor of data class must only have property ('val' / 'var') parameters.")
@@ -1028,6 +1098,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             EMPTY,
             EMPTY
         )
+        map.put(REDUNDANT_ANNOTATION, "Annotation ''{0}'' is redundant.", CLASS_ID)
         map.put(ANNOTATION_ON_SUPERCLASS, "Annotations on superclasses are meaningless.")
         map.put(RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION, "Expression annotations with retention other than SOURCE are prohibited.")
         map.put(WRONG_ANNOTATION_TARGET, "This annotation is not applicable to target ''{0}''.", TO_STRING)
@@ -1077,12 +1148,12 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION, "This class can only be used as an annotation.")
         map.put(
             OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN,
-            "This class can only be used as an annotation or as an argument to @OptIn."
+            "This class can only be used as an annotation or as an argument to '@OptIn'."
         )
-        map.put(OPT_IN_WITHOUT_ARGUMENTS, "@OptIn without any arguments has no effect.")
+        map.put(OPT_IN_WITHOUT_ARGUMENTS, "'@OptIn' without any arguments has no effect.")
         map.put(
             OPT_IN_ARGUMENT_IS_NOT_MARKER,
-            "Annotation ''{0}'' is not an opt-in requirement marker; therefore, its usage in @OptIn is ignored.",
+            "Annotation ''{0}'' is not annotated with ''@RequiresOptIn''. ''@OptIn'' has no effect.",
             CLASS_ID
         )
         map.put(
@@ -1103,7 +1174,12 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             OPT_IN_MARKER_ON_OVERRIDE_WARNING,
             "Opt-in requirement marker annotation on override. It's recommended to add the same annotation to the base declaration."
         )
-        map.put(SUBCLASS_OPT_IN_INAPPLICABLE, "@SubclassOptInRequired is not applicable to ''{0}''.", STRING)
+        map.put(SUBCLASS_OPT_IN_INAPPLICABLE, "''@SubclassOptInRequired'' is not applicable to ''{0}''.", STRING)
+        map.put(
+            SUBCLASS_OPT_ARGUMENT_IS_NOT_MARKER,
+            "Annotation ''{0}'' is not annotated with ''@RequiresOptIn''.",
+            CLASS_ID
+        )
 
         map.put(NOT_A_CLASS, "Not a class.")
         map.put(
@@ -1304,7 +1380,10 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             CONTEXT_RECEIVERS_WITH_BACKING_FIELD,
             "Property with context receivers cannot be initialized because it has no backing field."
         )
-
+        map.put(
+            SELF_CALL_IN_NESTED_OBJECT_CONSTRUCTOR_ERROR,
+            "Self references to members of containing class are prohibited in constructor of nested object."
+        )
         // Ambiguity
         map.put(OVERLOAD_RESOLUTION_AMBIGUITY, "Overload resolution ambiguity between candidates:{0}", SYMBOLS_ON_NEXT_LINES)
         map.put(ASSIGN_OPERATOR_AMBIGUITY, "Ambiguity between assign operator candidates:{0}", SYMBOLS_ON_NEXT_LINES)
@@ -1422,6 +1501,14 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             TO_STRING,
             NOT_RENDERED
         )
+        map.put(
+            SMARTCAST_IMPOSSIBLE_ON_IMPLICIT_INVOKE_RECEIVER,
+            "Smart cast to ''{0}'' is impossible, because ''{1}'' is a {2}. Use explicit ''?.invoke'' to make a function-like call instead.",
+            RENDER_TYPE,
+            CALLEE_NAME,
+            TO_STRING,
+            NOT_RENDERED
+        )
 
         map.put(
             TYPE_VARIANCE_CONFLICT_ERROR,
@@ -1463,7 +1550,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
 
         map.put(TYPE_PARAMETER_OF_PROPERTY_NOT_USED_IN_RECEIVER, "Type parameter of a property must be used in its receiver type.")
 
-        map.put(NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY, "A 'return' expression is required in a function with a block body ('{...}').")
+        map.put(NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY, "Missing return statement.")
 
         map.put(
             RETURN_TYPE_MISMATCH,
@@ -1568,6 +1655,12 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "Secondary constructors with bodies are reserved for future releases."
         )
         map.put(RESERVED_MEMBER_INSIDE_VALUE_CLASS, "Member name ''{0}'' is reserved for future releases.", TO_STRING)
+        map.put(
+            RESERVED_MEMBER_FROM_INTERFACE_INSIDE_VALUE_CLASS,
+            "Member name ''{1}'' is reserved for future releases but is implemented in supertype ''{0}''.",
+            TO_STRING,
+            TO_STRING,
+        )
         map.put(TYPE_ARGUMENT_ON_TYPED_VALUE_CLASS_EQUALS, "Type arguments for typed value class equals must all be star projections.")
         map.put(INNER_CLASS_INSIDE_VALUE_CLASS, "Value class cannot have inner classes.")
         map.put(VALUE_CLASS_CANNOT_BE_CLONEABLE, "Value class cannot be 'Cloneable'.")
@@ -1648,6 +1741,13 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             TO_STRING
         )
         map.put(
+            CANNOT_WEAKEN_ACCESS_PRIVILEGE_WARNING,
+            "Cannot weaken access privilege {0} for ''{1}'' in ''{2}''. This will be prohibited in the future.",
+            VISIBILITY,
+            DECLARATION_NAME,
+            TO_STRING
+        )
+        map.put(
             CANNOT_CHANGE_ACCESS_PRIVILEGE,
             "Cannot change access privilege {0} for ''{1}'' in ''{2}''.",
             VISIBILITY,
@@ -1655,8 +1755,20 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             TO_STRING
         )
         map.put(
+            CANNOT_CHANGE_ACCESS_PRIVILEGE_WARNING,
+            "Cannot change access privilege {0} for ''{1}'' in ''{2}''. This will be prohibited in the future.",
+            VISIBILITY,
+            DECLARATION_NAME,
+            TO_STRING
+        )
+        map.put(
             CANNOT_INFER_VISIBILITY,
-            "Cannot infer visibility for ''{0}''. Please specify it explicitly",
+            "Cannot infer visibility for ''{0}''. Please specify it explicitly.",
+            DECLARATION_NAME,
+        )
+        map.put(
+            CANNOT_INFER_VISIBILITY_WARNING,
+            "Cannot infer visibility for ''{0}''. Please specify it explicitly. This will be prohibited in the future.",
             DECLARATION_NAME,
         )
 
@@ -1813,12 +1925,17 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             DECLARATION_NAME,
             commaSeparated(SYMBOL_WITH_CONTAINING_DECLARATION)
         )
+        map.put(
+            INLINE_CLASS_DEPRECATED,
+            "'inline' modifier is deprecated. Use 'value' instead."
+        )
 
         // Redeclarations
         map.put(MANY_COMPANION_OBJECTS, "Only one companion object is allowed per class.")
         map.put(CONFLICTING_OVERLOADS, "Conflicting overloads:{0}", SYMBOLS_ON_NEXT_LINES)
         map.put(REDECLARATION, "Conflicting declarations:{0}", SYMBOLS_ON_NEXT_LINES)
-        map.put(PACKAGE_OR_CLASSIFIER_REDECLARATION, "Redeclaration:{0}", SYMBOLS_ON_NEXT_LINES)
+        map.put(CLASSIFIER_REDECLARATION, "Redeclaration:{0}", SYMBOLS_ON_NEXT_LINES)
+        map.put(PACKAGE_CONFLICTS_WITH_CLASSIFIER, "Package conflicts with classifier {0}", CLASS_ID)
         map.put(EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE, "{0}: expect and corresponding actual are declared in the same module", DECLARATION_NAME)
 
         map.put(METHOD_OF_ANY_IMPLEMENTED_IN_INTERFACE, "Interfaces cannot implement a method of 'Any'.")
@@ -2078,13 +2195,6 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "Expected function source is not found, so generating default argument values declared there is impossible. Please add the corresponding file to compilation sources."
         )
         map.put(
-            NO_ACTUAL_FOR_EXPECT,
-            "Expected ''{0}'' has no actual declaration in ''{1}''{2}.",
-            SYMBOL,
-            MODULE_DATA,
-            FirPlatformIncompatibilityDiagnosticRenderer.TEXT
-        )
-        map.put(
             ACTUAL_WITHOUT_EXPECT,
             "''{0}'' has no corresponding expected declaration{1}",
             SYMBOL,
@@ -2175,6 +2285,11 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             CAPTURED_MEMBER_VAL_INITIALIZATION,
             "Initialization of captured member values is prohibited because of possible reassignments.",
+            VARIABLE_NAME
+        )
+        map.put(
+            FirErrors.NON_INLINE_MEMBER_VAL_INITIALIZATION,
+            "Initialization of captured member values must be inlined.",
             VARIABLE_NAME
         )
         map.put(
@@ -2273,6 +2388,14 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             CONFUSING_BRANCH_CONDITION,
             "Logical expression in when-with-subject. The branch will be matched by comparing the result of the logical expression with the subject. To suppress the diagnostic, wrap the expression with parentheses."
+        )
+        map.put(
+            COMMA_IN_WHEN_CONDITION_WITH_WHEN_GUARD,
+            "Use of comma in 'when' condition with guard statement is not allowed."
+        )
+        map.put(
+            WHEN_GUARD_WITHOUT_SUBJECT,
+            "Guard statements are only allowed in 'when' with subject."
         )
 
         // Context tracking
@@ -2402,8 +2525,9 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             TO_STRING
         )
         map.put(
-            PROPERTY_AS_OPERATOR,
-            "Property ''{0}'' cannot be used as operator.",
+            NOT_FUNCTION_AS_OPERATOR,
+            "{0} ''{1}'' cannot be used as operator.",
+            STRING,
             SYMBOL
         )
         map.put(
@@ -2451,7 +2575,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             NON_PUBLIC_CALL_FROM_PUBLIC_INLINE_DEPRECATION,
             "Public-API inline function cannot access non-public-API ''{0}''. " +
-                    "This will become an error in Kotlin ${LanguageFeature.ProhibitPrivateOperatorCallInInline.sinceVersion?.versionString}.",
+                    "This will become an error in ${LanguageFeature.ProhibitPrivateOperatorCallInInline.formatKotlinWithVersion()}.",
             SYMBOL,
             SYMBOL
         )
@@ -2587,8 +2711,16 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "Ambiguous access to the 'entries' property from within the enum is deprecated. Please add the explicit qualifier to the call."
         )
         map.put(
+            DEPRECATED_ACCESS_TO_ENTRIES_PROPERTY,
+            "Ambiguous access to the 'entries' property is deprecated. In the future, it will be shadowed by enum 'entries' property. Please resolve the ambiguity (e.g. by adding explicit qualifier to the call)."
+        )
+        map.put(
             DEPRECATED_ACCESS_TO_ENUM_ENTRY_PROPERTY_AS_REFERENCE,
             "Ambiguous access to the 'entries' property is deprecated. Please specify the type of the referenced expression explicitly."
+        )
+        map.put(
+            DEPRECATED_ACCESS_TO_ENTRIES_AS_QUALIFIER,
+            "Ambiguous access to the 'entries' qualifier is deprecated. In the future, it will be shadowed by enum 'entries' property. Please resolve the ambiguity (e.g. by renaming conflicting declaration)."
         )
         map.put(
             DEPRECATED_DECLARATION_OF_ENUM_ENTRY,
@@ -2648,5 +2780,14 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             TO_STRING,
             TO_STRING
         )
+    }
+}
+
+fun LanguageFeature.formatKotlinWithVersion(): String {
+    val sinceVersion = sinceVersion
+    return if (sinceVersion != null) {
+        "Kotlin ${sinceVersion.versionString}"
+    } else {
+        "a future release"
     }
 }

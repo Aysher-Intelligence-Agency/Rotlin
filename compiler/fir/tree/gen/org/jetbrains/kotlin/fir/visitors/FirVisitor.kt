@@ -65,9 +65,6 @@ abstract class FirVisitor<out R, in D> {
     open fun visitElementWithResolveState(elementWithResolveState: FirElementWithResolveState, data: D): R =
         visitElement(elementWithResolveState, data)
 
-    open fun visitFileAnnotationsContainer(fileAnnotationsContainer: FirFileAnnotationsContainer, data: D): R =
-        visitElement(fileAnnotationsContainer, data)
-
     open fun visitDeclaration(declaration: FirDeclaration, data: D): R =
         visitElement(declaration, data)
 
@@ -221,7 +218,7 @@ abstract class FirVisitor<out R, in D> {
     open fun visitTryExpression(tryExpression: FirTryExpression, data: D): R =
         visitElement(tryExpression, data)
 
-    open fun <T> visitLiteralExpression(literalExpression: FirLiteralExpression<T>, data: D): R =
+    open fun visitLiteralExpression(literalExpression: FirLiteralExpression, data: D): R =
         visitElement(literalExpression, data)
 
     open fun visitTypeProjection(typeProjection: FirTypeProjection, data: D): R =
@@ -260,8 +257,8 @@ abstract class FirVisitor<out R, in D> {
     open fun visitTypeOperatorCall(typeOperatorCall: FirTypeOperatorCall, data: D): R =
         visitElement(typeOperatorCall, data)
 
-    open fun visitAssignmentOperatorStatement(assignmentOperatorStatement: FirAssignmentOperatorStatement, data: D): R =
-        visitElement(assignmentOperatorStatement, data)
+    open fun visitAugmentedAssignment(augmentedAssignment: FirAugmentedAssignment, data: D): R =
+        visitElement(augmentedAssignment, data)
 
     open fun visitIncrementDecrementExpression(incrementDecrementExpression: FirIncrementDecrementExpression, data: D): R =
         visitElement(incrementDecrementExpression, data)
@@ -287,8 +284,8 @@ abstract class FirVisitor<out R, in D> {
     open fun visitArrayLiteral(arrayLiteral: FirArrayLiteral, data: D): R =
         visitElement(arrayLiteral, data)
 
-    open fun visitAugmentedArraySetCall(augmentedArraySetCall: FirAugmentedArraySetCall, data: D): R =
-        visitElement(augmentedArraySetCall, data)
+    open fun visitIndexedAccessAugmentedAssignment(indexedAccessAugmentedAssignment: FirIndexedAccessAugmentedAssignment, data: D): R =
+        visitElement(indexedAccessAugmentedAssignment, data)
 
     open fun visitClassReferenceExpression(classReferenceExpression: FirClassReferenceExpression, data: D): R =
         visitElement(classReferenceExpression, data)
@@ -362,9 +359,6 @@ abstract class FirVisitor<out R, in D> {
     open fun visitWrappedArgumentExpression(wrappedArgumentExpression: FirWrappedArgumentExpression, data: D): R =
         visitElement(wrappedArgumentExpression, data)
 
-    open fun visitLambdaArgumentExpression(lambdaArgumentExpression: FirLambdaArgumentExpression, data: D): R =
-        visitElement(lambdaArgumentExpression, data)
-
     open fun visitSpreadArgumentExpression(spreadArgumentExpression: FirSpreadArgumentExpression, data: D): R =
         visitElement(spreadArgumentExpression, data)
 
@@ -418,9 +412,6 @@ abstract class FirVisitor<out R, in D> {
 
     open fun visitErrorNamedReference(errorNamedReference: FirErrorNamedReference, data: D): R =
         visitElement(errorNamedReference, data)
-
-    open fun visitFromMissingDependenciesNamedReference(fromMissingDependenciesNamedReference: FirFromMissingDependenciesNamedReference, data: D): R =
-        visitElement(fromMissingDependenciesNamedReference, data)
 
     open fun visitSuperReference(superReference: FirSuperReference, data: D): R =
         visitElement(superReference, data)

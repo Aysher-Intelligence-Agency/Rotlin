@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -10,14 +10,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.ApplicationServiceRegistration
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.FirStandaloneServiceRegistrar
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.KtStaticProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.LLFirStandaloneLibrarySymbolProviderFactory
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.StandaloneProjectFactory
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.services.LLSealedInheritorsProviderFactory
+import org.jetbrains.kotlin.analysis.api.standalone.base.services.LLStandaloneFirElementByPsiElementChooser
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.services.LLFirElementByPsiElementChooser
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirLibrarySymbolProviderFactory
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.builder.KtModuleProviderBuilder
@@ -33,8 +34,6 @@ import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreProjectEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.setupIdeaStandaloneExecution
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
-import org.jetbrains.kotlin.fir.declarations.SealedClassInheritorsProvider
-import org.jetbrains.kotlin.fir.declarations.SealedClassInheritorsProviderImpl
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.contracts.ExperimentalContracts
@@ -63,7 +62,15 @@ public class StandaloneAnalysisAPISessionBuilder(
         )
 
     init {
-        FirStandaloneServiceRegistrar.registerApplicationServices(kotlinCoreProjectEnvironment.environment.application)
+        val application = kotlinCoreProjectEnvironment.environment.application
+        ApplicationServiceRegistration.registerWithCustomRegistration(application, listOf(FirStandaloneServiceRegistrar)) {
+            // TODO (KT-68186): Passing the class loader explicitly is a workaround for KT-68186.
+            if (this is FirStandaloneServiceRegistrar) {
+                registerApplicationServicesWithCustomClassLoader(application, classLoader)
+            } else {
+                registerApplicationServices(application, data = Unit)
+            }
+        }
     }
 
     public val application: Application = kotlinCoreProjectEnvironment.environment.application
@@ -112,8 +119,6 @@ public class StandaloneAnalysisAPISessionBuilder(
     ) {
         val project = kotlinCoreProjectEnvironment.project
         project.apply {
-            registerService(KotlinMessageBusProvider::class.java, KotlinProjectMessageBusProvider::class.java)
-
             FirStandaloneServiceRegistrar.registerProjectServices(project)
             FirStandaloneServiceRegistrar.registerProjectExtensionPoints(project)
             FirStandaloneServiceRegistrar.registerProjectModelServices(project, kotlinCoreProjectEnvironment.parentDisposable)
@@ -139,20 +144,12 @@ public class StandaloneAnalysisAPISessionBuilder(
             registerService(KotlinPackageProviderMerger::class.java, KotlinStaticPackageProviderMerger(this))
 
             registerService(
-                LLSealedInheritorsProviderFactory::class.java,
-                object : LLSealedInheritorsProviderFactory {
-                    override fun createSealedInheritorsProvider(): SealedClassInheritorsProvider {
-                        return SealedClassInheritorsProviderImpl
-                    }
-                }
-            )
-
-            registerService(
                 PackagePartProviderFactory::class.java,
                 KotlinStaticPackagePartProviderFactory(packagePartProvider)
             )
 
             registerService(LLFirLibrarySymbolProviderFactory::class.java, LLFirStandaloneLibrarySymbolProviderFactory::class.java)
+            registerService(LLFirElementByPsiElementChooser::class.java, LLStandaloneFirElementByPsiElementChooser::class.java)
         }
     }
 
@@ -184,7 +181,6 @@ public class StandaloneAnalysisAPISessionBuilder(
             kotlinCoreProjectEnvironment,
             projectStructureProvider,
         )
-        val project = kotlinCoreProjectEnvironment.project
         val sourceKtFiles = projectStructureProvider.allSourceFiles.filterIsInstance<KtFile>()
         val libraryRoots = StandaloneProjectFactory.getAllBinaryRoots(
             projectStructureProvider.allKtModules,
@@ -192,7 +188,6 @@ public class StandaloneAnalysisAPISessionBuilder(
         )
         val createPackagePartProvider =
             StandaloneProjectFactory.createPackagePartsProvider(
-                project,
                 libraryRoots,
             )
         registerProjectServices(

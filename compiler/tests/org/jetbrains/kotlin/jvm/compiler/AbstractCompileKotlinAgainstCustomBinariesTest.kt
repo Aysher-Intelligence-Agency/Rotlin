@@ -140,8 +140,7 @@ abstract class AbstractCompileKotlinAgainstCustomBinariesTest : AbstractKotlinCo
 
     // ------------------------------------------------------------------------------
 
-    // KT-62043
-    fun testRawTypes() = muteForK2 {
+    fun testRawTypes() {
         compileKotlin("main.kt", tmpdir, listOf(compileLibrary("library")))
     }
 
@@ -491,8 +490,7 @@ abstract class AbstractCompileKotlinAgainstCustomBinariesTest : AbstractKotlinCo
         compileKotlin("source.kt", tmpdir, listOf(library1))
     }
 
-    // KT-60777 K2: missing INLINE_FROM_HIGHER_PLATFORM
-    fun testWrongInlineTarget() = muteForK2 {
+    fun testWrongInlineTarget() {
         val library = compileLibrary("library", additionalOptions = listOf("-jvm-target", "11"))
 
         compileKotlin("source.kt", tmpdir, listOf(library), additionalOptions = listOf("-jvm-target", "1.8"))
@@ -572,6 +570,20 @@ abstract class AbstractCompileKotlinAgainstCustomBinariesTest : AbstractKotlinCo
             listOf(library),
             additionalOptions = listOf("-jvm-target", "1.8", "-Xjvm-default=all-compatibility")
         )
+    }
+
+    fun testAnnotationsFromBinariesWithNonTrivialJvmDefaultConfiguration() {
+        val disabledJvmDefaults = compileLibrary(
+            "disabledJvmDefaults",
+            additionalOptions = listOf("-Xjvm-default=disable"),
+            extraClassPath = emptyList()
+        )
+        val enabledJvmDefaults = compileLibrary(
+            "enabledJvmDefaults",
+            additionalOptions = listOf("-Xjvm-default=all"),
+            extraClassPath = listOf(disabledJvmDefaults)
+        )
+        compileKotlin("source.kt", tmpdir, listOf(disabledJvmDefaults, enabledJvmDefaults))
     }
 
     // KT-60531 K2/JS: Report diagnostics before running FIR2IR

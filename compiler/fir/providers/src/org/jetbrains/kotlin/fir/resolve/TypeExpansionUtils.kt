@@ -90,6 +90,7 @@ fun ConeClassLikeType.directExpansionType(
         alias.expandedConeType
     },
 ): ConeClassLikeType? {
+    if (this is ConeErrorType) return null
     val typeAliasSymbol = lookupTag.toSymbol(useSiteSession) as? FirTypeAliasSymbol ?: return null
     val typeAlias = typeAliasSymbol.fir
 
@@ -198,3 +199,6 @@ fun FirTypeAlias.fullyExpandedConeType(useSiteSession: FirSession): ConeClassLik
 fun FirTypeAlias.fullyExpandedClass(session: FirSession): FirClassLikeDeclaration? {
     return fullyExpandedConeType(session)?.toSymbol(session)?.fir
 }
+
+inline fun ConeKotlinType.forEachExpandedType(session: FirSession, action: (ConeKotlinType) -> Unit) =
+    forEachType(prepareType = { it.fullyExpandedType(session) }, action = action)

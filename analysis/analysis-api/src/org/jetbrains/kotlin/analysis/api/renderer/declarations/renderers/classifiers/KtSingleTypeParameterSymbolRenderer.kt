@@ -5,51 +5,75 @@
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.types.Variance
 
-public interface KtSingleTypeParameterSymbolRenderer {
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    public fun renderSymbol(symbol: KtTypeParameterSymbol, printer: PrettyPrinter)
+public interface KaSingleTypeParameterSymbolRenderer {
+    public fun renderSymbol(
+        analysisSession: KaSession,
+        symbol: KaTypeParameterSymbol,
+        declarationRenderer: KaDeclarationRenderer,
+        printer: PrettyPrinter,
+    )
 
-    public object NO : KtSingleTypeParameterSymbolRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderSymbol(symbol: KtTypeParameterSymbol, printer: PrettyPrinter) {
-        }
+    public object NO : KaSingleTypeParameterSymbolRenderer {
+        override fun renderSymbol(
+            analysisSession: KaSession,
+            symbol: KaTypeParameterSymbol,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ) {}
     }
 
 
-    public object WITHOUT_BOUNDS : KtSingleTypeParameterSymbolRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderSymbol(symbol: KtTypeParameterSymbol, printer: PrettyPrinter): Unit = printer {
-            " ".separated(
-                { annotationRenderer.renderAnnotations(symbol, printer) },
-                { modifiersRenderer.renderDeclarationModifiers(symbol, printer) },
-                { nameRenderer.renderName(symbol, printer) },
-            )
+    public object WITHOUT_BOUNDS : KaSingleTypeParameterSymbolRenderer {
+        override fun renderSymbol(
+            analysisSession: KaSession,
+            symbol: KaTypeParameterSymbol,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                " ".separated(
+                    { declarationRenderer.annotationRenderer.renderAnnotations(analysisSession, symbol, printer) },
+                    { declarationRenderer.modifiersRenderer.renderDeclarationModifiers(analysisSession, symbol, printer) },
+                    { declarationRenderer.nameRenderer.renderName(analysisSession, symbol, declarationRenderer, printer) },
+                )
+            }
         }
     }
 
-    public object WITH_COMMA_SEPARATED_BOUNDS : KtSingleTypeParameterSymbolRenderer {
-        context(KtAnalysisSession, KtDeclarationRenderer)
-        override fun renderSymbol(symbol: KtTypeParameterSymbol, printer: PrettyPrinter): Unit = printer {
-            " ".separated(
-                { annotationRenderer.renderAnnotations(symbol, printer) },
-                { modifiersRenderer.renderDeclarationModifiers(symbol, printer) },
-                { nameRenderer.renderName(symbol, printer) },
-                {
-                    if (symbol.upperBounds.isNotEmpty()) {
-                        withPrefix(": ") {
-                            printCollection(symbol.upperBounds) {
-                                typeRenderer.renderType(declarationTypeApproximator.approximateType(it, Variance.OUT_VARIANCE), printer)
+    public object WITH_COMMA_SEPARATED_BOUNDS : KaSingleTypeParameterSymbolRenderer {
+        override fun renderSymbol(
+            analysisSession: KaSession,
+            symbol: KaTypeParameterSymbol,
+            declarationRenderer: KaDeclarationRenderer,
+            printer: PrettyPrinter,
+        ) {
+            printer {
+                " ".separated(
+                    { declarationRenderer.annotationRenderer.renderAnnotations(analysisSession, symbol, printer) },
+                    { declarationRenderer.modifiersRenderer.renderDeclarationModifiers(analysisSession, symbol, printer) },
+                    { declarationRenderer.nameRenderer.renderName(analysisSession, symbol,declarationRenderer, printer) },
+                    {
+                        if (symbol.upperBounds.isNotEmpty()) {
+                            withPrefix(": ") {
+                                printCollection(symbol.upperBounds) {
+                                    val approximatedType = declarationRenderer.declarationTypeApproximator
+                                        .approximateType(analysisSession, it, Variance.OUT_VARIANCE)
+
+                                    declarationRenderer.typeRenderer.renderType(analysisSession, approximatedType, printer)
+                                }
                             }
                         }
                     }
-                }
-            )
+                )
+            }
         }
     }
 }
+
+public typealias KtSingleTypeParameterSymbolRenderer = KaSingleTypeParameterSymbolRenderer
