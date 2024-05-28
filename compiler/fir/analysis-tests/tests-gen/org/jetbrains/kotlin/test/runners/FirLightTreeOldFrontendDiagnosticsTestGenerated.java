@@ -30777,6 +30777,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("functionalConstraintDuringCompletion.kt")
+      public void testFunctionalConstraintDuringCompletion() {
+        runTest("compiler/testData/diagnostics/tests/resolve/functionalConstraintDuringCompletion.kt");
+      }
+
+      @Test
       @TestMetadata("HiddenDeclarations.kt")
       public void testHiddenDeclarations() {
         runTest("compiler/testData/diagnostics/tests/resolve/HiddenDeclarations.kt");
@@ -30822,6 +30828,18 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("kt49736.kt")
       public void testKt49736() {
         runTest("compiler/testData/diagnostics/tests/resolve/kt49736.kt");
+      }
+
+      @Test
+      @TestMetadata("lambdaAgainstTypeVariableWithConstraint.kt")
+      public void testLambdaAgainstTypeVariableWithConstraint() {
+        runTest("compiler/testData/diagnostics/tests/resolve/lambdaAgainstTypeVariableWithConstraint.kt");
+      }
+
+      @Test
+      @TestMetadata("lambdaAgainstTypeVariableWithConstraintAfter.kt")
+      public void testLambdaAgainstTypeVariableWithConstraintAfter() {
+        runTest("compiler/testData/diagnostics/tests/resolve/lambdaAgainstTypeVariableWithConstraintAfter.kt");
       }
 
       @Test
@@ -38439,6 +38457,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("expansionDnnTypeArgument.kt")
+      public void testExpansionDnnTypeArgument() {
+        runTest("compiler/testData/diagnostics/tests/typealias/expansionDnnTypeArgument.kt");
+      }
+
+      @Test
       @TestMetadata("exposedExpandedType.kt")
       public void testExposedExpandedType() {
         runTest("compiler/testData/diagnostics/tests/typealias/exposedExpandedType.kt");
@@ -40054,6 +40078,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("smartCastAndSuppressedVisibility.kt")
       public void testSmartCastAndSuppressedVisibility() {
         runTest("compiler/testData/diagnostics/tests/visibility/smartCastAndSuppressedVisibility.kt");
+      }
+
+      @Test
+      @TestMetadata("visibleDeclarationThroughInvisibleTypeAlias.kt")
+      public void testVisibleDeclarationThroughInvisibleTypeAlias() {
+        runTest("compiler/testData/diagnostics/tests/visibility/visibleDeclarationThroughInvisibleTypeAlias.kt");
       }
     }
 

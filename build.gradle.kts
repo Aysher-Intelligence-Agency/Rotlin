@@ -161,7 +161,6 @@ val commonCompilerModules = arrayOf(
     ":analysis:decompiled:decompiler-native",
     ":analysis:decompiled:decompiler-to-psi",
     ":analysis:decompiled:light-classes-for-decompiled",
-    ":analysis:analysis-api-providers",
     ":analysis:project-structure",
     ":analysis:kt-references",
     ":kotlin-build-common",
@@ -897,6 +896,7 @@ tasks {
         dependsOn(":kotlin-util-io:test")
         dependsOn(":kotlin-util-klib:test")
         dependsOn(":kotlin-util-klib-abi:test")
+        dependsOn(":kotlinx-metadata-klib:test")
         dependsOn(":generators:test")
     }
 

@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
 import org.jetbrains.kotlin.types.Variance
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.memberProperties
@@ -51,11 +50,11 @@ internal fun KaSession.stringRepresentation(any: Any?): String = with(any) {
         is KaFunctionLikeSymbol -> buildString {
             append(
                 when (this@with) {
-                    is KaFunctionSymbol -> callableIdIfNonLocal ?: name
-                    is KaSamConstructorSymbol -> callableIdIfNonLocal ?: name
+                    is KaFunctionSymbol -> callableId ?: name
+                    is KaSamConstructorSymbol -> callableId ?: name
                     is KaConstructorSymbol -> "<constructor>"
-                    is KaPropertyGetterSymbol -> callableIdIfNonLocal ?: "<getter>"
-                    is KaPropertySetterSymbol -> callableIdIfNonLocal ?: "<setter>"
+                    is KaPropertyGetterSymbol -> callableId ?: "<getter>"
+                    is KaPropertySetterSymbol -> callableId ?: "<setter>"
                     else -> error("unexpected symbol kind in KaCall: ${this@with::class}")
                 }
             )
@@ -141,7 +140,7 @@ private fun KaSession.stringRepresentation(signature: KaCallableSignature<*>): S
         KaCallableSignature<*>::returnType,
         KaCallableSignature<*>::symbol,
         KaFunctionLikeSignature<*>::valueParameters.takeIf { signature is KaFunctionLikeSignature<*> },
-        KaCallableSignature<*>::callableIdIfNonLocal
+        KaCallableSignature<*>::callableId
     )
     memberProperties.joinTo(this, separator = "\n  ", prefix = "  ") { property ->
         @Suppress("UNCHECKED_CAST")
@@ -275,9 +274,9 @@ internal fun KaSession.assertStableResult(
 
 internal fun KaSession.renderScopeWithParentDeclarations(scope: KaScope): String = prettyPrint {
     fun KaSymbol.qualifiedNameString() = when (this) {
-        is KaConstructorSymbol -> "<constructor> ${containingClassIdIfNonLocal?.asString()}"
-        is KaClassLikeSymbol -> classIdIfNonLocal!!.asString()
-        is KaCallableSymbol -> callableIdIfNonLocal!!.toString()
+        is KaConstructorSymbol -> "<constructor> ${containingClassId?.asString()}"
+        is KaClassLikeSymbol -> classId!!.asString()
+        is KaCallableSymbol -> callableId!!.toString()
         else -> error("unknown symbol $this")
     }
 
@@ -291,7 +290,7 @@ internal fun KaSession.renderScopeWithParentDeclarations(scope: KaScope): String
         val containingDeclaration = symbol.getContainingSymbol() as KaClassLikeSymbol
         append(symbol.render(renderer))
         append(" fromClass ")
-        append(containingDeclaration.classIdIfNonLocal?.asString())
+        append(containingDeclaration.classId?.asString())
         if (symbol.typeParameters.isNotEmpty()) {
             appendLine()
             withIndent {

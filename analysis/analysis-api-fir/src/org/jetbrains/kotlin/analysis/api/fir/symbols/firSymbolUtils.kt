@@ -79,7 +79,7 @@ private fun createContextReceiver(
     builder.token
 )
 
-internal fun FirCallableSymbol<*>.getCallableIdIfNonLocal(): CallableId? {
+internal fun FirCallableSymbol<*>.getCallableId(): CallableId? {
     return when {
         origin == FirDeclarationOrigin.DynamicScope -> null
         callableId.isLocal -> null
@@ -87,7 +87,7 @@ internal fun FirCallableSymbol<*>.getCallableIdIfNonLocal(): CallableId? {
     }
 }
 
-internal fun FirClassLikeSymbol<*>.getClassIdIfNonLocal(): ClassId? =
+internal fun FirClassLikeSymbol<*>.getClassId(): ClassId? =
     classId.takeUnless { it.isLocal }
 
 internal fun FirCallableSymbol<*>.dispatchReceiverType(

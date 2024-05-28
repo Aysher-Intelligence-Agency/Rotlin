@@ -1,0 +1,19 @@
+KtInapplicableCallCandidateInfo:
+  diagnostic = ERROR<INVISIBLE_MEMBER: Cannot access 'i': it is private in 'A'>
+  candidate = KtSimpleVariableAccessCall:
+    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
+      dispatchReceiver = KtExplicitReceiverValue:
+        expression = a
+        isSafeNavigation = false
+        type = A
+      extensionReceiver = null
+      signature = KtVariableLikeSignature:
+        name = i
+        receiverType = null
+        returnType = kotlin.Int
+        symbol = val i: kotlin.Int
+        callableId = /A.i
+    simpleAccess = Read:
+      
+    typeArgumentsMapping = {}
+  isInBestCandidates = true

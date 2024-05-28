@@ -27,7 +27,7 @@ public inline fun <R> analyze(
     action: KaSession.() -> R
 ): R =
     KaSessionProvider.getInstance(useSiteKtElement.project)
-        .analyse(useSiteKtElement, action)
+        .analyze(useSiteKtElement, action)
 
 /**
  * Executes the given [action] in a [KaSession] context.
@@ -35,7 +35,6 @@ public inline fun <R> analyze(
  * The project will be analyzed from the perspective of the given [useSiteKtModule].
  *
  * @see KaSession
- * @see KaLifetimeTokenFactory
  */
 public inline fun <R> analyze(
     useSiteKtModule: KtModule,

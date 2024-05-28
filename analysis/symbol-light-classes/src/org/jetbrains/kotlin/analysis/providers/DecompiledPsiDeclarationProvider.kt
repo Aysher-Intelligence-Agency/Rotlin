@@ -29,7 +29,7 @@ object DecompiledPsiDeclarationProvider {
         constructorSymbol: KaConstructorSymbol,
         project: Project
     ): PsiElement? {
-        val classId = constructorSymbol.containingClassIdIfNonLocal ?: return null
+        val classId = constructorSymbol.containingClassId ?: return null
         val psiClass = project.createPsiDeclarationProvider(constructorSymbol.scope(project))
             ?.getClassesByClassId(classId)
             ?.firstOrNull() ?: return null
@@ -42,7 +42,7 @@ object DecompiledPsiDeclarationProvider {
         functionLikeSymbol: KaFunctionLikeSymbol,
         project: Project
     ): PsiElement? {
-        return functionLikeSymbol.callableIdIfNonLocal?.let {
+        return functionLikeSymbol.callableId?.let {
             val candidates = project.createPsiDeclarationProvider(functionLikeSymbol.scope(project))
                 ?.getFunctions(it)
             if (candidates?.size == 1)
@@ -58,7 +58,7 @@ object DecompiledPsiDeclarationProvider {
         variableLikeSymbol: KaVariableLikeSymbol,
         project: Project
     ): PsiElement? {
-        return variableLikeSymbol.callableIdIfNonLocal?.let {
+        return variableLikeSymbol.callableId?.let {
             val candidates = project.createPsiDeclarationProvider(variableLikeSymbol.scope(project))
                 ?.getProperties(it)
             if (candidates?.size == 1)
@@ -75,7 +75,7 @@ object DecompiledPsiDeclarationProvider {
         classLikeSymbol: KaClassLikeSymbol,
         project: Project
     ): PsiElement? {
-        return classLikeSymbol.classIdIfNonLocal?.let {
+        return classLikeSymbol.classId?.let {
             project.createPsiDeclarationProvider(classLikeSymbol.scope(project))
                 ?.getClassesByClassId(it)
                 ?.firstOrNull()
@@ -86,7 +86,7 @@ object DecompiledPsiDeclarationProvider {
         enumEntrySymbol: KaEnumEntrySymbol,
         project: Project
     ): PsiElement? {
-        val classId = enumEntrySymbol.containingEnumClassIdIfNonLocal ?: return null
+        val classId = enumEntrySymbol.callableId?.classId ?: return null
         val psiClass = project.createPsiDeclarationProvider(enumEntrySymbol.scope(project))
             ?.getClassesByClassId(classId)
             ?.firstOrNull() ?: return null

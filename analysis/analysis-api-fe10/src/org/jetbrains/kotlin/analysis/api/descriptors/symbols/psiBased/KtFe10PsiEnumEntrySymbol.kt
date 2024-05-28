@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.bas
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.isEqualTo
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.pointers.KaFe10NeverRestoringSymbolPointer
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.KaFe10PsiSymbol
-import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.callableIdIfNonLocal
+import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.callableId
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.createErrorType
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.cached
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -24,10 +24,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtEnumEntry
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.resolve.BindingContext
 
 internal class KaFe10PsiEnumEntrySymbol(
@@ -39,14 +37,8 @@ internal class KaFe10PsiEnumEntrySymbol(
         bindingContext[BindingContext.CLASS, psi]
     }
 
-    override val containingEnumClassIdIfNonLocal: ClassId?
-        get() = withValidityAssertion {
-            val containingClass = psi.containingClass()?.takeIf { it.isEnum() } ?: return null
-            return containingClass.getClassId()
-        }
-
-    override val callableIdIfNonLocal: CallableId?
-        get() = withValidityAssertion { psi.callableIdIfNonLocal }
+    override val callableId: CallableId?
+        get() = withValidityAssertion { psi.callableId }
 
     override val returnType: KaType
         get() = withValidityAssertion {

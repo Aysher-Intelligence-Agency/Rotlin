@@ -7,6 +7,9 @@ package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.callRe
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.KaCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.calls.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.assertStableSymbolResult
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.compareCalls
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.stringRepresentation
@@ -16,22 +19,52 @@ import org.jetbrains.kotlin.test.services.assertions
 import org.jetbrains.kotlin.test.services.moduleStructure
 
 abstract class AbstractResolveCandidatesTest : AbstractResolveTest() {
-    override fun doResolutionTest(mainElement: KtElement, testServices: TestServices) {
-        val actual = analyseForTest(mainElement) {
+    override val resolveKind: String get() = "candidates"
+
+    override fun generateResolveOutput(mainElement: KtElement, testServices: TestServices): String {
+        return analyseForTest(mainElement) {
             val candidates = collectCallCandidates(mainElement)
             ignoreStabilityIfNeeded(testServices.moduleStructure.allDirectives) {
                 val candidatesAgain = collectCallCandidates(mainElement)
                 assertStableSymbolResult(testServices, candidates, candidatesAgain)
             }
 
+            checkConsistencyWithResolveCall(mainElement, candidates, testServices)
             if (candidates.isEmpty()) {
                 "NO_CANDIDATES"
             } else {
                 candidates.joinToString("\n\n") { stringRepresentation(it) }
             }
         }
+    }
 
-        testServices.assertions.assertEqualsToTestDataFileSibling(actual)
+    private fun KaSession.checkConsistencyWithResolveCall(
+        mainElement: KtElement,
+        candidates: List<KaCallCandidateInfo>,
+        testServices: TestServices,
+    ) {
+        val resolvedCall = mainElement.resolveCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
+        if (candidates.isEmpty()) {
+            testServices.assertions.assertEquals(null, resolvedCall) {
+                "Inconsistency between candidates and resolved call. " +
+                        "Resolved call is not null, but no candidates found.\n" +
+                        stringRepresentation(resolvedCall)
+            }
+        } else {
+            if (resolvedCall == null) return
+            val resolvedSymbol = stringRepresentation(resolvedCall.symbol)
+            val candidatesRepresentation = candidates.mapNotNull {
+                if (it.isInBestCandidates) {
+                    stringRepresentation((it.candidate as KaCallableMemberCall<*, *>).symbol)
+                } else {
+                    null
+                }
+            }
+
+            testServices.assertions.assertTrue(resolvedSymbol in candidatesRepresentation) {
+                "'$resolvedSymbol' is not found in:\n" + candidatesRepresentation.joinToString("\n")
+            }
+        }
     }
 
     private fun KaSession.collectCallCandidates(element: KtElement): List<KaCallCandidateInfo> {

@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.fir.backend.jvm
 
-import org.jetbrains.kotlin.backend.common.serialization.signature.PublicIdSignatureComputer
 import org.jetbrains.kotlin.backend.jvm.*
 import org.jetbrains.kotlin.backend.jvm.overrides.IrJavaIncompatibilityRulesOverridabilityCondition
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -37,9 +36,9 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 class JvmFir2IrExtensions(
     configuration: CompilerConfiguration,
     private val irDeserializer: JvmIrDeserializer,
-    private val mangler: KotlinMangler.IrMangler,
 ) : Fir2IrExtensions, JvmGeneratorExtensions {
     private var irBuiltIns: IrBuiltIns? = null
+    private var symbolTable: SymbolTable? = null
 
     override val parametersAreAssignable: Boolean get() = true
     override val externalOverridabilityConditions: List<IrExternalOverridabilityCondition>
@@ -81,13 +80,6 @@ class JvmFir2IrExtensions(
             specialAnnotationConstructors.add(constructors.single())
         }
 
-    override fun registerDeclarations(symbolTable: SymbolTable) {
-        val signatureComputer = PublicIdSignatureComputer(mangler)
-        specialAnnotationConstructors.forEach { constructor ->
-            symbolTable.declareConstructorWithSignature(signatureComputer.composePublicIdSignature(constructor, false), constructor.symbol)
-        }
-    }
-
     override fun findInjectedValue(calleeReference: FirReference, conversionScope: Fir2IrConversionScope): InjectedValue? {
         return null
     }
@@ -97,8 +89,9 @@ class JvmFir2IrExtensions(
 
     override fun deserializeToplevelClass(irClass: IrClass, components: Fir2IrComponents): Boolean {
         val builtIns = irBuiltIns ?: error("BuiltIns are not initialized")
+        val symbolTable = symbolTable ?: error("SymbolTable is not initialized")
         return irDeserializer.deserializeTopLevelClass(
-            irClass, builtIns, components.symbolTable, components.irProviders, this
+            irClass, builtIns, symbolTable, components.irProviders, this
         )
     }
 
@@ -109,8 +102,10 @@ class JvmFir2IrExtensions(
         declaration.hasAnnotation(StandardClassIds.Annotations.jvmStatic, session) ||
                 (declaration as? FirPropertyAccessor)?.propertySymbol?.fir?.hasAnnotation(StandardClassIds.Annotations.jvmStatic, session) == true
 
-    override fun initializeIrBuiltIns(irBuiltIns: IrBuiltIns) {
+    override fun initializeIrBuiltInsAndSymbolTable(irBuiltIns: IrBuiltIns, symbolTable: SymbolTable) {
         require(this.irBuiltIns == null) { "BuiltIns are already initialized" }
         this.irBuiltIns = irBuiltIns
+        require(this.symbolTable == null) { "SymboTable is already initialized" }
+        this.symbolTable = symbolTable
     }
 }

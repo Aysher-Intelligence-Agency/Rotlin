@@ -78,8 +78,8 @@ abstract class AbstractOverriddenDeclarationProviderTest : AbstractAnalysisApiBa
             // Render qualified names for top-level declarations
             if (index == 0) {
                 val qualifiedName = when (parent) {
-                    is KaClassLikeSymbol -> parent.classIdIfNonLocal?.toString()
-                    is KaCallableSymbol -> parent.callableIdIfNonLocal?.toString()
+                    is KaClassLikeSymbol -> parent.classId?.toString()
+                    is KaCallableSymbol -> parent.callableId?.toString()
                     else -> null
                 }
 

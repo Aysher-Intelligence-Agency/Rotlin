@@ -31,13 +31,13 @@ abstract class AbstractReferenceResolveTest : AbstractAnalysisApiBasedTest() {
         super.configureTest(builder)
         with(builder) {
             useDirectives(Directives)
-            forTestsMatching("analysis/analysis-api/testData/referenceResolve/kDoc/*") {
+            forTestsMatching("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/*") {
                 defaultDirectives {
                     +AnalysisApiTestDirectives.DISABLE_DEPENDED_MODE
                     +AnalysisApiTestDirectives.IGNORE_FE10
                 }
             }
-            forTestsMatching("analysis/analysis-api/testData/referenceResolve/kDoc/qualified/stdlib/*") {
+            forTestsMatching("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/qualified/stdlib/*") {
                 defaultDirectives {
                     +ConfigurationDirectives.WITH_STDLIB
                 }
@@ -47,7 +47,12 @@ abstract class AbstractReferenceResolveTest : AbstractAnalysisApiBasedTest() {
     }
 
     override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
-        val caretPositions = testServices.expressionMarkerProvider.getAllCarets(mainFile)
+        val caretPositions = testServices.expressionMarkerProvider.getAllCarets(mainFile).ifEmpty {
+            testServices.expressionMarkerProvider.getSelectedRangeOrNull(mainFile)?.let {
+                CaretMarker(tag = "from_expression", offset = it.startOffset)
+            }.let(::listOfNotNull)
+        }
+
         doTestByFileStructure(mainFile, caretPositions, mainModule, testServices)
     }
 
@@ -70,7 +75,7 @@ abstract class AbstractReferenceResolveTest : AbstractAnalysisApiBasedTest() {
             }
         }
 
-        testServices.assertions.assertEqualsToTestDataFileSibling(actual)
+        testServices.assertions.assertEqualsToTestDataFileSibling(actual, extension = "references.txt")
     }
 
     private fun renderResolvedReferencesForCaretPosition(
@@ -81,7 +86,7 @@ abstract class AbstractReferenceResolveTest : AbstractAnalysisApiBasedTest() {
     ): String {
         val ktReferences = findReferencesAtCaret(ktFile, caret.offset)
         if (ktReferences.isEmpty()) {
-            testServices.assertions.fail { "No references at caret $caret found" }
+            return "${caret.fullTag}: no references found"
         }
 
         val resolvedTo = analyzeReferenceElement(ktReferences.first().element, mainModule) {

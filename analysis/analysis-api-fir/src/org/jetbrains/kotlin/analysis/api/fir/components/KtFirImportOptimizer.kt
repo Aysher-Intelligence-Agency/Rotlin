@@ -75,7 +75,7 @@ internal class KaFirImportOptimizer(
     }
 
     override fun getImportableName(symbol: KaSymbol): FqName? = when (symbol) {
-        is KaClassLikeSymbol -> symbol.classIdIfNonLocal?.asSingleFqName()
+        is KaClassLikeSymbol -> symbol.classId?.asSingleFqName()
         is KaCallableSymbol -> symbol.firSymbol.computeImportableName(firSession)
         else -> null
     }
@@ -301,7 +301,7 @@ internal class KaFirImportOptimizer(
                 buildList {
                     when (symbol) {
                         is KaCallableSymbol -> {
-                            val callableId = symbol.callableIdIfNonLocal ?: return emptyList()
+                            val callableId = symbol.callableId ?: return emptyList()
                             val fqName = callableId.asSingleFqName()
                             val classFqName = callableId.classId?.asSingleFqName()
                             // either it is a member declaration
@@ -323,7 +323,7 @@ internal class KaFirImportOptimizer(
                             }
                         }
                         is KaClassLikeSymbol -> {
-                            val fqName = symbol.classIdIfNonLocal?.asSingleFqName()
+                            val fqName = symbol.classId?.asSingleFqName()
                             if (fqName != null && fqName != qualifiedNameAsFqName) {
                                 this += fqName
                             }

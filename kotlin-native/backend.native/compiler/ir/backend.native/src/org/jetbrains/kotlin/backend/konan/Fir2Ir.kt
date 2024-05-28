@@ -51,7 +51,6 @@ internal object NativeFir2IrExtensions : Fir2IrExtensions {
     override val parametersAreAssignable: Boolean get() = false
     override val externalOverridabilityConditions = listOf(IrObjCOverridabilityCondition)
     override fun deserializeToplevelClass(irClass: IrClass, components: Fir2IrComponents) = false
-    override fun registerDeclarations(symbolTable: SymbolTable) {}
     override fun findInjectedValue(calleeReference: FirReference, conversionScope: Fir2IrConversionScope) = null
     override fun hasBackingField(property: FirProperty, session: FirSession): Boolean =
             if (property.isExternalObjCClassProperty(session))
@@ -60,7 +59,7 @@ internal object NativeFir2IrExtensions : Fir2IrExtensions {
                 Fir2IrExtensions.Default.hasBackingField(property, session)
 
     override fun isTrueStatic(declaration: FirCallableDeclaration, session: FirSession): Boolean = false
-    override fun initializeIrBuiltIns(irBuiltIns: IrBuiltIns) {}
+    override fun initializeIrBuiltInsAndSymbolTable(irBuiltIns: IrBuiltIns, symbolTable: SymbolTable) {}
 }
 
 internal fun PhaseContext.fir2Ir(
