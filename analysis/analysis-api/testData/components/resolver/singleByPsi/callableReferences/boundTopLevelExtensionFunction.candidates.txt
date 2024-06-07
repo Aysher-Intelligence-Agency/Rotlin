@@ -1,25 +1,26 @@
-KtApplicableCallCandidateInfo:
-  candidate = KtSimpleFunctionCall:
-    isImplicitInvoke = false
-    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
-      dispatchReceiver = null
-      extensionReceiver = KtExplicitReceiverValue:
-        expression = obj
-        isSafeNavigation = false
-        type = Foo
-      signature = KtFunctionLikeSignature:
-        receiverType = Foo
-        returnType = kotlin.Unit
-        symbol = /foo(<extension receiver>: Foo, a: kotlin.Int): kotlin.Unit
-        valueParameters = [
-          KtVariableLikeSignature:
-            name = a
-            receiverType = null
-            returnType = kotlin.Int
-            symbol = a: kotlin.Int
-            callableId = null
-        ]
-        callableId = /foo
-    typeArgumentsMapping = {}
-    argumentMapping = {}
-  isInBestCandidates = true
+KtCallableReferenceExpression(72,80): 'obj::foo'
+  KaApplicableCallCandidateInfo:
+    candidate = KaSimpleFunctionCall:
+      isImplicitInvoke = false
+      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        dispatchReceiver = null
+        extensionReceiver = KaExplicitReceiverValue:
+          expression = obj
+          isSafeNavigation = false
+          type = Foo
+        signature = KaFunctionLikeSignature:
+          receiverType = Foo
+          returnType = kotlin.Unit
+          symbol = /foo(<extension receiver>: Foo, a: kotlin.Int): kotlin.Unit
+          valueParameters = [
+            KaVariableLikeSignature:
+              name = a
+              receiverType = null
+              returnType = kotlin.Int
+              symbol = a: kotlin.Int
+              callableId = null
+          ]
+          callableId = /foo
+      typeArgumentsMapping = {}
+      argumentMapping = {}
+    isInBestCandidates = true

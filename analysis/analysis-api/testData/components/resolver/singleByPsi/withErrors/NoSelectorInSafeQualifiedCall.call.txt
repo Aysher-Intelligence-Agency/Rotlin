@@ -1,14 +1,15 @@
-KtSuccessCallInfo:
-  call = KtSimpleFunctionCall:
-    isImplicitInvoke = false
-    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
-      dispatchReceiver = null
-      extensionReceiver = null
-      signature = KtFunctionLikeSignature:
-        receiverType = null
-        returnType = testing.Foo
-        symbol = testing/makeFoo(): testing.Foo
-        valueParameters = []
-        callableId = testing/makeFoo
-    typeArgumentsMapping = {}
-    argumentMapping = {}
+KtNameReferenceExpression(108,115): 'makeFoo'
+  KaSuccessCallInfo:
+    call = KaSimpleFunctionCall:
+      isImplicitInvoke = false
+      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        dispatchReceiver = null
+        extensionReceiver = null
+        signature = KaFunctionLikeSignature:
+          receiverType = null
+          returnType = testing.Foo
+          symbol = testing/makeFoo(): testing.Foo
+          valueParameters = []
+          callableId = testing/makeFoo
+      typeArgumentsMapping = {}
+      argumentMapping = {}

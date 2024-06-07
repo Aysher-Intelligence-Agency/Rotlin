@@ -1,2 +1,3 @@
-Resolved to:
-0: bb: kotlin.Int
+KtNameReferenceExpression(66,68): 'bb'
+  KtSimpleNameReference:
+    bb: kotlin.Int

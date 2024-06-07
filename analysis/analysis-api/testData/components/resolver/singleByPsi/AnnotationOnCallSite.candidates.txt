@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtNameReferenceExpression(23,31): 'Suppress'
+  NO_CANDIDATES

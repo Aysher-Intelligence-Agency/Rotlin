@@ -1,24 +1,25 @@
-KtApplicableCallCandidateInfo:
-  candidate = KtSimpleFunctionCall:
-    isImplicitInvoke = false
-    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
-      dispatchReceiver = null
-      extensionReceiver = KtImplicitReceiverValue:
-        symbol = KtReceiverParameterSymbol:
-          annotationsList: []
-          origin: SOURCE
-          owningCallableSymbol: KtFunctionSymbol(/test)
-          type: KtUsualClassType:
+KtCallExpression(51,56): 'foo()'
+  KaApplicableCallCandidateInfo:
+    candidate = KaSimpleFunctionCall:
+      isImplicitInvoke = false
+      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        dispatchReceiver = null
+        extensionReceiver = KaImplicitReceiverValue:
+          symbol = KaReceiverParameterSymbol:
             annotationsList: []
-            ownTypeArguments: []
-            type: kotlin/Any
-        type = kotlin.String
-      signature = KtFunctionLikeSignature:
-        receiverType = kotlin.String
-        returnType = kotlin.Unit
-        symbol = /foo(<extension receiver>: kotlin.String): kotlin.Unit
-        valueParameters = []
-        callableId = /foo
-    typeArgumentsMapping = {}
-    argumentMapping = {}
-  isInBestCandidates = true
+            origin: SOURCE
+            owningCallableSymbol: KaFunctionSymbol(/test)
+            type: KaUsualClassType:
+              annotationsList: []
+              typeArguments: []
+              type: kotlin/Any
+          type = kotlin.String
+        signature = KaFunctionLikeSignature:
+          receiverType = kotlin.String
+          returnType = kotlin.Unit
+          symbol = /foo(<extension receiver>: kotlin.String): kotlin.Unit
+          valueParameters = []
+          callableId = /foo
+      typeArgumentsMapping = {}
+      argumentMapping = {}
+    isInBestCandidates = true

@@ -1,2 +1,3 @@
-Resolved to:
-0: From
+KtNameReferenceExpression(65,69): 'From'
+  KtSimpleNameReference:
+    From

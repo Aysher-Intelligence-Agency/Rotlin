@@ -1,14 +1,15 @@
-KtSuccessCallInfo:
-  call = KtDelegatedConstructorCall:
-    kind = SUPER_CALL
-    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
-      dispatchReceiver = null
-      extensionReceiver = null
-      signature = KtFunctionLikeSignature:
-        receiverType = null
-        returnType = kotlin.Any
-        symbol = <constructor>(): kotlin.Any
-        valueParameters = []
-        callableId = null
-    typeArgumentsMapping = {}
-    argumentMapping = {}
+KtConstructorDelegationReferenceExpression(136,136): ''
+  KaSuccessCallInfo:
+    call = KaDelegatedConstructorCall:
+      kind = SUPER_CALL
+      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        dispatchReceiver = null
+        extensionReceiver = null
+        signature = KaFunctionLikeSignature:
+          receiverType = null
+          returnType = kotlin.Any
+          symbol = <constructor>(): kotlin.Any
+          valueParameters = []
+          callableId = null
+      typeArgumentsMapping = {}
+      argumentMapping = {}

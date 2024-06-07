@@ -1,28 +1,28 @@
-KtUsualClassType:
-  abbreviatedType: KtUsualClassType:
+KaUsualClassType:
+  abbreviatedType: KaUsualClassType:
     abbreviatedType: null
     annotationsList: []
     classId: expansion/TransitiveStringAlias
-    classSymbol: KtTypeAliasSymbol(expansion/TransitiveStringAlias)
     nullability: NON_NULLABLE
-    ownTypeArguments: []
     qualifiers: [
       qualifier:
         name: TransitiveStringAlias
-        symbol: KtTypeAliasSymbol(expansion/TransitiveStringAlias)
+        symbol: KaTypeAliasSymbol(expansion/TransitiveStringAlias)
         typeArguments: []
     ]
+    symbol: KaTypeAliasSymbol(expansion/TransitiveStringAlias)
+    typeArguments: []
   annotationsList: []
   classId: kotlin/String
-  classSymbol: KtNamedClassOrObjectSymbol(kotlin/String)
   nullability: NULLABLE
-  ownTypeArguments: []
   qualifiers: [
     qualifier:
       name: String
-      symbol: KtNamedClassOrObjectSymbol(kotlin/String)
+      symbol: KaNamedClassOrObjectSymbol(kotlin/String)
       typeArguments: []
   ]
+  symbol: KaNamedClassOrObjectSymbol(kotlin/String)
+  typeArguments: []
 
 Rendered type:
 expansion.TransitiveStringAlias

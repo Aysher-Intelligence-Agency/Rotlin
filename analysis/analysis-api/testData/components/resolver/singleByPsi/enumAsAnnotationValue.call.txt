@@ -1,27 +1,28 @@
-KtSuccessCallInfo:
-  call = KtAnnotationCall:
-    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
-      dispatchReceiver = null
-      extensionReceiver = null
-      signature = KtFunctionLikeSignature:
-        receiverType = null
-        returnType = Annotation
-        symbol = <constructor>(color: Color): Annotation
-        valueParameters = [
-          KtVariableLikeSignature:
-            name = color
-            receiverType = null
-            returnType = Color
-            symbol = color: Color
-            callableId = null
-        ]
-        callableId = null
-    typeArgumentsMapping = {}
-    argumentMapping = {
-      Color.R -> (KtVariableLikeSignature:
-        name = color
-        receiverType = null
-        returnType = Color
-        symbol = color: Color
-        callableId = null)
-    }
+KtAnnotationEntry(90,110): '@Annotation(Color.R)'
+  KaSuccessCallInfo:
+    call = KaAnnotationCall:
+      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        dispatchReceiver = null
+        extensionReceiver = null
+        signature = KaFunctionLikeSignature:
+          receiverType = null
+          returnType = Annotation
+          symbol = <constructor>(color: Color): Annotation
+          valueParameters = [
+            KaVariableLikeSignature:
+              name = color
+              receiverType = null
+              returnType = Color
+              symbol = color: Color
+              callableId = null
+          ]
+          callableId = null
+      typeArgumentsMapping = {}
+      argumentMapping = {
+        Color.R -> (KaVariableLikeSignature:
+          name = color
+          receiverType = null
+          returnType = Color
+          symbol = color: Color
+          callableId = null)
+      }

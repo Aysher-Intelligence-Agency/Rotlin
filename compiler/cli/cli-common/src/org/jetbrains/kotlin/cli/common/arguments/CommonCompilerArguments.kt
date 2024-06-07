@@ -432,6 +432,13 @@ They should be a subset of sources passed as free arguments."""
         }
 
     @Argument(
+        value = "-Xverify-ir",
+        valueDescription = "{none|warning|error}",
+        description = "IR verification mode (no verification by default)."
+    )
+    var verifyIr: String? = null
+
+    @Argument(
         value = "-Xprofile-phases",
         description = "Profile backend phases."
     )
@@ -666,36 +673,6 @@ The corresponding calls' declarations may not be marked with @BuilderInference."
         description = "Enable experimental multi-dollar interpolation."
     )
     var multiDollarInterpolation = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
-        value = "-Xklib-relative-path-base",
-        description = "Provide a base path to compute the source's relative paths in klib (default is empty)."
-    )
-    var relativePathBases: Array<String>? = null
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
-        value = "-Xklib-normalize-absolute-path",
-        description = "Normalize absolute paths in klibs."
-    )
-    var normalizeAbsolutePath = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
-        value = "-Xklib-enable-signature-clash-checks",
-        description = "Enable signature uniqueness checks."
-    )
-    var enableSignatureClashChecks = true
         set(value) {
             checkFrozen()
             field = value

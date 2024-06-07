@@ -1,2 +1,6 @@
-Resolved to:
-0: (in C) fun foo()
+KtNameReferenceExpression(110,113): 'foo'
+  KtSimpleNameReference:
+    (in C) fun foo()
+  
+  SyntheticPropertyAccessorReference:
+    Nothing (Unresolved reference)

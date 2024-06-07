@@ -1,17 +1,18 @@
-KtErrorCallInfo:
-  candidateCalls = [
-    KtDelegatedConstructorCall:
-      kind = SUPER_CALL
-      partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KtFunctionLikeSignature:
-          receiverType = null
-          returnType = A
-          symbol = <constructor>(): A
-          valueParameters = []
-          callableId = null
-      typeArgumentsMapping = {}
-      argumentMapping = {}
-  ]
-  diagnostic = ERROR<null: OTHER_ERROR with <init>>
+KtConstructorCalleeExpression(31,32): 'A'
+  KaErrorCallInfo:
+    candidateCalls = [
+      KaDelegatedConstructorCall:
+        kind = SUPER_CALL
+        partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+          dispatchReceiver = null
+          extensionReceiver = null
+          signature = KaFunctionLikeSignature:
+            receiverType = null
+            returnType = A
+            symbol = <constructor>(): A
+            valueParameters = []
+            callableId = null
+        typeArgumentsMapping = {}
+        argumentMapping = {}
+    ]
+    diagnostic = ERROR<null: OTHER_ERROR with <init>>

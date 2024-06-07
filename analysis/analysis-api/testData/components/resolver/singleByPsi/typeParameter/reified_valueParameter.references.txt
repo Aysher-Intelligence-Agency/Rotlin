@@ -1,2 +1,3 @@
-Resolved to:
-0: reified T
+KtNameReferenceExpression(45,46): 'T'
+  KtSimpleNameReference:
+    reified T

@@ -1,2 +1,3 @@
-Resolved to:
-0: (in Foo.Bar) constructor() [privateClass.kt]
+KtNameReferenceExpression(97,100): 'Bar'
+  KtSimpleNameReference:
+    (in Foo.Bar) constructor() [privateClass.kt]

@@ -1,2 +1,7 @@
-Resolved to:
-0: vararg a: test.A
+KtNameReferenceExpression(87,88): 'a'
+  KtSimpleNameReference:
+    vararg a: test.A
+
+KtCallExpression(82,104): 'some(a = arrayOf(A()))'
+  KtInvokeFunctionReference:
+    Nothing (Unresolved reference)

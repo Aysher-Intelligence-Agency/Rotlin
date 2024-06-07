@@ -39,7 +39,7 @@ internal fun buildBridgeRequests(generator: BridgeGenerator, container: SirDecla
 }
 
 private fun SirFunction.constructBridgeRequests(generator: BridgeGenerator): List<BridgeRequest> {
-    val fqName = ((origin as? KotlinSource)?.symbol as? KtFunctionLikeSymbol)
+    val fqName = ((origin as? KotlinSource)?.symbol as? KaFunctionLikeSymbol)
         ?.callableId?.asSingleFqName()
         ?.pathSegments()?.map { it.toString() }
         ?: return emptyList()
@@ -51,10 +51,10 @@ private fun SirFunction.constructBridgeRequests(generator: BridgeGenerator): Lis
 
 private fun SirVariable.constructBridgeRequests(generator: BridgeGenerator): List<BridgeRequest> {
     val fqName = when (val origin = origin) {
-        is KotlinSource -> (origin.symbol as? KtVariableLikeSymbol)
+        is KotlinSource -> (origin.symbol as? KaVariableLikeSymbol)
             ?.callableId?.asSingleFqName()
             ?.pathSegments()?.map { it.toString() }
-        is SirOrigin.ObjectAccessor -> ((origin.`for` as KotlinSource).symbol as KtNamedClassOrObjectSymbol)
+        is SirOrigin.ObjectAccessor -> ((origin.`for` as KotlinSource).symbol as KaNamedClassOrObjectSymbol)
             .classId?.asSingleFqName()
             ?.pathSegments()?.map { it.toString() }
         else -> null
@@ -78,7 +78,7 @@ private fun SirInit.constructBridgeRequests(generator: BridgeGenerator): List<Br
         })
         return emptyList()
     }
-    val fqName = ((origin as? KotlinSource)?.symbol as? KtConstructorSymbol)
+    val fqName = ((origin as? KotlinSource)?.symbol as? KaConstructorSymbol)
         ?.containingClassId?.asSingleFqName()
         ?.pathSegments()?.map { it.toString() }
         ?: return emptyList()
@@ -95,6 +95,8 @@ private fun SirCallable.patchCallableBodyAndGenerateRequest(
     val typesUsed = listOf(returnType) + allParameters.map { it.type }
     if (typesUsed.any { !it.isSupported })
         return null
+    if (allParameters.any { it.type.isNever })
+        return null // If any of the parameters is never - there should be no ability to call this function - therefor we can skip the bridge generation
     val suffix = bridgeSuffix
     val request = BridgeRequest(
         this,
@@ -109,7 +111,7 @@ private val SirType.isSupported: Boolean
     get() = when (this) {
         is SirNominalType -> when (val declaration = type) {
             is SirTypealias -> declaration.type.isSupported
-            else -> declaration != KotlinRuntimeModule.kotlinBase // Unexported types are mapped to KotlinBase; they cannot have bridges
+            else -> declaration != KotlinRuntimeModule.kotlinBase  // Unexported types are mapped to KotlinBase; they cannot have bridges
         }
         else -> false
     }

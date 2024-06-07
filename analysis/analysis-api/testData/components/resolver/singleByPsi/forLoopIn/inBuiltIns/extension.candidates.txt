@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtForExpression(47,74): 'for (i in it.iterator()) {}'
+  NO_CANDIDATES

@@ -1,2 +1,3 @@
-Resolved to:
-0: K
+KtNameReferenceExpression(47,48): 'K'
+  KtSimpleNameReference:
+    K

@@ -686,6 +686,7 @@ tasks.named("clean", Delete) {
     it.delete(layout.buildDirectory)
     it.delete(bundle.outputs.files)
     it.delete("${projectDir}/compile_commands.json")
+    it.delete(rootProject.file("test.output").absolutePath) // Clean up after legacy test infrastructure
 }
 
 publishing {
@@ -730,7 +731,8 @@ publishing {
                     /* receiver = */  mvn,
                     /* project = */   project,
                     /* explicitDescription = */ "Kotlin/Native bundle",
-                    /* packaging = */ "pom"
+                    /* packaging = */ "pom",
+                    /* explicitName = */ null
             )
         }
         register("BundlePrebuilt", MavenPublication) { mvn ->
@@ -770,7 +772,8 @@ publishing {
                     /* receiver = */  mvn,
                     /* project = */   project,
                     /* explicitDescription = */ "Kotlin/Native bundle (prebuilt platform libs)",
-                    /* packaging = */ "pom"
+                    /* packaging = */ "pom",
+                    /* explicitName = */ null
             )
         }
     }

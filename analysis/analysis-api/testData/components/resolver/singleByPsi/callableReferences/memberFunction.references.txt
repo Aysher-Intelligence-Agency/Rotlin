@@ -1,2 +1,7 @@
-Resolved to:
-0: (in ROOT) interface Foo
+KtNameReferenceExpression(64,67): 'Foo'
+  KtSimpleNameReference:
+    (in ROOT) interface Foo
+
+KtCallExpression(56,73): 'consume(Foo::foo)'
+  KtInvokeFunctionReference:
+    Nothing (Unresolved reference)

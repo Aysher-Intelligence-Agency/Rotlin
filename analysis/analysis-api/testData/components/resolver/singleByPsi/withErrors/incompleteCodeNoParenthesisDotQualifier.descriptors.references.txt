@@ -1,2 +1,6 @@
-Resolved to:
-0: (in kotlin.collections) interface List<out E> : kotlin.collections.Collection<E>
+KtNameReferenceExpression(36,40): 'List'
+  KtSimpleNameReference:
+    (in kotlin.collections) interface List<out E> : kotlin.collections.Collection<E>
+  
+  SyntheticPropertyAccessorReference:
+    Nothing (Unresolved reference)

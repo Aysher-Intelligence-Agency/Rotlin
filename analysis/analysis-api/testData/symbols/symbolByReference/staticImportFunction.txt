@@ -1,4 +1,4 @@
-KtFunctionSymbol:
+KaFunctionSymbol:
   annotationsList: []
   callableId: one/two/TopLevelObject.foo
   contextReceivers: []
@@ -20,19 +20,19 @@ KtFunctionSymbol:
   name: foo
   origin: SOURCE
   receiverParameter: null
-  returnType: KtUsualClassType:
+  returnType: KaUsualClassType:
     annotationsList: []
-    ownTypeArguments: []
+    typeArguments: []
     type: kotlin/Unit
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: []
   visibility: Public
-  getDispatchReceiver(): KtUsualClassType:
+  getDispatchReceiver(): KaUsualClassType:
     annotationsList: []
-    ownTypeArguments: []
+    typeArguments: []
     type: one/two/TopLevelObject
-  getContainingFileSymbol: KtFileSymbol(dependency.kt)
+  getContainingFileSymbol: KaFileSymbol(dependency.kt)
   getContainingJvmClassName: one.two.TopLevelObject
   getContainingModule: KtSourceModule "Sources of main"
   deprecationStatus: null

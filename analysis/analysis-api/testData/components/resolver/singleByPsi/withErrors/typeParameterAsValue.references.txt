@@ -1,2 +1,7 @@
-Resolved to:
-0: T
+KtNameReferenceExpression(88,89): 'T'
+  KtSimpleNameReference:
+    T
+
+KtCallExpression(80,90): 'println(T)'
+  KtInvokeFunctionReference:
+    Nothing (Unresolved reference)

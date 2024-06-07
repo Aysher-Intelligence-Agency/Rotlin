@@ -1,1 +1,2 @@
-null
+KtNameReferenceExpression(22,25): 'sin'
+  null

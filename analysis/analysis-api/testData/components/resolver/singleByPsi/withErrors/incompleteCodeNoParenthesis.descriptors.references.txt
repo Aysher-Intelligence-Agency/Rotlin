@@ -1,2 +1,6 @@
-Resolved to:
-0: (in ALE) constructor()
+KtNameReferenceExpression(64,67): 'ALE'
+  KtSimpleNameReference:
+    (in ALE) constructor()
+  
+  SyntheticPropertyAccessorReference:
+    Nothing (Unresolved reference)

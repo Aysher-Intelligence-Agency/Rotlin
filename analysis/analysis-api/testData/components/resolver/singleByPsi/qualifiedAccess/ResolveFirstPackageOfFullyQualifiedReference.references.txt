@@ -1,2 +1,3 @@
-Resolved to:
-0: package foo
+KtNameReferenceExpression(106,109): 'foo'
+  KtSimpleNameReference:
+    package foo

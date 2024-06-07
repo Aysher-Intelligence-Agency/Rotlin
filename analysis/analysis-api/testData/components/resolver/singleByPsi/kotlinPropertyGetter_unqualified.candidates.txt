@@ -1,24 +1,24 @@
-KtApplicableCallCandidateInfo:
-  candidate = KtSimpleVariableAccessCall:
-    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
-      dispatchReceiver = KtImplicitReceiverValue:
-        symbol = KtReceiverParameterSymbol:
-          annotationsList: []
-          origin: SOURCE
-          owningCallableSymbol: KtFunctionSymbol(/foo)
-          type: KtUsualClassType:
+KtNameReferenceExpression(50,51): 'i'
+  KaApplicableCallCandidateInfo:
+    candidate = KaSimpleVariableAccessCall:
+      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        dispatchReceiver = KaImplicitReceiverValue:
+          symbol = KaReceiverParameterSymbol:
             annotationsList: []
-            ownTypeArguments: []
-            type: A
-        type = A
-      extensionReceiver = null
-      signature = KtVariableLikeSignature:
-        name = i
-        receiverType = null
-        returnType = kotlin.Int
-        symbol = val i: kotlin.Int
-        callableId = /A.i
-    simpleAccess = Read:
-
-    typeArgumentsMapping = {}
-  isInBestCandidates = true
+            origin: SOURCE
+            owningCallableSymbol: KaFunctionSymbol(/foo)
+            type: KaUsualClassType:
+              annotationsList: []
+              typeArguments: []
+              type: A
+          type = A
+        extensionReceiver = null
+        signature = KaVariableLikeSignature:
+          name = i
+          receiverType = null
+          returnType = kotlin.Int
+          symbol = val i: kotlin.Int
+          callableId = /A.i
+      simpleAccess = Read
+      typeArgumentsMapping = {}
+    isInBestCandidates = true

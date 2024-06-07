@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtNameReferenceExpression(65,70): 'Inner'
+  NO_CANDIDATES

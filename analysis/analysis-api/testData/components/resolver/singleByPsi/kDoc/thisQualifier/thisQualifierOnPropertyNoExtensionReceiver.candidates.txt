@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtProperty(0,39): '/**'
+  NO_CANDIDATES

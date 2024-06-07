@@ -1,2 +1,6 @@
-Resolved to:
-0: (in test) class Test<T>
+KtNameReferenceExpression(76,80): 'Test'
+  KtSimpleNameReference:
+    (in test) class Test<T>
+  
+  SyntheticPropertyAccessorReference:
+    Nothing (Unresolved reference)

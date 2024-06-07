@@ -1,17 +1,18 @@
-KtSuccessCallInfo:
-  call = KtSimpleVariableAccessCall:
-    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
-      dispatchReceiver = KtExplicitReceiverValue:
-        expression = a
-        isSafeNavigation = false
-        type = A
-      extensionReceiver = null
-      signature = KtVariableLikeSignature:
-        name = something
-        receiverType = null
-        returnType = kotlin.Int
-        symbol = var something: kotlin.Int
-        callableId = /A.something
-    simpleAccess = Write:
-      value = 1
-    typeArgumentsMapping = {}
+KtNameReferenceExpression(221,230): 'something'
+  KaSuccessCallInfo:
+    call = KaSimpleVariableAccessCall:
+      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        dispatchReceiver = KaExplicitReceiverValue:
+          expression = a
+          isSafeNavigation = false
+          type = A
+        extensionReceiver = null
+        signature = KaVariableLikeSignature:
+          name = something
+          receiverType = null
+          returnType = kotlin.Int
+          symbol = var something: kotlin.Int
+          callableId = /A.something
+      simpleAccess = Write:
+        value = 1
+      typeArgumentsMapping = {}

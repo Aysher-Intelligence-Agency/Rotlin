@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeErrorTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaErrorTypeRenderer
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.scopes.KaScopeLike
 import org.jetbrains.kotlin.analysis.api.symbols.DebugSymbolRenderer
@@ -40,7 +40,7 @@ internal object TestScopeRenderer {
                     for (implicitReceiver in scopeContext.implicitReceivers) {
                         val type = implicitReceiver.type
                         appendLine("type: ${renderType(type, printPretty)}")
-                        append("owner symbol: ").appendLine(DebugSymbolRenderer.computeApiEntityName(implicitReceiver.ownerSymbol::class))
+                        append("owner symbol: ").appendLine(implicitReceiver.ownerSymbol::class.simpleName)
                         appendLine()
                     }
                 }
@@ -157,7 +157,7 @@ internal object TestScopeRenderer {
     }
 
     private val prettyPrintTypeRenderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-        typeErrorTypeRenderer = KaTypeErrorTypeRenderer.WITH_ERROR_MESSAGE
+        errorTypeRenderer = KaErrorTypeRenderer.WITH_ERROR_MESSAGE
     }
 }
 

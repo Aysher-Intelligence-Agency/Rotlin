@@ -1,1 +1,2 @@
-null
+KtNameReferenceExpression(41,42): 'A'
+  null

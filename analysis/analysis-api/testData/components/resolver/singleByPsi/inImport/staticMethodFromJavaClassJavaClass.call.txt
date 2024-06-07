@@ -1,1 +1,2 @@
-null
+KtNameReferenceExpression(17,21): 'Math'
+  null

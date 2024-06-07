@@ -1,2 +1,3 @@
-Resolved to:
-0: package java.util
+KtNameReferenceExpression(12,16): 'util'
+  KtSimpleNameReference:
+    package java.util

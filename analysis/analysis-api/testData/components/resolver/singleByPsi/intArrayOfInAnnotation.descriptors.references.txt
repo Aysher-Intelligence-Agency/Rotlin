@@ -1,2 +1,6 @@
-Resolved to:
-0: (in kotlin) fun intArrayOf(vararg elements: kotlin.Int): kotlin.IntArray
+KtNameReferenceExpression(86,96): 'intArrayOf'
+  KtSimpleNameReference:
+    (in kotlin) fun intArrayOf(vararg elements: kotlin.Int): kotlin.IntArray
+  
+  SyntheticPropertyAccessorReference:
+    Nothing (Unresolved reference)

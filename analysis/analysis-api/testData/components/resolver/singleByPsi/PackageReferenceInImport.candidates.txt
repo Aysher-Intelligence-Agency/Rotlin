@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtNameReferenceExpression(45,56): 'testPackage'
+  NO_CANDIDATES

@@ -21,6 +21,12 @@ import java.util.regex.Pattern;
 @TestDataPath("$PROJECT_ROOT")
 public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends AbstractFirLightTreeWithActualizerDiagnosticsTest {
   @Test
+  @TestMetadata("abstractEnumInIr.kt")
+  public void testAbstractEnumInIr() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/abstractEnumInIr.kt");
+  }
+
+  @Test
   @TestMetadata("actualClassDelegationWithImplicitType.kt")
   public void testActualClassDelegationWithImplicitType() {
     runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassDelegationWithImplicitType.kt");
@@ -392,6 +398,18 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
   }
 
   @Test
+  @TestMetadata("privateExpectFakeOverride.kt")
+  public void testPrivateExpectFakeOverride() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/privateExpectFakeOverride.kt");
+  }
+
+  @Test
+  @TestMetadata("privateExpectFakeOverride_incompatibleReturnType.kt")
+  public void testPrivateExpectFakeOverride_incompatibleReturnType() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/privateExpectFakeOverride_incompatibleReturnType.kt");
+  }
+
+  @Test
   @TestMetadata("privateTopLevelDeclarations.kt")
   public void testPrivateTopLevelDeclarations() {
     runTest("compiler/testData/diagnostics/tests/multiplatform/privateTopLevelDeclarations.kt");
@@ -425,12 +443,6 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
   @TestMetadata("smartcastOnMemberPropertyFromCommonClass.kt")
   public void testSmartcastOnMemberPropertyFromCommonClass() {
     runTest("compiler/testData/diagnostics/tests/multiplatform/smartcastOnMemberPropertyFromCommonClass.kt");
-  }
-
-  @Test
-  @TestMetadata("stdlibWithActualizationErrors.kt")
-  public void testStdlibWithActualizationErrors() {
-    runTest("compiler/testData/diagnostics/tests/multiplatform/stdlibWithActualizationErrors.kt");
   }
 
   @Test
@@ -501,6 +513,24 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
     @TestMetadata("actualInnerClassMissingMember.kt")
     public void testActualInnerClassMissingMember() {
       runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/actualInnerClassMissingMember.kt");
+    }
+
+    @Test
+    @TestMetadata("actualizeExpectProtectedToJavaProtected.kt")
+    public void testActualizeExpectProtectedToJavaProtected() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/actualizeExpectProtectedToJavaProtected.kt");
+    }
+
+    @Test
+    @TestMetadata("actualizePropertyByJavaField_supportedCase.kt")
+    public void testActualizePropertyByJavaField_supportedCase() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/actualizePropertyByJavaField_supportedCase.kt");
+    }
+
+    @Test
+    @TestMetadata("actualizePropertyByJavaField_unsupportedCase.kt")
+    public void testActualizePropertyByJavaField_unsupportedCase() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/actualizePropertyByJavaField_unsupportedCase.kt");
     }
 
     @Test

@@ -5,13 +5,15 @@
 
 package org.jetbrains.kotlin.sir.providers.impl
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.builder.buildExtension
 import org.jetbrains.kotlin.sir.providers.SirEnumGenerator
 import org.jetbrains.kotlin.sir.providers.SirParentProvider
 import org.jetbrains.kotlin.sir.providers.SirSession
+import org.jetbrains.kotlin.sir.providers.utils.containingModule
+import org.jetbrains.kotlin.sir.providers.utils.updateImport
 import org.jetbrains.kotlin.sir.util.addChild
 
 public class SirParentProviderImpl(
@@ -21,16 +23,16 @@ public class SirParentProviderImpl(
 
     private val createdExtensionsForModule: MutableMap<SirModule, MutableMap<SirEnum, SirExtension>> = mutableMapOf()
 
-    override fun KtDeclarationSymbol.getSirParent(ktAnalysisSession: KtAnalysisSession): SirDeclarationContainer {
+    override fun KaDeclarationSymbol.getSirParent(ktAnalysisSession: KaSession): SirDeclarationContainer {
         val symbol = this@getSirParent
         val parentSymbol = with(ktAnalysisSession) { symbol.getContainingSymbol() }
 
         return if (parentSymbol == null) {
             // top level function. -> parent is either extension for package, of plain module in case of <root> package
             val packageFqName = when (symbol) {
-                is KtNamedClassOrObjectSymbol -> symbol.classId?.packageFqName
-                is KtCallableSymbol -> symbol.callableId?.packageName
-                is KtTypeAliasSymbol -> symbol.classId?.packageFqName
+                is KaNamedClassOrObjectSymbol -> symbol.classId?.packageFqName
+                is KaCallableSymbol -> symbol.callableId?.packageName
+                is KaTypeAliasSymbol -> symbol.classId?.packageFqName
                 else -> null
             } ?: error("encountered unknown origin: $symbol. This exception should be reworked during KT-65980")
 
@@ -39,9 +41,16 @@ public class SirParentProviderImpl(
             return if (packageFqName.isRoot) {
                 sirModule
             } else {
-                val enumAsPackage = with(packageEnumGenerator) { packageFqName.sirPackageEnum(sirModule) }
+                val enumAsPackage = with(packageEnumGenerator) { packageFqName.sirPackageEnum() }
                 val extensionsInModule = createdExtensionsForModule.getOrPut(sirModule) { mutableMapOf() }
                 val extensionForPackage = extensionsInModule.getOrPut(enumAsPackage) {
+                    sirModule.updateImport(
+                        SirImport(
+                            moduleName = enumAsPackage.containingModule().name,
+                            // so the user will have access to the Fully Qualified Name for declaration without importing additional modules
+                            isExported = true,
+                        )
+                    )
                     sirModule.addChild {
                         buildExtension {
                             origin = enumAsPackage.origin

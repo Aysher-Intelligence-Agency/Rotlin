@@ -1,1 +1,2 @@
-null
+KtWhenExpression(25,50): 'when (true) { else -> 2 }'
+  null

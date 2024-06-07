@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtProperty(0,21): 'val foo: Int by Bar()'
+  NO_CANDIDATES

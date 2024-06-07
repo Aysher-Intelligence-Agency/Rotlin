@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.fir.tree.generator.FieldSets.typeParameters
 import org.jetbrains.kotlin.fir.tree.generator.FieldSets.typeRefField
 import org.jetbrains.kotlin.fir.tree.generator.FieldSets.visibility
 import org.jetbrains.kotlin.fir.tree.generator.context.AbstractFieldConfigurator
-import org.jetbrains.kotlin.fir.tree.generator.context.AbstractFirTreeBuilder.Companion.baseFirElement
 import org.jetbrains.kotlin.fir.tree.generator.context.type
 import org.jetbrains.kotlin.fir.tree.generator.model.*
 import org.jetbrains.kotlin.generators.tree.AbstractField
@@ -456,6 +455,11 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +annotations
         }
 
+        scriptReceiverParameter.configure {
+            +typeRefField.withTransform()
+            +booleanField("isBaseClassReceiver") // means coming from ScriptCompilationConfigurationKeys.baseClass (could be deprecated soon, see KT-68540)
+        }
+
         variable.configure {
             +name
             +declaredSymbol(variableSymbolType.withArgs(variable))
@@ -516,7 +520,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +declarations.withTransform().withReplace()
             +declaredSymbol(scriptSymbolType)
             +fieldList("parameters", property).withTransform()
-            +fieldList(contextReceiver, useMutableOrEmpty = true).withTransform()
+            +fieldList("receivers", scriptReceiverParameter, useMutableOrEmpty = true).withTransform()
             +field("resultPropertyName", nameType, nullable = true)
         }
 

@@ -1,1 +1,2 @@
-null
+KtBinaryExpression(36,42): 'a ?: b'
+  null

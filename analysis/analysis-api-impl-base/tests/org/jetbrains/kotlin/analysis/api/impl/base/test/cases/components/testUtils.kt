@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8,22 +8,22 @@ package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.KaApplicableCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.calls.KaCall
-import org.jetbrains.kotlin.analysis.api.calls.KaCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.calls.KaCallInfo
-import org.jetbrains.kotlin.analysis.api.calls.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.KaCompoundArrayAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.KaCompoundVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.KaErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.calls.KaInapplicableCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.calls.calls
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.analysis.api.impl.base.KaChainedSubstitutor
 import org.jetbrains.kotlin.analysis.api.impl.base.KaMapBackedSubstitutor
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaInapplicableCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionLikeSignature
@@ -38,13 +38,14 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.memberProperties
 
 @OptIn(KaAnalysisApiInternals::class)
 internal fun KaSession.stringRepresentation(any: Any?): String = with(any) {
-    fun KaType.render() = asStringForDebugging().replace('/', '.')
+    fun KaType.render() = toString().replace('/', '.')
     return when (this) {
         null -> "null"
         is KaFunctionLikeSymbol -> buildString {
@@ -55,6 +56,7 @@ internal fun KaSession.stringRepresentation(any: Any?): String = with(any) {
                     is KaConstructorSymbol -> "<constructor>"
                     is KaPropertyGetterSymbol -> callableId ?: "<getter>"
                     is KaPropertySetterSymbol -> callableId ?: "<setter>"
+                    is KaAnonymousFunctionSymbol -> "<anonymous function>"
                     else -> error("unexpected symbol kind in KaCall: ${this@with::class}")
                 }
             )
@@ -76,6 +78,9 @@ internal fun KaSession.stringRepresentation(any: Any?): String = with(any) {
         is KaValueParameterSymbol -> "${if (isVararg) "vararg " else ""}$name: ${returnType.render()}"
         is KaTypeParameterSymbol -> this.nameOrAnonymous.asString()
         is KaVariableSymbol -> "${if (isVal) "val" else "var"} $name: ${returnType.render()}"
+        is KaClassLikeSymbol -> classId?.toString() ?: nameOrAnonymous.asString()
+        is KaPackageSymbol -> fqName.toString()
+        is KaEnumEntrySymbol -> callableId?.toString() ?: name.asString()
         is KaSymbol -> DebugSymbolRenderer().render(analysisSession, this)
         is Boolean -> toString()
         is Map<*, *> -> if (isEmpty()) "{}" else entries.joinToString(
@@ -94,7 +99,7 @@ internal fun KaSession.stringRepresentation(any: Any?): String = with(any) {
         is KaSubstitutor.Empty -> "<empty substitutor>"
         is KaMapBackedSubstitutor -> {
             val mappingText = getAsMap().entries
-                .joinToString(prefix = "{", postfix = "}") { (k, v) -> stringRepresentation(k) + " = " + v.asStringForDebugging() }
+                .joinToString(prefix = "{", postfix = "}") { (k, v) -> stringRepresentation(k) + " = " + v }
             "<map substitutor: $mappingText>"
         }
         is KaChainedSubstitutor -> "${stringRepresentation(first)} then ${stringRepresentation(second)}"
@@ -107,33 +112,32 @@ internal fun KaSession.stringRepresentation(any: Any?): String = with(any) {
         is KaCallableSignature<*> -> stringRepresentation(this)
         else -> buildString {
             val clazz = this@with::class
-            val className = DebugSymbolRenderer.computeApiEntityName(clazz)
+            val className = clazz.simpleName
             append(className)
-            appendLine(":")
-            clazz.memberProperties
-                .filter { it.name != "token" && it.visibility == KVisibility.PUBLIC }
-                .joinTo(this, separator = "\n  ", prefix = "  ") { property ->
+            clazz.memberProperties.filter { it.name != "token" && it.visibility == KVisibility.PUBLIC }.ifNotEmpty {
+                joinTo(this@buildString, separator = "\n  ", prefix = ":\n  ") { property ->
                     val name = property.name
 
                     @Suppress("UNCHECKED_CAST")
                     val value = (property as KProperty1<Any, *>).get(this@with)?.let {
-                        if (className == "KtErrorCallInfo" && name == "candidateCalls") {
+                        if (className == "KaErrorCallInfo" && name == "candidateCalls") {
                             sortedCalls(it as Collection<KaCall>)
                         } else it
                     }
                     val valueAsString = value?.let { stringRepresentation(it).indented() }
                     "$name = $valueAsString"
                 }
+            }
         }
     }
 }
 
 private fun KaSession.stringRepresentation(signature: KaCallableSignature<*>): String = buildString {
     when (signature) {
-        is KaFunctionLikeSignature<*> -> append(DebugSymbolRenderer.computeApiEntityName(KaFunctionLikeSignature::class))
-        is KaVariableLikeSignature<*> -> append(DebugSymbolRenderer.computeApiEntityName(KaVariableLikeSignature::class))
+        is KaFunctionLikeSignature<*> -> append(KaFunctionLikeSignature::class.simpleName)
+        is KaVariableLikeSignature<*> -> append(KaVariableLikeSignature::class.simpleName)
     }
-    appendLine(":")
+
     val memberProperties = listOfNotNull(
         KaVariableLikeSignature<*>::name.takeIf { signature is KaVariableLikeSignature<*> },
         KaCallableSignature<*>::receiverType,
@@ -142,7 +146,8 @@ private fun KaSession.stringRepresentation(signature: KaCallableSignature<*>): S
         KaFunctionLikeSignature<*>::valueParameters.takeIf { signature is KaFunctionLikeSignature<*> },
         KaCallableSignature<*>::callableId
     )
-    memberProperties.joinTo(this, separator = "\n  ", prefix = "  ") { property ->
+
+    memberProperties.joinTo(this, separator = "\n  ", prefix = ":\n  ") { property ->
         @Suppress("UNCHECKED_CAST")
         val value = (property as KProperty1<Any, *>).get(signature)
         val valueAsString = value?.let { stringRepresentation(it).indented() }
@@ -315,4 +320,13 @@ internal fun KaSession.renderScopeWithParentDeclarations(scope: KaScope): String
             }
         }
     }
+}
+
+internal fun renderFrontendIndependentKClassNameOf(instanceOfClassToRender: Any): String {
+    var classToRender: Class<*> = instanceOfClassToRender::class.java
+    while (classToRender.simpleName.let { it.contains("Fir") || it.contains("Fe10") } == true) {
+        classToRender = classToRender.superclass
+    }
+
+    return classToRender.simpleName
 }
