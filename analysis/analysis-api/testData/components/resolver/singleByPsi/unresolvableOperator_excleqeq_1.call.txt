@@ -1,1 +1,2 @@
-null
+KtBinaryExpression(36,43): 'a !== b'
+  null

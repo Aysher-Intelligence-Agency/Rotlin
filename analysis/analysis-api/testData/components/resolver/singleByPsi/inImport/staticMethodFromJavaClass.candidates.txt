@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtNameReferenceExpression(22,25): 'sin'
+  NO_CANDIDATES

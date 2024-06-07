@@ -1,4 +1,4 @@
-KtFunctionSymbol:
+KaFunctionSymbol:
   annotationsList: []
   callableId: /B.bar
   contextReceivers: []
@@ -20,19 +20,19 @@ KtFunctionSymbol:
   name: bar
   origin: DELEGATED
   receiverParameter: null
-  returnType: KtUsualClassType:
+  returnType: KaUsualClassType:
     annotationsList: []
-    ownTypeArguments: []
+    typeArguments: []
     type: kotlin/Unit
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: []
   visibility: Public
-  getDispatchReceiver(): KtUsualClassType:
+  getDispatchReceiver(): KaUsualClassType:
     annotationsList: []
-    ownTypeArguments: []
+    typeArguments: []
     type: B
-  getContainingFileSymbol: KtFileSymbol(withOverridden.kt)
+  getContainingFileSymbol: KaFileSymbol(withOverridden.kt)
   getContainingJvmClassName: B
   getContainingModule: KtSourceModule "Sources of main"
   deprecationStatus: null

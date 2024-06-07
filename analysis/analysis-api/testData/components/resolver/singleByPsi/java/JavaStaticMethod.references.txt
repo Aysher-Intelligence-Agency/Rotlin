@@ -1,2 +1,3 @@
-Resolved to:
-0: (in pkg.Foo) open fun bar()
+KtNameReferenceExpression(589,592): 'bar'
+  KtSimpleNameReference:
+    (in pkg.Foo) open fun bar()

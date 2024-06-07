@@ -15886,6 +15886,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     }
 
     @Test
+    @TestMetadata("propertyOfDnnType.kt")
+    public void testPropertyOfDnnType() {
+      runTest("compiler/testData/codegen/box/dataClasses/propertyOfDnnType.kt");
+    }
+
+    @Test
     @TestMetadata("twoValParams.kt")
     public void testTwoValParams() {
       runTest("compiler/testData/codegen/box/dataClasses/twoValParams.kt");
@@ -20722,6 +20728,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     }
 
     @Test
+    @TestMetadata("inferenceWithTypeAliasFromOtherModule.kt")
+    public void testInferenceWithTypeAliasFromOtherModule() {
+      runTest("compiler/testData/codegen/box/fir/inferenceWithTypeAliasFromOtherModule.kt");
+    }
+
+    @Test
     @TestMetadata("initializationInLocalInnerClassWithSecondaryConstructor.kt")
     public void testInitializationInLocalInnerClassWithSecondaryConstructor() {
       runTest("compiler/testData/codegen/box/fir/initializationInLocalInnerClassWithSecondaryConstructor.kt");
@@ -23020,6 +23032,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     }
 
     @Test
+    @TestMetadata("packagePrivateCst.kt")
+    public void testPackagePrivateCst() {
+      runTest("compiler/testData/codegen/box/inference/packagePrivateCst.kt");
+    }
+
+    @Test
     @TestMetadata("plusAssignInsideLambda.kt")
     public void testPlusAssignInsideLambda() {
       runTest("compiler/testData/codegen/box/inference/plusAssignInsideLambda.kt");
@@ -23242,6 +23260,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
       @TestMetadata("memberScope.kt")
       public void testMemberScope() {
         runTest("compiler/testData/codegen/box/inference/builderInference/memberScope.kt");
+      }
+
+      @Test
+      @TestMetadata("nestedNonExhaustiveIf.kt")
+      public void testNestedNonExhaustiveIf() {
+        runTest("compiler/testData/codegen/box/inference/builderInference/nestedNonExhaustiveIf.kt");
       }
 
       @Test
@@ -29615,6 +29639,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     @TestMetadata("innerWithDefaultArgument.kt")
     public void testInnerWithDefaultArgument() {
       runTest("compiler/testData/codegen/box/innerNested/innerWithDefaultArgument.kt");
+    }
+
+    @Test
+    @TestMetadata("innerWithDefaultArgumentGenericExtensionProperty.kt")
+    public void testInnerWithDefaultArgumentGenericExtensionProperty() {
+      runTest("compiler/testData/codegen/box/innerNested/innerWithDefaultArgumentGenericExtensionProperty.kt");
     }
 
     @Test
@@ -49726,6 +49756,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     }
 
     @Test
+    @TestMetadata("kt68727.kt")
+    public void testKt68727() {
+      runTest("compiler/testData/codegen/box/regressions/kt68727.kt");
+    }
+
+    @Test
     @TestMetadata("kt715.kt")
     public void testKt715() {
       runTest("compiler/testData/codegen/box/regressions/kt715.kt");
@@ -53963,6 +53999,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
   @TestDataPath("$PROJECT_ROOT")
   public class Typealias {
     @Test
+    @TestMetadata("abbreviationWithCapturedType.kt")
+    public void testAbbreviationWithCapturedType() {
+      runTest("compiler/testData/codegen/box/typealias/abbreviationWithCapturedType.kt");
+    }
+
+    @Test
     public void testAllFilesPresentInTypealias() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/typealias"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
     }
@@ -54043,6 +54085,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     @TestMetadata("objectLiteralConstructor.kt")
     public void testObjectLiteralConstructor() {
       runTest("compiler/testData/codegen/box/typealias/objectLiteralConstructor.kt");
+    }
+
+    @Test
+    @TestMetadata("outerClassArgumentsThroughTypealias.kt")
+    public void testOuterClassArgumentsThroughTypealias() {
+      runTest("compiler/testData/codegen/box/typealias/outerClassArgumentsThroughTypealias.kt");
     }
 
     @Test
@@ -54401,6 +54449,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     @TestMetadata("forInUnsignedUntil.kt")
     public void testForInUnsignedUntil() {
       runTest("compiler/testData/codegen/box/unsignedTypes/forInUnsignedUntil.kt");
+    }
+
+    @Test
+    @TestMetadata("generic.kt")
+    public void testGeneric() {
+      runTest("compiler/testData/codegen/box/unsignedTypes/generic.kt");
     }
 
     @Test
@@ -55149,6 +55203,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     @TestMetadata("nullableWhen.kt")
     public void testNullableWhen() {
       runTest("compiler/testData/codegen/box/when/nullableWhen.kt");
+    }
+
+    @Test
+    @TestMetadata("oneUnitBranch.kt")
+    public void testOneUnitBranch() {
+      runTest("compiler/testData/codegen/box/when/oneUnitBranch.kt");
     }
 
     @Test

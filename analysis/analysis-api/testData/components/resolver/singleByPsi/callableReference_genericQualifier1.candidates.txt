@@ -1,18 +1,19 @@
-KtInapplicableCallCandidateInfo:
-  diagnostic = ERROR<null: Inapplicable candidate>
-  candidate = KtSimpleFunctionCall:
-    isImplicitInvoke = false
-    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
-      dispatchReceiver = null
-      extensionReceiver = null
-      signature = KtFunctionLikeSignature:
-        receiverType = null
-        returnType = test.Test<T>
-        symbol = <constructor>(): test.Test<T>
-        valueParameters = []
-        callableId = null
-    typeArgumentsMapping = {
-      T -> (test.Bar)
-    }
-    argumentMapping = {}
-  isInBestCandidates = false
+KtCallExpression(71,80): 'Test<Bar>'
+  KaInapplicableCallCandidateInfo:
+    diagnostic = ERROR<null: Inapplicable candidate>
+    candidate = KaSimpleFunctionCall:
+      isImplicitInvoke = false
+      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        dispatchReceiver = null
+        extensionReceiver = null
+        signature = KaFunctionLikeSignature:
+          receiverType = null
+          returnType = test.Test<T>
+          symbol = <constructor>(): test.Test<T>
+          valueParameters = []
+          callableId = null
+      typeArgumentsMapping = {
+        T -> (test.Bar)
+      }
+      argumentMapping = {}
+    isInBestCandidates = false

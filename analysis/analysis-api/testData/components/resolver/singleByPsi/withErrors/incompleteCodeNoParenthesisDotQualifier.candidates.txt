@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtCallExpression(36,48): 'List<String>'
+  NO_CANDIDATES

@@ -452,6 +452,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PRIVATE_CONST
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PUBLIC_CALL_FROM_PUBLIC_INLINE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PUBLIC_CALL_FROM_PUBLIC_INLINE_DEPRECATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PUBLIC_INLINE_CALL_FROM_PUBLIC_INLINE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_SOURCE_ANNOTATION_ON_INLINED_LAMBDA_EXPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_TAIL_RECURSIVE_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_VARARG_SPREAD
@@ -686,6 +687,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_FEATU
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_INHERITANCE_FROM_JAVA_MEMBER_REFERENCING_KOTLIN_FUNCTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_SEALED_FUN_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_SUSPEND_TEST
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNUSED_ANONYMOUS_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNUSED_VARIABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_IS_EXTENSION_FUNCTION_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLATED
@@ -2571,10 +2573,16 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             SYMBOL
         )
         map.put(RECURSION_IN_INLINE, "Inline function ''{0}'' cannot be recursive.", SYMBOL)
-        map.put(NON_PUBLIC_CALL_FROM_PUBLIC_INLINE, "Public-API inline function cannot access non-public-API ''{0}''.", SYMBOL, SYMBOL)
+        map.put(NON_PUBLIC_CALL_FROM_PUBLIC_INLINE, "Public-API inline declaration cannot access non-public-API ''{0}''.", SYMBOL, SYMBOL)
+        map.put(
+            NON_PUBLIC_INLINE_CALL_FROM_PUBLIC_INLINE,
+            "Public-API inline declaration cannot access non-public-API inline declaration ''{0}'' as it could transitively access non-public-API declarations.",
+            SYMBOL,
+            SYMBOL
+        )
         map.put(
             NON_PUBLIC_CALL_FROM_PUBLIC_INLINE_DEPRECATION,
-            "Public-API inline function cannot access non-public-API ''{0}''. " +
+            "Public-API inline declaration cannot access non-public-API ''{0}''. " +
                     "This will become an error in ${LanguageFeature.ProhibitPrivateOperatorCallInInline.formatKotlinWithVersion()}.",
             SYMBOL,
             SYMBOL
@@ -2743,6 +2751,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(ASSIGNED_VALUE_IS_NEVER_READ, "Assigned value is never read.")
         map.put(VARIABLE_INITIALIZER_IS_REDUNDANT, "Initializer is redundant.")
         map.put(VARIABLE_NEVER_READ, "Variable is never read.")
+        map.put(UNUSED_ANONYMOUS_PARAMETER, "Parameter ''{0}'' is never used, could be renamed to ''_''.", SYMBOL)
 
         // Compatibility issues group
         map.put(

@@ -1,18 +1,19 @@
-KtApplicableCallCandidateInfo:
-  candidate = KtSimpleFunctionCall:
-    isImplicitInvoke = true
-    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
-      dispatchReceiver = null
-      extensionReceiver = KtExplicitReceiverValue:
-        expression = f
-        isSafeNavigation = false
-        type = kotlin.Int
-      signature = KtFunctionLikeSignature:
-        receiverType = kotlin.Int
-        returnType = kotlin.Unit
-        symbol = /invoke(<extension receiver>: kotlin.Int): kotlin.Unit
-        valueParameters = []
-        callableId = /invoke
-    typeArgumentsMapping = {}
-    argumentMapping = {}
-  isInBestCandidates = true
+KtCallExpression(64,67): 'f()'
+  KaApplicableCallCandidateInfo:
+    candidate = KaSimpleFunctionCall:
+      isImplicitInvoke = true
+      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        dispatchReceiver = null
+        extensionReceiver = KaExplicitReceiverValue:
+          expression = f
+          isSafeNavigation = false
+          type = kotlin.Int
+        signature = KaFunctionLikeSignature:
+          receiverType = kotlin.Int
+          returnType = kotlin.Unit
+          symbol = /invoke(<extension receiver>: kotlin.Int): kotlin.Unit
+          valueParameters = []
+          callableId = /invoke
+      typeArgumentsMapping = {}
+      argumentMapping = {}
+    isInBestCandidates = true

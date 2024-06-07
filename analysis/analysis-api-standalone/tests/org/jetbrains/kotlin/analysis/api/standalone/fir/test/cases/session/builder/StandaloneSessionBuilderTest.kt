@@ -9,9 +9,9 @@ package org.jetbrains.kotlin.analysis.api.standalone.fir.test.cases.session.buil
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.calls.KaSuccessCallInfo
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.standalone.buildStandaloneAnalysisAPISession
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -68,7 +68,7 @@ class StandaloneSessionBuilderTest : TestWithDisposable() {
         val ktFile = session.modulesWithFiles.getValue(sourceModule).single() as KtFile
         analyze(ktFile) {
             val ktCallExpression = ktFile.findDescendantOfType<KtCallExpression>()!!
-            val ktCallInfo = ktCallExpression.resolveCall()
+            val ktCallInfo = ktCallExpression.resolveCallOld()
             Assertions.assertInstanceOf(KaSuccessCallInfo::class.java, ktCallInfo); ktCallInfo as KaSuccessCallInfo
             val symbol = ktCallInfo.successfulFunctionCallOrNull()?.symbol
             Assertions.assertInstanceOf(KaConstructorSymbol::class.java, symbol); symbol as KaConstructorSymbol
@@ -134,7 +134,7 @@ class StandaloneSessionBuilderTest : TestWithDisposable() {
             val type = symbol.returnType as KaNonErrorClassType
             Assertions.assertEquals(
                 ClassId.fromString("kotlin/jvm/JvmInline"),
-                type.classSymbol.annotations.single().classId
+                type.symbol.annotations.single().classId
             )
         }
     }
@@ -362,7 +362,7 @@ class StandaloneSessionBuilderTest : TestWithDisposable() {
             assertEquals(fileSymbol.getContainingModule(), dummyModule)
 
             val callExpression = dummyFile.findDescendantOfType<KtCallExpression>()!!
-            val call = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: error("Call inside a dummy file is unresolved")
+            val call = callExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: error("Call inside a dummy file is unresolved")
             assert(call.symbol is KaFunctionSymbol)
         }
     }

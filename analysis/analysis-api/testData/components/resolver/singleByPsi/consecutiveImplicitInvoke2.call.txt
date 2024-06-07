@@ -1,17 +1,18 @@
-KtSuccessCallInfo:
-  call = KtSimpleFunctionCall:
-    isImplicitInvoke = true
-    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
-      dispatchReceiver = null
-      extensionReceiver = KtExplicitReceiverValue:
-        expression = i()
-        isSafeNavigation = false
-        type = kotlin.Long
-      signature = KtFunctionLikeSignature:
-        receiverType = kotlin.Long
-        returnType = kotlin.Double
-        symbol = /invoke(<extension receiver>: kotlin.Long): kotlin.Double
-        valueParameters = []
-        callableId = /invoke
-    typeArgumentsMapping = {}
-    argumentMapping = {}
+KtCallExpression(135,140): 'i()()'
+  KaSuccessCallInfo:
+    call = KaSimpleFunctionCall:
+      isImplicitInvoke = true
+      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        dispatchReceiver = null
+        extensionReceiver = KaExplicitReceiverValue:
+          expression = i()
+          isSafeNavigation = false
+          type = kotlin.Long
+        signature = KaFunctionLikeSignature:
+          receiverType = kotlin.Long
+          returnType = kotlin.Double
+          symbol = /invoke(<extension receiver>: kotlin.Long): kotlin.Double
+          valueParameters = []
+          callableId = /invoke
+      typeArgumentsMapping = {}
+      argumentMapping = {}

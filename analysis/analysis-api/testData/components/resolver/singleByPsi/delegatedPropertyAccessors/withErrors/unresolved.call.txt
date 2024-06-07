@@ -1,1 +1,2 @@
-null
+KtProperty(0,21): 'val foo: Int by Bar()'
+  null

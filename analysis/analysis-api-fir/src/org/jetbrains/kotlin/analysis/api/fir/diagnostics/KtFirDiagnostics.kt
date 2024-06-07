@@ -3352,6 +3352,11 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = UselessCallOnNotNull::class
     }
 
+    interface UnusedAnonymousParameter : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = UnusedAnonymousParameter::class
+        val parameter: KaSymbol
+    }
+
     interface ReturnNotAllowed : KaFirDiagnostic<KtReturnExpression> {
         override val diagnosticClass get() = ReturnNotAllowed::class
     }
@@ -3404,6 +3409,12 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface NonPublicCallFromPublicInline : KaFirDiagnostic<KtElement> {
         override val diagnosticClass get() = NonPublicCallFromPublicInline::class
+        val inlineDeclaration: KaSymbol
+        val referencedDeclaration: KaSymbol
+    }
+
+    interface NonPublicInlineCallFromPublicInline : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = NonPublicInlineCallFromPublicInline::class
         val inlineDeclaration: KaSymbol
         val referencedDeclaration: KaSymbol
     }

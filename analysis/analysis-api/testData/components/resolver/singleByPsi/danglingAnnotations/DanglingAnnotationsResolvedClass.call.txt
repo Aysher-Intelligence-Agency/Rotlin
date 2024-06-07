@@ -1,1 +1,2 @@
-null
+KtNameReferenceExpression(73,77): 'Ann0'
+  null

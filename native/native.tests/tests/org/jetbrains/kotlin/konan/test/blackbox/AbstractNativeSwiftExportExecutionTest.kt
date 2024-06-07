@@ -10,17 +10,16 @@ import org.jetbrains.kotlin.konan.test.blackbox.support.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.SwiftCompilation
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationArtifact
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationResult.Companion.assertSuccess
+import org.jetbrains.kotlin.konan.test.blackbox.support.runner.SimpleTestRunProvider.getTestRun
 import org.jetbrains.kotlin.konan.test.blackbox.support.runner.TestExecutable
+import org.jetbrains.kotlin.konan.test.blackbox.support.runner.TestRunners.createProperTestRunner
 import org.jetbrains.kotlin.konan.test.blackbox.support.util.createTestProvider
-import org.jetbrains.kotlin.swiftexport.standalone.InputModule
 import org.jetbrains.kotlin.swiftexport.standalone.SwiftExportConfig
 import org.jetbrains.kotlin.swiftexport.standalone.SwiftExportModule
 import org.jetbrains.kotlin.swiftexport.standalone.createDummyLogger
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.KotlinNativePaths
 import org.junit.jupiter.api.Tag
 import java.io.File
-import kotlin.io.path.div
 
 @Tag("swiftexport")
 abstract class AbstractNativeSwiftExportExecutionTest : AbstractNativeSwiftExportTest() {
@@ -30,30 +29,22 @@ abstract class AbstractNativeSwiftExportExecutionTest : AbstractNativeSwiftExpor
         testPathFull: File,
         testCase: TestCase,
         swiftExportOutput: SwiftExportModule,
-        swiftModule: TestCompilationArtifact.Swift.Module,
+        swiftModules: Set<TestCompilationArtifact.Swift.Module>,
     ) {
         val swiftTestFiles = testPathFull.walk().filter { it.extension == "swift" }.map { testPathFull.resolve(it) }.toList()
         val testExecutable =
-            compileTestExecutable(testPathFull.name, swiftTestFiles, swiftModule.rootDir, swiftModule.moduleName, swiftModule.modulemap)
+            compileTestExecutable(testPathFull.name, swiftTestFiles, swiftModules = swiftModules)
         runExecutableAndVerify(testCase, testExecutable)
     }
 
-    override fun constructSwiftInput(
-        testPathFull: File,
-    ): InputModule {
-        val testName = testPathFull.name
-        val swiftModuleName = testName.capitalizeAsciiOnly()
-
-        return InputModule.Source(
-            name = swiftModuleName,
-            path = testPathFull.toPath(),
-        )
+    internal fun runExecutableAndVerify(testCase: TestCase, executable: TestExecutable) {
+        val testRun = getTestRun(testCase, executable)
+        val testRunner = createProperTestRunner(testRun, testRunSettings)
+        testRunner.run()
     }
 
-    override fun constructSwiftExportConfig(
-        testPathFull: File,
-    ): SwiftExportConfig {
-        val exportResultsPath = buildDir.toPath().resolve("swift_export_results")
+    override fun constructSwiftExportConfig(module: TestModule.Exclusive): SwiftExportConfig {
+        val exportResultsPath = buildDir(module.name).toPath().resolve("swift_export_results")
         return SwiftExportConfig(
             settings = mapOf(
                 SwiftExportConfig.BRIDGE_MODULE_NAME to SwiftExportConfig.DEFAULT_BRIDGE_MODULE_NAME,
@@ -64,31 +55,26 @@ abstract class AbstractNativeSwiftExportExecutionTest : AbstractNativeSwiftExpor
         )
     }
 
-    override fun collectKotlinFiles(testPathFull: File): List<File> =
-        testPathFull.walk().filter { it.extension == "kt" }.map { testPathFull.resolve(it) }.toList()
-
     private fun compileTestExecutable(
         testName: String,
         testSources: List<File>,
-        swiftModuleDir: File,
-        binaryLibraryName: String,
-        moduleMap: File,
+        swiftModules: Set<TestCompilationArtifact.Swift.Module>,
     ): TestExecutable {
-        val swiftExtraOpts = listOf(
-            "-I", swiftModuleDir.absolutePath,
-            "-L", swiftModuleDir.absolutePath,
-            "-l$binaryLibraryName",
-            "-Xcc", "-fmodule-map-file=${moduleMap.absolutePath}",
-            "-Xcc", "-fmodule-map-file=${Distribution(KotlinNativePaths.homePath.absolutePath).kotlinRuntimeForSwiftModuleMap}",
-        )
-        val provider = createTestProvider(buildDir, testSources)
+        val swiftExtraOpts = swiftModules.flatMap {
+            listOf(
+                "-I", it.rootDir.absolutePath,
+                "-L", it.rootDir.absolutePath,
+                "-l${it.moduleName}",
+            ) + (it.modulemap?.let { listOf("-Xcc", "-fmodule-map-file=${it.absolutePath}") } ?: emptyList())
+        } + listOf("-Xcc", "-fmodule-map-file=${Distribution(KotlinNativePaths.homePath.absolutePath).kotlinRuntimeForSwiftModuleMap}")
+        val provider = createTestProvider(buildDir(testName), testSources)
         val success = SwiftCompilation(
             testRunSettings,
             testSources + listOf(
                 provider,
                 testSuiteDir.resolve("main.swift")
             ),
-            TestCompilationArtifact.Executable(buildDir.resolve("swiftTestExecutable")),
+            TestCompilationArtifact.Executable(buildDir(testName).resolve("swiftTestExecutable")),
             swiftExtraOpts,
             outputFile = { executable -> executable.executableFile }
         ).result.assertSuccess()

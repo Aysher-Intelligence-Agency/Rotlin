@@ -6,9 +6,9 @@
 package org.jetbrains.kotlin.idea.references
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.calls
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtImportAlias
 
 class KaFirInvokeFunctionReference(expression: KtCallExpression) : KtInvokeFunctionReference(expression), KaFirReference {
     override fun KaSession.resolveToSymbols(): Collection<KaSymbol> {
-        return expression.resolveCall()?.calls.orEmpty().mapNotNull { call ->
+        return expression.resolveCallOld()?.calls.orEmpty().mapNotNull { call ->
             (call as? KaSimpleFunctionCall)
                 ?.takeIf { it.isImplicitInvoke }
                 ?.partiallyAppliedSymbol

@@ -1,1 +1,2 @@
-null
+KtForExpression(23,37): 'for(i in f) {}'
+  null

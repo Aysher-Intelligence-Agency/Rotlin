@@ -1,1 +1,2 @@
-null
+KtNameReferenceExpression(99,104): 'coreR'
+  null

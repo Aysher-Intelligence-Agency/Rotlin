@@ -1,17 +1,17 @@
-KtKotlinPropertySymbol:
+KaKotlinPropertySymbol:
   annotationsList: []
-  backingFieldSymbol: KtBackingFieldSymbol:
+  backingFieldSymbol: KaBackingFieldSymbol:
     annotationsList: []
     callableId: null
     contextReceivers: []
     isExtension: false
     name: field
     origin: PROPERTY_BACKING_FIELD
-    owningProperty: KtKotlinPropertySymbol(one/topLevelProperty)
+    owningProperty: KaKotlinPropertySymbol(one/topLevelProperty)
     receiverParameter: null
-    returnType: KtUsualClassType:
+    returnType: KaUsualClassType:
       annotationsList: []
-      ownTypeArguments: []
+      typeArguments: []
       type: kotlin/String
     symbolKind: LOCAL
     typeParameters: []
@@ -21,7 +21,7 @@ KtKotlinPropertySymbol:
     deprecationStatus: null
   callableId: one/topLevelProperty
   contextReceivers: []
-  getter: KtPropertyGetterSymbol:
+  getter: KaPropertyGetterSymbol:
     annotationsList: []
     callableId: null
     contextReceivers: []
@@ -34,9 +34,9 @@ KtKotlinPropertySymbol:
     modality: FINAL
     origin: LIBRARY
     receiverParameter: null
-    returnType: KtUsualClassType:
+    returnType: KaUsualClassType:
       annotationsList: []
-      ownTypeArguments: []
+      typeArguments: []
       type: kotlin/String
     symbolKind: ACCESSOR
     typeParameters: []
@@ -64,9 +64,9 @@ KtKotlinPropertySymbol:
   name: topLevelProperty
   origin: LIBRARY
   receiverParameter: null
-  returnType: KtUsualClassType:
+  returnType: KaUsualClassType:
     annotationsList: []
-    ownTypeArguments: []
+    typeArguments: []
     type: kotlin/String
   setter: null
   symbolKind: TOP_LEVEL

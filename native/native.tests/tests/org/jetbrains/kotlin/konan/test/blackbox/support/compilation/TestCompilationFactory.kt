@@ -6,13 +6,10 @@
 package org.jetbrains.kotlin.konan.test.blackbox.support.compilation
 
 import org.jetbrains.kotlin.container.topologicalSort
-import org.jetbrains.kotlin.konan.test.blackbox.muteCInteropTestIfNecessary
-import org.jetbrains.kotlin.konan.test.blackbox.support.CINTEROP_SOURCE_EXTENSIONS
-import org.jetbrains.kotlin.konan.test.blackbox.support.PackageName
-import org.jetbrains.kotlin.konan.test.blackbox.support.TestCase
+import org.jetbrains.kotlin.konan.target.CompilerOutputKind
+import org.jetbrains.kotlin.konan.target.KonanTarget
+import org.jetbrains.kotlin.konan.test.blackbox.support.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.TestCase.*
-import org.jetbrains.kotlin.konan.test.blackbox.support.TestCompilerArgs
-import org.jetbrains.kotlin.konan.test.blackbox.support.TestModule
 import org.jetbrains.kotlin.konan.test.blackbox.support.TestModule.Companion.allDependencies
 import org.jetbrains.kotlin.konan.test.blackbox.support.TestModule.Companion.allDependsOn
 import org.jetbrains.kotlin.konan.test.blackbox.support.TestModule.Companion.allFriends
@@ -20,8 +17,6 @@ import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilat
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationDependencyType.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.util.*
-import org.jetbrains.kotlin.konan.target.CompilerOutputKind
-import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertTrue
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.io.File
@@ -89,6 +84,15 @@ internal class TestCompilationFactory {
                         )
                     }
         }
+    }
+
+    fun testCaseToKLib(testCase: TestCase, settings: Settings): TestCompilation<KLIB> {
+        return modulesToKlib(
+            sourceModules = testCase.modules,
+            freeCompilerArgs = testCase.freeCompilerArgs,
+            settings = settings,
+            produceStaticCache = ProduceStaticCache.No,
+        ).klib
     }
 
     fun testCaseToBinaryLibrary(testCase: TestCase, settings: Settings, kind: BinaryLibraryKind): BinaryLibraryCompilation {
@@ -297,8 +301,10 @@ internal class TestCompilationFactory {
                     ) to null
                     filesByExtension.contains("def") -> {
                         val defFile = filesByExtension["def"]!!.single()
-                        muteCInteropTestIfNecessary(defFile, settings.get<KotlinNativeTargets>().testTarget)
-
+                        val testTarget = settings.get<KotlinNativeTargets>().testTarget
+                        check(defFile.defFileIsSupportedOn(testTarget)) {
+                            "Unsupported $defFile for target $testTarget"
+                        }
                         val cSourceFiles = buildList {
                             for (ext in CINTEROP_SOURCE_EXTENSIONS) {
                                 filesByExtension[ext]?.let { addAll(it) }

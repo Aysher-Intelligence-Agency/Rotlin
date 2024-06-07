@@ -1,1 +1,2 @@
-null
+KtNameReferenceExpression(96,102): 'Helper'
+  null

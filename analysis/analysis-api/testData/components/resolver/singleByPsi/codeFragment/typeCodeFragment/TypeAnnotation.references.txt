@@ -1,2 +1,3 @@
-Resolved to:
-0: (in Anno) constructor()
+KtNameReferenceExpression(136,140): 'Anno'
+  KtSimpleNameReference:
+    (in Anno) constructor()

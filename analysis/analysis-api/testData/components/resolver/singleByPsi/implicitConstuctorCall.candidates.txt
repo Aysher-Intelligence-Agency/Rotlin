@@ -1,15 +1,16 @@
-KtApplicableCallCandidateInfo:
-  candidate = KtSimpleFunctionCall:
-    isImplicitInvoke = false
-    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
-      dispatchReceiver = null
-      extensionReceiver = null
-      signature = KtFunctionLikeSignature:
-        receiverType = null
-        returnType = A
-        symbol = <constructor>(): A
-        valueParameters = []
-        callableId = null
-    typeArgumentsMapping = {}
-    argumentMapping = {}
-  isInBestCandidates = true
+KtCallExpression(34,37): 'A()'
+  KaApplicableCallCandidateInfo:
+    candidate = KaSimpleFunctionCall:
+      isImplicitInvoke = false
+      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        dispatchReceiver = null
+        extensionReceiver = null
+        signature = KaFunctionLikeSignature:
+          receiverType = null
+          returnType = A
+          symbol = <constructor>(): A
+          valueParameters = []
+          callableId = null
+      typeArgumentsMapping = {}
+      argumentMapping = {}
+    isInBestCandidates = true

@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
-import org.jetbrains.kotlin.analysis.providers.KotlinPackageProvider
+import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
@@ -459,17 +459,19 @@ internal class KaSymbolByFirBuilder(
                 }
                 is ConeTypeParameterType -> KaFirTypeParameterType(coneType, this@KaSymbolByFirBuilder)
                 is ConeErrorType -> when (val diagnostic = coneType.diagnostic) {
-                    is ConeUnresolvedError, is ConeUnmatchedTypeArgumentsError ->
+                    is ConeUnresolvedError, is ConeUnmatchedTypeArgumentsError -> {
                         KaFirClassErrorType(coneType, diagnostic, this@KaSymbolByFirBuilder)
-                    else -> KaFirTypeErrorType(coneType, this@KaSymbolByFirBuilder)
+                    }
+                    else -> {
+                        KaFirErrorType(coneType, this@KaSymbolByFirBuilder)
+                    }
                 }
                 is ConeDynamicType -> KaFirDynamicType(coneType, this@KaSymbolByFirBuilder)
                 is ConeFlexibleType -> KaFirFlexibleType(coneType, this@KaSymbolByFirBuilder)
                 is ConeIntersectionType -> KaFirIntersectionType(coneType, this@KaSymbolByFirBuilder)
                 is ConeDefinitelyNotNullType -> KaFirDefinitelyNotNullType(coneType, this@KaSymbolByFirBuilder)
                 is ConeCapturedType -> KaFirCapturedType(coneType, this@KaSymbolByFirBuilder)
-                is ConeIntegerLiteralConstantType -> KaFirIntegerLiteralType(coneType, this@KaSymbolByFirBuilder)
-                is ConeIntegerConstantOperatorType -> buildKtType(coneType.getApproximatedType())
+                is ConeIntegerLiteralType -> buildKtType(coneType.getApproximatedType())
 
                 is ConeTypeVariableType -> {
                     val diagnostic = when ( val typeParameter = coneType.typeConstructor.originalTypeParameter) {

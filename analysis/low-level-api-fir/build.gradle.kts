@@ -30,7 +30,7 @@ dependencies {
     testImplementation(project(":analysis:analysis-api-fir"))
     implementation(project(":compiler:frontend.common"))
     implementation(project(":compiler:fir:entrypoint"))
-    implementation(project(":analysis:analysis-api-providers"))
+    implementation(project(":analysis:analysis-api-platform-interface"))
     implementation(project(":analysis:analysis-api"))
     implementation(project(":analysis:analysis-internal-utils"))
     implementation(project(":analysis:analysis-api-standalone:analysis-api-standalone-base"))
@@ -86,7 +86,7 @@ kotlin {
     }
 }
 
-projectTest(jUnitMode = JUnitMode.JUnit5) {
+projectTest(jUnitMode = JUnitMode.JUnit5, defineJDKEnvVariables = listOf(JdkMajorVersion.JDK_21_0)) {
     dependsOn(":dist", ":plugins:scripting:test-script-definition:testJar")
     workingDir = rootDir
     useJUnitPlatform()

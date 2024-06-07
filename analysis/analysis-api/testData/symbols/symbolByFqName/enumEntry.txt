@@ -1,4 +1,4 @@
-KtEnumEntrySymbol:
+KaEnumEntrySymbol:
   annotationsList: []
   callableId: kotlin/LazyThreadSafetyMode.SYNCHRONIZED
   contextReceivers: []
@@ -7,9 +7,9 @@ KtEnumEntrySymbol:
   name: SYNCHRONIZED
   origin: LIBRARY
   receiverParameter: null
-  returnType: KtUsualClassType:
+  returnType: KaUsualClassType:
     annotationsList: []
-    ownTypeArguments: []
+    typeArguments: []
     type: kotlin/LazyThreadSafetyMode
   symbolKind: CLASS_MEMBER
   typeParameters: []

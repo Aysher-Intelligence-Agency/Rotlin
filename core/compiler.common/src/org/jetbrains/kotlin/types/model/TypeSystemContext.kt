@@ -156,7 +156,7 @@ interface TypeSystemInferenceExtensionContext : TypeSystemContext, TypeSystemBui
 
     fun TypeConstructorMarker.isUnitTypeConstructor(): Boolean
 
-    fun TypeConstructorMarker.getApproximatedIntegerLiteralType(): KotlinTypeMarker
+    fun TypeConstructorMarker.getApproximatedIntegerLiteralType(expectedType: KotlinTypeMarker?): KotlinTypeMarker
 
     fun TypeConstructorMarker.isCapturedTypeConstructor(): Boolean
 
@@ -240,6 +240,11 @@ interface TypeSystemInferenceExtensionContext : TypeSystemContext, TypeSystemBui
         firstCandidate: KotlinTypeMarker,
         secondCandidate: KotlinTypeMarker
     ): KotlinTypeMarker
+
+    /**
+     * Only for K2
+     */
+    fun KotlinTypeMarker.getUpperBoundForApproximationOfIntersectionType() : KotlinTypeMarker? = null
 
     fun KotlinTypeMarker.isSpecial(): Boolean
 
@@ -553,10 +558,6 @@ interface TypeSystemContext : TypeSystemOptimizationContext {
     fun SimpleTypeMarker.isPrimitiveType(): Boolean
 
     fun KotlinTypeMarker.getAttributes(): List<AnnotationMarker>
-
-    fun KotlinTypeMarker.hasCustomAttributes(): Boolean
-
-    fun KotlinTypeMarker.getCustomAttributes(): List<AnnotationMarker>
 
     fun substitutionSupertypePolicy(type: SimpleTypeMarker): TypeCheckerState.SupertypesPolicy
 

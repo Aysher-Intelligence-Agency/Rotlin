@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.test.directives.CodegenTestDirectives.ATTACH_DEBUGGE
 import org.jetbrains.kotlin.test.directives.CodegenTestDirectives.REQUIRES_SEPARATE_PROCESS
 import org.jetbrains.kotlin.test.directives.JvmEnvironmentConfigurationDirectives.JDK_KIND
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.ENABLE_JVM_PREVIEW
-import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.STDLIB_COMPILATION
+import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.PREFER_IN_TEST_OVER_STDLIB
 import org.jetbrains.kotlin.test.directives.model.singleOrZeroValue
 import org.jetbrains.kotlin.test.model.BinaryArtifacts
 import org.jetbrains.kotlin.test.model.DependencyKind
@@ -289,7 +289,7 @@ open class JvmBoxRunner(testServices: TestServices) : JvmBinaryArtifactHandler(t
     ): GeneratedClassLoader {
         val classLoader = generatedTestClassLoader(testServices, module, classFileFactory)
         if (REQUIRES_SEPARATE_PROCESS !in module.directives && module.directives.singleOrZeroValue(JDK_KIND)?.requiresSeparateProcess != true) {
-            val verificationSucceeded = CodegenTestUtil.verifyAllFilesWithAsm(classFileFactory, classLoader, reportProblems)
+            val verificationSucceeded = CodegenTestUtil.verifyAllFilesWithAsm(classFileFactory, reportProblems)
             if (!verificationSucceeded) {
                 assertions.fail { "Verification failed: see exceptions above" }
             }
@@ -327,7 +327,7 @@ internal fun generatedTestClassLoader(
 ): GeneratedClassLoader {
     val configuration = testServices.compilerConfigurationProvider.getCompilerConfiguration(module)
     val classpath = computeTestRuntimeClasspath(testServices, module)
-    if (STDLIB_COMPILATION in module.directives) {
+    if (PREFER_IN_TEST_OVER_STDLIB in module.directives) {
         val libPathProvider = testServices.standardLibrariesPathProvider
         classpath += libPathProvider.runtimeJarForTests()
         if (configuration[TEST_CONFIGURATION_KIND_KEY]?.withReflection == true) {

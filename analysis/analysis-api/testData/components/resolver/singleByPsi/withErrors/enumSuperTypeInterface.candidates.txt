@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtSuperTypeCallEntry(15,18): 'I()'
+  NO_CANDIDATES

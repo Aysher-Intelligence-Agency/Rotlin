@@ -1,4 +1,4 @@
-KtJavaFieldSymbol:
+KaJavaFieldSymbol:
   annotationsList: []
   callableId: /BaseClass.bar
   contextReceivers: []
@@ -9,9 +9,9 @@ KtJavaFieldSymbol:
   name: bar
   origin: JAVA
   receiverParameter: null
-  returnType: KtUsualClassType:
+  returnType: KaUsualClassType:
     annotationsList: []
-    ownTypeArguments: []
+    typeArguments: []
     type: kotlin/Int
   symbolKind: CLASS_MEMBER
   typeParameters: []

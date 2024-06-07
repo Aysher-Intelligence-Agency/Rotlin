@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtCallExpression(76,85): 'Test<Bar>'
+  NO_CANDIDATES

@@ -8,10 +8,7 @@ package org.jetbrains.kotlin.generators.tree
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.generators.tree.imports.ImportCollecting
 import org.jetbrains.kotlin.generators.tree.imports.ImportCollector
-import org.jetbrains.kotlin.generators.tree.printer.ImportCollectingPrinter
-import org.jetbrains.kotlin.generators.tree.printer.extendedKDoc
-import org.jetbrains.kotlin.generators.tree.printer.printKDoc
-import org.jetbrains.kotlin.generators.tree.printer.withNewPrinter
+import org.jetbrains.kotlin.generators.tree.printer.*
 import org.jetbrains.kotlin.utils.SmartPrinter
 import org.jetbrains.kotlin.utils.withIndent
 
@@ -40,15 +37,7 @@ abstract class AbstractElementPrinter<Element : AbstractElement<Element, Field, 
             printKDoc(elementKDoc(element))
             print(kind.title, " ", element.typeName)
             print(element.params.typeParameters())
-
-            val parentRefs = element.parentRefs
-            if (parentRefs.isNotEmpty()) {
-                print(
-                    parentRefs.sortedBy { it.typeKind }.joinToString(prefix = " : ") { parent ->
-                        parent.render() + parent.inheritanceClauseParenthesis()
-                    }
-                )
-            }
+            printInheritanceClause(element.parentRefs)
             print(element.params.multipleUpperBoundsList())
 
             val printer = SmartPrinter(StringBuilder())
@@ -57,14 +46,14 @@ abstract class AbstractElementPrinter<Element : AbstractElement<Element, Field, 
                 withIndent {
                     for (field in filterFields(element)) {
                         if (field.isParameter) continue
-                        if (field.isFinal && field.fromParent) {
+                        if (field.isFinal && field.isOverride) {
                             continue
                         }
                         if (separateFieldsWithBlankLine) println()
                         fieldPrinter.printField(
                             field,
                             inImplementation = false,
-                            override = field.fromParent,
+                            override = field.isOverride,
                             modality = Modality.ABSTRACT.takeIf { !field.isFinal && !kind.isInterface },
                         )
                     }

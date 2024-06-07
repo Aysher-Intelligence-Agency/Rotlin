@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtNameReferenceExpression(41,52): 'MutableList'
+  NO_CANDIDATES

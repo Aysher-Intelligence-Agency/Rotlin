@@ -1,1 +1,2 @@
-null
+KtNamedFunction(65,107): '/**'
+  null

@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtNameReferenceExpression(45,48): 'jvm'
+  NO_CANDIDATES

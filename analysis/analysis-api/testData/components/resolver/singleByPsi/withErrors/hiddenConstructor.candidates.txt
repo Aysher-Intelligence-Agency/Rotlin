@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtCallExpression(17,25): 'Obj(555)'
+  NO_CANDIDATES

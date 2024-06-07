@@ -1,32 +1,18 @@
-KtApplicableCallCandidateInfo:
-  candidate = KtSimpleVariableAccessCall:
-    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
-      dispatchReceiver = KtExplicitReceiverValue:
-        expression = java.lang.annotation.RetentionPolicy
-        isSafeNavigation = false
-        type = kotlin.Unit
-      extensionReceiver = null
-      signature = KtVariableLikeSignature:
-        name = RUNTIME
-        receiverType = null
-        returnType = java.lang.annotation.RetentionPolicy
-        symbol = KtEnumEntrySymbol:
-          annotationsList: []
-          callableId: java/lang/annotation/RetentionPolicy.RUNTIME
-          contextReceivers: []
-          enumEntryInitializer: null
-          isExtension: false
-          name: RUNTIME
-          origin: JAVA
-          receiverParameter: null
-          returnType: KtUsualClassType:
-            annotationsList: []
-            ownTypeArguments: []
-            type: java/lang/annotation/RetentionPolicy
-          symbolKind: CLASS_MEMBER
-          typeParameters: []
-        callableId = java/lang/annotation/RetentionPolicy.RUNTIME
-    simpleAccess = Read:
-
-    typeArgumentsMapping = {}
-  isInBestCandidates = true
+KtNameReferenceExpression(69,76): 'RUNTIME'
+  KaApplicableCallCandidateInfo:
+    candidate = KaSimpleVariableAccessCall:
+      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        dispatchReceiver = KaExplicitReceiverValue:
+          expression = java.lang.annotation.RetentionPolicy
+          isSafeNavigation = false
+          type = kotlin.Unit
+        extensionReceiver = null
+        signature = KaVariableLikeSignature:
+          name = RUNTIME
+          receiverType = null
+          returnType = java.lang.annotation.RetentionPolicy
+          symbol = java/lang/annotation/RetentionPolicy.RUNTIME
+          callableId = java/lang/annotation/RetentionPolicy.RUNTIME
+      simpleAccess = Read
+      typeArgumentsMapping = {}
+    isInBestCandidates = true

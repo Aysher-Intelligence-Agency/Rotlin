@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtBinaryExpression(36,42): 'a ?: b'
+  NO_CANDIDATES

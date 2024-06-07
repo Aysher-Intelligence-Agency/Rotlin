@@ -51,6 +51,12 @@ public class ForeignAnnotationsCompiledJavaTestGenerated extends AbstractForeign
     }
 
     @Test
+    @TestMetadata("annotatedConflictsWithPurelyImplemented.kt")
+    public void testAnnotatedConflictsWithPurelyImplemented() {
+      runTest("compiler/testData/diagnostics/foreignAnnotationsTests/tests/annotatedConflictsWithPurelyImplemented.kt");
+    }
+
+    @Test
     @TestMetadata("aosp.kt")
     public void testAosp() {
       runTest("compiler/testData/diagnostics/foreignAnnotationsTests/tests/aosp.kt");
@@ -1004,6 +1010,12 @@ public class ForeignAnnotationsCompiledJavaTestGenerated extends AbstractForeign
         @TestMetadata("kt65318.kt")
         public void testKt65318() {
           runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/kt65318.kt");
+        }
+
+        @Test
+        @TestMetadata("kt68110.kt")
+        public void testKt68110() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/kt68110.kt");
         }
 
         @Test

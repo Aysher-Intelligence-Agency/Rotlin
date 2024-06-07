@@ -207,7 +207,7 @@ internal class SymbolLightSimpleMethod(
 
     @Suppress("UnusedReceiverParameter")
     private fun KaSession.isInlineClassType(type: KaType): Boolean {
-        return ((type as? KaNonErrorClassType)?.classSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true
+        return ((type as? KaNonErrorClassType)?.symbol as? KaNamedClassOrObjectSymbol)?.isInline == true
     }
 
     private fun KaSession.isVoidType(type: KaType): Boolean {
@@ -220,7 +220,7 @@ internal class SymbolLightSimpleMethod(
             val ktType = if (functionSymbol.isSuspend) {
                 analysisSession.builtinTypes.NULLABLE_ANY // Any?
             } else {
-                functionSymbol.returnType.takeUnless { isVoidType(it) } ?: return@withFunctionSymbol PsiType.VOID
+                functionSymbol.returnType.takeUnless { isVoidType(it) } ?: return@withFunctionSymbol PsiTypes.voidType()
             }
 
             val typeMappingMode = if (forceBoxedReturnType(functionSymbol))

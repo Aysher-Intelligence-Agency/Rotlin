@@ -1,1 +1,2 @@
-null
+KtProperty(0,39): '/**'
+  null

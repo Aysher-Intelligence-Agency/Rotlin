@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtNameReferenceExpression(86,92): 'String'
+  NO_CANDIDATES

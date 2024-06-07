@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtCallExpression(76,79): 'a()'
+  NO_CANDIDATES

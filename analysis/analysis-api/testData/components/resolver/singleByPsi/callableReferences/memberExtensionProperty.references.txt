@@ -1,2 +1,7 @@
-Resolved to:
-0: (in ROOT) interface Bar
+KtNameReferenceExpression(249,252): 'Bar'
+  KtSimpleNameReference:
+    (in ROOT) interface Bar
+
+KtCallExpression(241,258): 'consume(Bar::foo)'
+  KtInvokeFunctionReference:
+    Nothing (Unresolved reference)

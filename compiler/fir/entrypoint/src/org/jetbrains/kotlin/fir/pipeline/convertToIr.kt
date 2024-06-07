@@ -8,20 +8,18 @@ package org.jetbrains.kotlin.fir.pipeline
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.kotlin.backend.common.CodegenUtil
 import org.jetbrains.kotlin.backend.common.IrSpecialAnnotationsProvider
-import org.jetbrains.kotlin.backend.common.actualizer.IrExtraActualDeclarationExtractor
-import org.jetbrains.kotlin.backend.common.actualizer.IrActualizedResult
-import org.jetbrains.kotlin.backend.common.actualizer.IrActualizer
-import org.jetbrains.kotlin.backend.common.actualizer.SpecialFakeOverrideSymbolsResolver
-import org.jetbrains.kotlin.backend.common.actualizer.SpecialFakeOverrideSymbolsResolverVisitor
+import org.jetbrains.kotlin.backend.common.actualizer.*
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.generators.Fir2IrDataClassGeneratedMemberBodyGenerator
+import org.jetbrains.kotlin.fir.backend.utils.generatedBuiltinsDeclarationsFileName
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
@@ -218,7 +216,7 @@ private class Fir2IrPipeline(
         val fakeOverrideBuilder = createFakeOverrideBuilder()
         buildFakeOverrides(fakeOverrideBuilder)
 
-        val expectActualMap = irActualizer?.actualizeCallablesAndMergeModules() ?: emptyMap()
+        val expectActualMap = irActualizer?.actualizeCallablesAndMergeModules() ?: IrExpectActualMap()
 
         val fakeOverrideResolver = SpecialFakeOverrideSymbolsResolver(expectActualMap)
         resolveFakeOverrideSymbols(fakeOverrideResolver)
@@ -229,6 +227,8 @@ private class Fir2IrPipeline(
 
         fakeOverrideResolver.cacheFakeOverridesOfAllClasses(mainIrFragment)
         (fakeOverrideBuilder.strategy as Fir2IrFakeOverrideStrategy).clearFakeOverrideFields()
+
+        removeGeneratedBuiltinsDeclarationsIfNeeded()
 
         val pluginContext = Fir2IrPluginContext(componentsStorage, irBuiltIns, componentsStorage.moduleDescriptor, symbolTable)
         pluginContext.applyIrGenerationExtensions(mainIrFragment, irGeneratorExtensions)
@@ -277,12 +277,18 @@ private class Fir2IrPipeline(
     }
 
     private fun Fir2IrConversionResult.buildFakeOverrides(fakeOverrideBuilder: IrFakeOverrideBuilder) {
-        val temporaryResolver = SpecialFakeOverrideSymbolsResolver(emptyMap())
+        val temporaryResolver = SpecialFakeOverrideSymbolsResolver(IrExpectActualMap())
         fakeOverrideBuilder.buildForAll(dependentIrFragments + mainIrFragment, temporaryResolver)
     }
 
     private fun Fir2IrConversionResult.resolveFakeOverrideSymbols(fakeOverrideResolver: SpecialFakeOverrideSymbolsResolver) {
         mainIrFragment.acceptVoid(SpecialFakeOverrideSymbolsResolverVisitor(fakeOverrideResolver))
+
+        val expectActualMap = fakeOverrideResolver.expectActualMap
+        if (expectActualMap.propertyAccessorsActualizedByFields.isNotEmpty()) {
+            mainIrFragment.transform(SpecialFakeOverrideSymbolsActualizedByFieldsTransformer(expectActualMap), null)
+        }
+
         @OptIn(Fir2IrSymbolsMappingForLazyClasses.SymbolRemapperInternals::class)
         componentsStorage.symbolsMappingForLazyClasses.initializeSymbolMap(fakeOverrideResolver)
     }
@@ -382,6 +388,16 @@ private class Fir2IrPipeline(
                     }
                 }
             }
+        }
+    }
+
+    /** If `stdlibCompilation` mode is enabled, there are files with synthetic declarations.
+     *  All of them should be generated before FIR2IR conversion and removed after the actualizaiton.
+     */
+    private fun Fir2IrConversionResult.removeGeneratedBuiltinsDeclarationsIfNeeded() {
+        if (fir2IrConfiguration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)) {
+            val isAnyFileRemoved = mainIrFragment.files.removeAll { it.name == generatedBuiltinsDeclarationsFileName }
+            require(isAnyFileRemoved)
         }
     }
 }

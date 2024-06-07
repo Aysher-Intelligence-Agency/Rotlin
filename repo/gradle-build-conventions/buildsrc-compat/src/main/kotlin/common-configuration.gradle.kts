@@ -1,3 +1,4 @@
+import org.gradle.api.internal.file.collections.DefaultConfigurableFileCollection
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinBasePluginWrapper
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
@@ -9,27 +10,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 val kotlinVersion: String by rootProject.extra
 group = "org.jetbrains.kotlin"
 version = kotlinVersion
-
-// Forcing minimal gson dependency version
-val gsonVersion = rootProject.extra["versions.gson"] as String
-dependencies {
-    constraints {
-        configurations.all {
-            if (isCanBeResolved && !isCanBeConsumed) {
-                allDependencies.configureEach {
-                    if (group == "com.google.code.gson" && name == "gson" && this@all.isCanBeDeclared) {
-                        this@constraints.add(this@all.name, "com.google.code.gson:gson") {
-                            version {
-                                require(gsonVersion)
-                            }
-                            because("Force using same gson version because of https://github.com/google/gson/pull/1991")
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 project.configureJvmDefaultToolchain()
 project.addEmbeddedConfigurations()
@@ -103,7 +83,9 @@ fun Project.configureJavaCompile() {
         tasks.withType<JavaCompile>().configureEach {
             options.compilerArgs.add("-Xlint:deprecation")
             options.compilerArgs.add("-Xlint:unchecked")
-            options.compilerArgs.add("-Werror")
+            if (!kotlinBuildProperties.disableWerror) {
+                options.compilerArgs.add("-Werror")
+            }
         }
     }
 }
@@ -238,15 +220,68 @@ fun Project.configureArtifacts() {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 
+    /**
+     * Bit mask: `rw-r--r--`
+     */
+    fun ConfigurableFilePermissions.configureDefaultFilePermissions() {
+        user {
+            read = true
+            write = true
+            execute = false
+        }
+        group {
+            read = true
+            write = false
+            execute = false
+        }
+        other {
+            read = true
+            write = false
+            execute = false
+        }
+    }
+
+    /**
+     * Bit mask: `rwxr-xr-x`
+     * Applies to both directories and executable files
+     */
+    fun ConfigurableFilePermissions.configureDefaultExecutableFilePermissions() {
+        user {
+            read = true
+            write = true
+            execute = true
+        }
+        group {
+            read = true
+            write = false
+            execute = true
+        }
+        other {
+            read = true
+            write = false
+            execute = true
+        }
+    }
+
     tasks.withType<AbstractArchiveTask>().configureEach {
         isPreserveFileTimestamps = false
         isReproducibleFileOrder = true
-        val `rw-r--r--` = 0b110100100
-        val `rwxr-xr-x` = 0b111101101
-        fileMode = `rw-r--r--`
-        dirMode = `rwxr-xr-x`
-        filesMatching("**/bin/*") { mode = `rwxr-xr-x` }
-        filesMatching("**/bin/*.bat") { mode = `rw-r--r--` }
+        filePermissions {
+            configureDefaultFilePermissions()
+        }
+        dirPermissions {
+            configureDefaultExecutableFilePermissions()
+        }
+        filesMatching("**/bin/*") {
+            permissions {
+                configureDefaultExecutableFilePermissions()
+            }
+        }
+        filesMatching("**/bin/*.bat") {
+            permissions {
+                configureDefaultFilePermissions()
+            }
+        }
     }
 
     normalization {
@@ -272,9 +307,11 @@ fun Project.configureArtifacts() {
 
 fun Project.configureTests() {
     val ignoreTestFailures: Boolean by rootProject.extra
-    tasks.configureEach {
-        if (this is VerificationTask) {
-            ignoreFailures = ignoreTestFailures
+    if (!plugins.hasPlugin("compiler-tests-convention")) {
+        tasks.configureEach {
+            if (this is VerificationTask) {
+                ignoreFailures = ignoreTestFailures
+            }
         }
     }
 
@@ -286,7 +323,9 @@ fun Project.configureTests() {
     }
 
     tasks.withType<Test>().configureEach {
-        outputs.doNotCacheIf("https://youtrack.jetbrains.com/issue/KTI-112") { true }
+        if (!plugins.hasPlugin("compiler-tests-convention")) {
+            outputs.doNotCacheIf("https://youtrack.jetbrains.com/issue/KTI-112") { true }
+        }
         if (project.kotlinBuildProperties.limitTestTasksConcurrency) {
             usesService(concurrencyLimitService)
         }
@@ -321,7 +360,11 @@ fun skipJvmDefaultAllForModule(path: String): Boolean =
 afterEvaluate {
     val versionString = version.toString()
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        val realFriendPaths = (friendPaths as DefaultConfigurableFileCollection).shallowCopy()
         val friendPathsWithoutVersion = friendPaths.filter { !it.name.contains(versionString) }
         friendPaths.setFrom(friendPathsWithoutVersion)
+        doFirst {
+            friendPaths.setFrom(realFriendPaths)
+        }
     }
 }

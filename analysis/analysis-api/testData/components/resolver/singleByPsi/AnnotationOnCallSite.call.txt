@@ -1,1 +1,2 @@
-null
+KtNameReferenceExpression(23,31): 'Suppress'
+  null

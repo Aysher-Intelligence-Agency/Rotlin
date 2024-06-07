@@ -1,1 +1,2 @@
-NO_CANDIDATES
+KtForExpression(15,32): 'for (x in Y()) {}'
+  NO_CANDIDATES

@@ -27,11 +27,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.PersistentFSConstants
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileSystem
+import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.impl.ZipHandler
+import com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.JavaClassSupersImpl
@@ -239,6 +237,8 @@ class KotlinCoreEnvironment private constructor(
             configuration.get(JVMConfigurationKeys.MODULES)?.singleOrNull()?.getOutputDirectory()
                 ?: configuration.get(JVMConfigurationKeys.OUTPUT_DIRECTORY)?.absolutePath
 
+        val contentRoots = configuration.getList(CLIConfigurationKeys.CONTENT_ROOTS)
+
         classpathRootsResolver = ClasspathRootsResolver(
             PsiManager.getInstance(project),
             messageCollector,
@@ -248,11 +248,11 @@ class KotlinCoreEnvironment private constructor(
             !configuration.getBoolean(CLIConfigurationKeys.ALLOW_KOTLIN_PACKAGE),
             outputDirectory?.let(this::findLocalFile),
             javaFileManager,
-            releaseTarget
+            releaseTarget,
+            hasKotlinSources = contentRoots.any { it is KotlinSourceRoot },
         )
 
-        val (initialRoots, javaModules) =
-            classpathRootsResolver.convertClasspathRoots(configuration.getList(CLIConfigurationKeys.CONTENT_ROOTS))
+        val (initialRoots, javaModules) = classpathRootsResolver.convertClasspathRoots(contentRoots)
         this.initialRoots.addAll(initialRoots)
 
         val (roots, singleJavaFileRoots) =
@@ -776,6 +776,8 @@ class KotlinCoreEnvironment private constructor(
                 application.registerService(KotlinBinaryClassCache::class.java, KotlinBinaryClassCache())
                 application.registerService(JavaClassSupers::class.java, JavaClassSupersImpl::class.java)
                 application.registerService(TransactionGuard::class.java, TransactionGuardImpl::class.java)
+                application.registerService(VirtualFileSetFactory::class.java, getCompactVirtualFileSetFactory())
+                application.registerService(InternalPersistentJavaLanguageLevelReaderService::class.java, InternalPersistentJavaLanguageLevelReaderService.DefaultImpl())
             }
         }
 

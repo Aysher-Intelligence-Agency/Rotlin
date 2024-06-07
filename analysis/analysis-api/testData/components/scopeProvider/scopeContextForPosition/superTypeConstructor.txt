@@ -16,7 +16,7 @@ scopes:
   PackageMemberScope, index = 2
     packages: 0
     classifiers: 2
-      KtNamedClassOrObjectSymbol:
+      KaNamedClassOrObjectSymbol:
         annotationsList: []
         classId: test/Base
         classKind: CLASS
@@ -33,15 +33,15 @@ scopes:
         name: Base
         origin: SOURCE
         superTypes: [
-          KtUsualClassType:
+          KaUsualClassType:
             annotationsList: []
-            ownTypeArguments: []
+            typeArguments: []
             type: kotlin/Any
         ]
         symbolKind: TOP_LEVEL
         typeParameters: []
         visibility: Public
-      KtNamedClassOrObjectSymbol:
+      KaNamedClassOrObjectSymbol:
         annotationsList: []
         classId: test/Child
         classKind: CLASS
@@ -58,9 +58,9 @@ scopes:
         name: Child
         origin: SOURCE
         superTypes: [
-          KtUsualClassType:
+          KaUsualClassType:
             annotationsList: []
-            ownTypeArguments: []
+            typeArguments: []
             type: test/Base
         ]
         symbolKind: TOP_LEVEL
