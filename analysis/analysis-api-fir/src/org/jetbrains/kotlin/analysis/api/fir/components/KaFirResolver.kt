@@ -6,9 +6,8 @@
 package org.jetbrains.kotlin.analysis.api.fir.components
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
-import org.jetbrains.kotlin.analysis.api.KaSymbolBasedReference
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
-import org.jetbrains.kotlin.analysis.api.diagnostics.KaNonBoundToPsiErrorDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
 import org.jetbrains.kotlin.analysis.api.fir.getCandidateSymbols
 import org.jetbrains.kotlin.analysis.api.fir.isInvokeFunction
@@ -16,41 +15,29 @@ import org.jetbrains.kotlin.analysis.api.fir.scopes.getConstructors
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirArrayOfSymbolProvider.arrayOf
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirArrayOfSymbolProvider.arrayOfSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirArrayOfSymbolProvider.arrayTypeToArrayOfCall
-import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.processEqualsFunctions
 import org.jetbrains.kotlin.analysis.api.getModule
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaAbstractResolver
+import org.jetbrains.kotlin.analysis.api.impl.base.resolution.KaCompoundVariableAccessCallImpl
+import org.jetbrains.kotlin.analysis.api.impl.base.util.KaNonBoundToPsiErrorDiagnostic
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.resolution.KaAnnotationCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaPartiallyAppliedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaPartiallyAppliedSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaPartiallyAppliedVariableSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KaVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.utils.errors.withPsiEntry
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFir
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirSafe
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbolOfTypeSafe
 import org.jetbrains.kotlin.analysis.low.level.api.fir.resolver.AllCandidatesResolver
-import org.jetbrains.kotlin.analysis.utils.errors.withPsiEntry
 import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.fullyExpandedClass
@@ -62,7 +49,7 @@ import org.jetbrains.kotlin.fir.realPsi
 import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.calls.AbstractCandidate
-import org.jetbrains.kotlin.fir.resolve.calls.Candidate
+import org.jetbrains.kotlin.fir.resolve.calls.candidate.Candidate
 import org.jetbrains.kotlin.fir.resolve.createConeDiagnosticForCandidateWithError
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeDiagnosticWithCandidates
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeHiddenCandidateError
@@ -72,11 +59,11 @@ import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirSymbolEntry
 import org.jetbrains.kotlin.idea.references.KtDefaultAnnotationArgumentReference
 import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -89,14 +76,30 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions.EQUALS
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.rethrowExceptionWithDetails
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
-internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbstractResolver(), KaFirSessionComponent {
-    override fun resolveToSymbols(reference: KtReference): Collection<KaSymbol> {
+@OptIn(KaExperimentalApi::class)
+internal class KaFirResolver(
+    override val analysisSessionProvider: () -> KaFirSession
+) : KaAbstractResolver<KaFirSession>(), KaFirSessionComponent {
+    override fun KtReference.isImplicitReferenceToCompanion(): Boolean = withValidityAssertion {
+        if (this !is KtSimpleNameReference) {
+            return false
+        }
+        val qualifier = element.getOrBuildFirSafe<FirResolvedQualifier>(analysisSession.firResolveSession) ?: return false
+        return qualifier.resolvedToCompanionObject
+    }
+
+    override fun KtReference.resolveToSymbols(): Collection<KaSymbol> = withValidityAssertion {
+        return doResolveToSymbols(this)
+    }
+
+    private fun doResolveToSymbols(reference: KtReference): Collection<KaSymbol> {
         if (reference is KtDefaultAnnotationArgumentReference) {
             return resolveDefaultAnnotationArgumentReference(reference)
         }
@@ -113,7 +116,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         }
     }
 
-    override fun resolveCall(psi: KtElement): KaCallInfo? {
+    override fun doResolveCall(psi: KtElement): KaCallInfo? {
         return wrapError(psi) {
             val ktCallInfos = getCallInfo(
                 psi,
@@ -135,7 +138,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         }
     }
 
-    override fun collectCallCandidates(psi: KtElement): List<KaCallCandidateInfo> = wrapError(psi) {
+    override fun doCollectCallCandidates(psi: KtElement): List<KaCallCandidateInfo> = wrapError(psi) {
         getCallInfo(
             psi,
             getErrorCallInfo = { emptyList() },
@@ -150,7 +153,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
     }
 
     private val equalsSymbolInAny: FirNamedFunctionSymbol? by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        val session = analysisSession.useSiteSession
+        val session = analysisSession.firSession
         val anyFirClass = session.builtinTypes.anyType.toRegularClassSymbol(session) ?: return@lazy null
         val scope = session.declaredMemberScope(
             anyFirClass,
@@ -173,8 +176,6 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
             resolveFragmentOfCall: Boolean,
         ) -> List<T>,
     ): List<T> {
-        if (!canBeResolvedAsCall(psi)) return emptyList()
-
         val containingCallExpressionForCalleeExpression = psi.getContainingCallExpressionForCalleeExpression()
         val containingBinaryExpressionForLhs = psi.getContainingBinaryExpressionForIncompleteLhs()
         val containingUnaryExpressionForIncOrDec = psi.getContainingUnaryIncOrDecExpression()
@@ -183,7 +184,6 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
             ?: containingUnaryExpressionForIncOrDec
             ?: psi.getContainingDotQualifiedExpressionForSelectorExpression()
             ?: psi.getConstructorDelegationCallForDelegationReferenceExpression()
-            ?: psi.getExpressionForOperationReferenceExpression()
             ?: psi
         val fir = psiToResolve.getOrBuildFir(analysisSession.firResolveSession) ?: return emptyList()
         if (fir is FirDiagnosticHolder) {
@@ -194,20 +194,6 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
             psiToResolve == containingCallExpressionForCalleeExpression,
             psiToResolve == containingBinaryExpressionForLhs || psiToResolve == containingUnaryExpressionForIncOrDec
         )
-    }
-
-    /**
-     * When resolving [KtOperationReferenceExpression], we instead resolve the containing [KtWhenConditionInRange] or [KtBinaryExpression].
-     * This way, the corresponding FIR element is a call instead of a reference.
-     */
-    private fun KtElement.getExpressionForOperationReferenceExpression(): KtElement? {
-        if (this !is KtOperationReferenceExpression) return null
-        return when (val parent = parent) {
-            // Augment assignment resolves into KtCompoundVariableAccessCall, but we should resolve into a specific function
-            is KtBinaryExpression -> parent.takeUnless { operationSignTokenType in KtTokens.AUGMENTED_ASSIGNMENTS }
-            is KtWhenConditionInRange -> parent
-            else -> null
-        }
     }
 
     private fun FirElement.toKtCallInfo(
@@ -275,7 +261,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
 
         return when (this) {
             is FirResolvable, is FirVariableAssignment -> {
-                when (val calleeReference = toReference(analysisSession.useSiteSession)) {
+                when (val calleeReference = toReference(analysisSession.firSession)) {
                     is FirResolvedErrorReference -> transformErrorReference(this, calleeReference)
                     is FirResolvedNamedReference -> when (calleeReference.resolvedSymbol) {
                         // `calleeReference.resolvedSymbol` isn't guaranteed to be callable. For example, function type parameters used in
@@ -319,7 +305,9 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         }
     }
 
-    private fun inapplicableCandidateDiagnostic() = KaNonBoundToPsiErrorDiagnostic(null, "Inapplicable candidate", token)
+    private fun inapplicableCandidateDiagnostic(): KaDiagnostic {
+        return KaNonBoundToPsiErrorDiagnostic(factoryName = FirErrors.OTHER_ERROR.name, "Inapplicable candidate", token)
+    }
 
     /**
      * When resolving the calleeExpression of a `KtCallExpression`, we resolve the entire `KtCallExpression` instead. This way, the
@@ -418,7 +406,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
             ?: return null
         if (targetSymbol !is FirCallableSymbol<*>) return null
         if (targetSymbol is FirErrorFunctionSymbol || targetSymbol is FirErrorPropertySymbol) return null
-        val unsubstitutedKtSignature = targetSymbol.toKtSignature()
+        val unsubstitutedKtSignature = targetSymbol.toKaSignature()
 
         handleCompoundAccessCall(psi, fir, resolveFragmentOfCall)?.let { return it }
 
@@ -572,7 +560,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                 @Suppress("UNCHECKED_CAST") // safe because of the above check on targetKtSymbol
                 KaAnnotationCall(
                     partiallyAppliedSymbol as KaPartiallyAppliedFunctionSymbol<KaConstructorSymbol>,
-                    fir.createArgumentMapping(partiallyAppliedSymbol.signature as KaFunctionLikeSignature<*>)
+                    fir.createArgumentMapping(partiallyAppliedSymbol.signature as KaFunctionSignature<*>)
                 )
             }
             is FirDelegatedConstructorCall -> {
@@ -581,16 +569,16 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                 KaDelegatedConstructorCall(
                     partiallyAppliedSymbol as KaPartiallyAppliedFunctionSymbol<KaConstructorSymbol>,
                     if (fir.isThis) KaDelegatedConstructorCall.Kind.THIS_CALL else KaDelegatedConstructorCall.Kind.SUPER_CALL,
-                    fir.createArgumentMapping(partiallyAppliedSymbol.signature as KaFunctionLikeSignature<*>),
+                    fir.createArgumentMapping(partiallyAppliedSymbol.signature as KaFunctionSignature<*>),
                     fir.toTypeArgumentsMapping(partiallyAppliedSymbol)
                 )
             }
             is FirVariableAssignment -> {
-                if (unsubstitutedKtSignature.symbol !is KaVariableLikeSymbol) return null
+                if (unsubstitutedKtSignature.symbol !is KaVariableSymbol) return null
                 val rhs = fir.rValue.psi as? KtExpression
                 @Suppress("UNCHECKED_CAST") // safe because of the above check on targetKtSymbol
                 KaSimpleVariableAccessCall(
-                    partiallyAppliedSymbol as KaPartiallyAppliedVariableSymbol<KaVariableLikeSymbol>,
+                    partiallyAppliedSymbol as KaPartiallyAppliedVariableSymbol<KaVariableSymbol>,
                     fir.unwrapLValue()?.toTypeArgumentsMapping(partiallyAppliedSymbol) ?: emptyMap(),
                     KaSimpleVariableAccess.Write(rhs)
                 )
@@ -599,19 +587,19 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                 @Suppress("USELESS_IS_CHECK") // K2 warning suppression, TODO: KT-62472
                 require(fir is FirQualifiedAccessExpression)
                 when (unsubstitutedKtSignature.symbol) {
-                    is KaVariableLikeSymbol -> {
+                    is KaVariableSymbol -> {
                         @Suppress("UNCHECKED_CAST") // safe because of the above check on targetKtSymbol
                         KaSimpleVariableAccessCall(
-                            partiallyAppliedSymbol as KaPartiallyAppliedVariableSymbol<KaVariableLikeSymbol>,
+                            partiallyAppliedSymbol as KaPartiallyAppliedVariableSymbol<KaVariableSymbol>,
                             fir.toTypeArgumentsMapping(partiallyAppliedSymbol),
                             KaSimpleVariableAccess.Read
                         )
                     }
                     // if errorsness call without ()
-                    is KaFunctionLikeSymbol -> {
+                    is KaFunctionSymbol -> {
                         @Suppress("UNCHECKED_CAST") // safe because of the above check on targetKtSymbol
                         KaSimpleFunctionCall(
-                            partiallyAppliedSymbol as KaPartiallyAppliedFunctionSymbol<KaFunctionLikeSymbol>,
+                            partiallyAppliedSymbol as KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>,
                             LinkedHashMap(),
                             fir.toTypeArgumentsMapping(partiallyAppliedSymbol),
                             isImplicitInvoke,
@@ -620,9 +608,9 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                 }
             }
             is FirFunctionCall -> {
-                if (unsubstitutedKtSignature.symbol !is KaFunctionLikeSymbol) return null
+                if (unsubstitutedKtSignature.symbol !is KaFunctionSymbol) return null
                 val argumentMapping = if (candidate is Candidate) {
-                    candidate.argumentMapping
+                    runIf(candidate.argumentMappingInitialized) { candidate.argumentMapping }
                 } else {
                     fir.resolvedArgumentMapping
                 }
@@ -634,10 +622,10 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                     }
                 @Suppress("UNCHECKED_CAST") // safe because of the above check on targetKtSymbol
                 KaSimpleFunctionCall(
-                    partiallyAppliedSymbol as KaPartiallyAppliedFunctionSymbol<KaFunctionLikeSymbol>,
+                    partiallyAppliedSymbol as KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>,
                     @Suppress("USELESS_CAST") // K2 warning suppression, TODO: KT-62472
                     argumentMappingWithoutExtensionReceiver
-                        ?.createArgumentMapping(partiallyAppliedSymbol.signature as KaFunctionLikeSignature<*>)
+                        ?.createArgumentMapping(partiallyAppliedSymbol.signature as KaFunctionSignature<*>)
                         ?: LinkedHashMap(),
                     fir.toTypeArgumentsMapping(partiallyAppliedSymbol),
                     isImplicitInvoke
@@ -666,7 +654,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                 val (operationPartiallyAppliedSymbol, getPartiallyAppliedSymbol, setPartiallyAppliedSymbol) =
                     getOperationPartiallyAppliedSymbolsForCompoundArrayAssignment(fir, leftOperandPsi) ?: return null
 
-                val getAccessArgumentMapping = LinkedHashMap<KtExpression, KaVariableLikeSignature<KaValueParameterSymbol>>().apply {
+                val getAccessArgumentMapping = LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>>().apply {
                     putAll(leftOperandPsi.indexExpressions.zip(getPartiallyAppliedSymbol.signature.valueParameters))
                 }
 
@@ -701,9 +689,8 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                         KaSimpleVariableAccess.Read
                     )
                 } else {
-                    KaCompoundVariableAccessCall(
+                    KaCompoundVariableAccessCallImpl(
                         variablePartiallyAppliedSymbol,
-                        fir.unwrapLValue()?.toTypeArgumentsMapping(variablePartiallyAppliedSymbol) ?: emptyMap(),
                         KaCompoundAccess.CompoundAssign(operationPartiallyAppliedSymbol, compoundAssignKind, rightOperandPsi),
                     )
                 }
@@ -721,7 +708,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                 val (operationPartiallyAppliedSymbol, getPartiallyAppliedSymbol, setPartiallyAppliedSymbol) =
                     getOperationPartiallyAppliedSymbolsForIncOrDecOperation(fir, baseExpression, incDecPrecedence) ?: return null
 
-                val getAccessArgumentMapping = LinkedHashMap<KtExpression, KaVariableLikeSignature<KaValueParameterSymbol>>().apply {
+                val getAccessArgumentMapping = LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>>().apply {
                     putAll(baseExpression.indexExpressions.zip(getPartiallyAppliedSymbol.signature.valueParameters))
                 }
                 return if (resolveFragmentOfCall) {
@@ -755,9 +742,8 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                         KaSimpleVariableAccess.Read
                     )
                 } else {
-                    KaCompoundVariableAccessCall(
+                    KaCompoundVariableAccessCallImpl(
                         variablePartiallyAppliedSymbol,
-                        fir.unwrapLValue()?.toTypeArgumentsMapping(variablePartiallyAppliedSymbol) ?: emptyMap(),
                         KaCompoundAccess.IncOrDecOperation(operationPartiallyAppliedSymbol, incOrDecOperationKind, incDecPrecedence),
                     )
                 }
@@ -767,9 +753,9 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
     }
 
     private data class CompoundArrayAccessPartiallyAppliedSymbols(
-        val operationPartiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>,
-        val getPartiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>,
-        val setPartiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>,
+        val operationPartiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>,
+        val getPartiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>,
+        val setPartiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>,
     )
 
     private fun getOperationPartiallyAppliedSymbolsForCompoundArrayAssignment(
@@ -846,17 +832,17 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
     private fun getOperationPartiallyAppliedSymbolsForCompoundVariableAccess(
         fir: FirVariableAssignment,
         leftOperandPsi: KtExpression,
-    ): KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>? {
+    ): KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>? {
         // The new value is a call to the appropriate operator function.
         val operationCall = fir.rValue as? FirFunctionCall ?: getInitializerOfReferencedLocalVariable(fir.rValue) ?: return null
         return operationCall.toPartiallyAppliedSymbol(leftOperandPsi)
     }
 
-    private fun FirVariableAssignment.toPartiallyAppliedSymbol(): KaPartiallyAppliedVariableSymbol<KaVariableLikeSymbol>? {
+    private fun FirVariableAssignment.toPartiallyAppliedSymbol(): KaPartiallyAppliedVariableSymbol<KaVariableSymbol>? {
         val variableRef = calleeReference as? FirResolvedNamedReference ?: return null
         val variableSymbol = variableRef.resolvedSymbol as? FirVariableSymbol<*> ?: return null
         val substitutor = unwrapLValue()?.createConeSubstitutorFromTypeArguments(rootModuleSession) ?: return null
-        val ktSignature = variableSymbol.toKtSignature()
+        val ktSignature = variableSymbol.toKaSignature()
         return KaPartiallyAppliedSymbol(
             with(analysisSession) { ktSignature.substitute(substitutor.toKtSubstitutor()) },
             dispatchReceiver?.toKtReceiverValue(),
@@ -866,7 +852,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
 
     private fun FirFunctionCall.toPartiallyAppliedSymbol(
         explicitReceiverPsiSupplement: KtExpression? = null,
-    ): KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>? {
+    ): KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>? {
         val operationSymbol =
             (calleeReference as? FirResolvedNamedReference)?.resolvedSymbol as? FirNamedFunctionSymbol ?: return null
         val substitutor = createConeSubstitutorFromTypeArguments(rootModuleSession) ?: return null
@@ -896,7 +882,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         } else {
             extensionReceiver?.toKtReceiverValue()
         }
-        val ktSignature = operationSymbol.toKtSignature()
+        val ktSignature = operationSymbol.toKaSignature()
         return KaPartiallyAppliedSymbol(
             with(analysisSession) { ktSignature.substitute(substitutor.toKtSubstitutor()) },
             dispatchReceiverValue,
@@ -916,7 +902,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
             }
             this is FirThisReceiverExpression && this.isImplicit -> {
                 val implicitPartiallyAppliedSymbol = when (val partiallyAppliedSymbol = calleeReference.boundSymbol) {
-                    is FirClassSymbol<*> -> partiallyAppliedSymbol.toKtSymbol()
+                    is FirClassSymbol<*> -> partiallyAppliedSymbol.toKaSymbol()
                     is FirCallableSymbol<*> -> firSymbolBuilder.callableBuilder.buildExtensionReceiverSymbol(partiallyAppliedSymbol)
                         ?: return null
                     else -> return null
@@ -925,7 +911,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
             }
             this is FirResolvedQualifier && this.source?.kind is KtFakeSourceElementKind.ImplicitReceiver -> {
                 val symbol = this.symbol ?: return null
-                KaImplicitReceiverValue(symbol.toKtSymbol(), resolvedType.asKtType())
+                KaImplicitReceiverValue(symbol.toKaSymbol(), resolvedType.asKtType())
             }
             else -> {
                 val psi = psi
@@ -935,16 +921,16 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         }
     }
 
-    private fun FirCallableSymbol<*>.toKtSignature(): KaCallableSignature<KaCallableSymbol> =
+    private fun FirCallableSymbol<*>.toKaSignature(): KaCallableSignature<KaCallableSymbol> =
         firSymbolBuilder.callableBuilder.buildCallableSignature(this)
 
-    private fun FirClassLikeSymbol<*>.toKtSymbol(): KaClassLikeSymbol = firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(this)
+    private fun FirClassLikeSymbol<*>.toKaSymbol(): KaClassLikeSymbol = firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(this)
 
-    private fun FirNamedFunctionSymbol.toKtSignature(): KaFunctionLikeSignature<KaFunctionSymbol> =
-        firSymbolBuilder.functionLikeBuilder.buildFunctionSignature(this)
+    private fun FirNamedFunctionSymbol.toKaSignature(): KaFunctionSignature<KaNamedFunctionSymbol> =
+        firSymbolBuilder.functionBuilder.buildNamedFunctionSignature(this)
 
-    private fun FirVariableSymbol<*>.toKtSignature(): KaVariableLikeSignature<KaVariableLikeSymbol> =
-        firSymbolBuilder.variableLikeBuilder.buildVariableLikeSignature(this)
+    private fun FirVariableSymbol<*>.toKaSignature(): KaVariableSignature<KaVariableSymbol> =
+        firSymbolBuilder.variableBuilder.buildVariableLikeSignature(this)
 
     private fun FirQualifiedAccessExpression.toTypeArgumentsMapping(
         partiallyAppliedSymbol: KaPartiallyAppliedSymbol<*, *>,
@@ -1062,10 +1048,10 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
     }
 
     private fun FirResolvedQualifier.findQualifierConstructors(): List<KaConstructorSymbol> {
-        val classSymbol = this.symbol?.fullyExpandedClass(analysisSession.useSiteSession) ?: return emptyList()
+        val classSymbol = this.symbol?.fullyExpandedClass(analysisSession.firSession) ?: return emptyList()
         return classSymbol.unsubstitutedScope(
-            analysisSession.useSiteSession,
-            analysisSession.getScopeSessionFor(analysisSession.useSiteSession),
+            analysisSession.firSession,
+            analysisSession.getScopeSessionFor(analysisSession.firSession),
             withForcedTypeCalculator = true,
             memberRequiredPhase = null,
         )
@@ -1090,39 +1076,41 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         // callee and the variable as the explicit receiver. To correctly get all candidates, we need to get the original function
         // call's explicit receiver (if there is any) and callee (i.e., the variable).
         val unwrappedExplicitReceiver = explicitReceiver?.unwrapSmartcastExpression()
-        val originalFunctionCall =
-            if (this is FirImplicitInvokeCall && unwrappedExplicitReceiver is FirPropertyAccessExpression) {
-                val originalCallee = unwrappedExplicitReceiver.calleeReference.safeAs<FirNamedReference>() ?: return emptyList()
-                buildFunctionCall {
-                    // NOTE: We only need to copy the explicit receiver and not the dispatch and extension receivers as only the explicit
-                    // receiver is needed by the resolver. The dispatch and extension receivers are only assigned after resolution when a
-                    // candidate is selected.
-                    source = this@collectCallCandidates.source
-                    annotations.addAll(this@collectCallCandidates.annotations)
-                    typeArguments.addAll(this@collectCallCandidates.typeArguments)
-                    explicitReceiver = unwrappedExplicitReceiver.explicitReceiver
-                    argumentList = this@collectCallCandidates.argumentList
-                    calleeReference = originalCallee
-                }
-            } else {
-                this
+        val isUnwrappedImplicitInvokeCall = this is FirImplicitInvokeCall && unwrappedExplicitReceiver is FirPropertyAccessExpression
+        val originalFunctionCall = if (isUnwrappedImplicitInvokeCall) {
+            val originalCallee = unwrappedExplicitReceiver.calleeReference.safeAs<FirNamedReference>() ?: return emptyList()
+            buildFunctionCall {
+                // NOTE: We only need to copy the explicit receiver and not the dispatch and extension receivers as only the explicit
+                // receiver is needed by the resolver. The dispatch and extension receivers are only assigned after resolution when a
+                // candidate is selected.
+                source = this@collectCallCandidates.source
+                annotations.addAll(this@collectCallCandidates.annotations)
+                typeArguments.addAll(this@collectCallCandidates.typeArguments)
+                explicitReceiver = unwrappedExplicitReceiver.explicitReceiver
+                argumentList = this@collectCallCandidates.argumentList
+                calleeReference = originalCallee
             }
+        } else {
+            this
+        }
 
         val calleeName = originalFunctionCall.calleeOrCandidateName ?: return emptyList()
-        val candidates = AllCandidatesResolver(analysisSession.useSiteSession).getAllCandidates(
+        val candidates = AllCandidatesResolver(analysisSession.firSession).getAllCandidates(
             analysisSession.firResolveSession,
             originalFunctionCall,
             calleeName,
             psi,
             ResolutionMode.ContextIndependent,
         )
+
         return candidates.mapNotNull {
-            convertToKtCallCandidateInfo(
-                originalFunctionCall,
-                psi,
-                it.candidate,
-                it.isInBestCandidates,
-                resolveFragmentOfCall
+            convertToKaCallCandidateInfo(
+                resolvable = originalFunctionCall,
+                element = psi,
+                candidate = it.candidate,
+                isInBestCandidates = it.isInBestCandidates,
+                resolveFragmentOfCall = resolveFragmentOfCall,
+                isUnwrappedImplicitInvokeCall = isUnwrappedImplicitInvokeCall,
             )
         }
     }
@@ -1147,16 +1135,17 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
 
         val derivedClass = findDerivedClass(psi)?.resolveToFirSymbolOfTypeSafe<FirClassSymbol<*>>(firResolveSession) ?: return emptyList()
 
-        val candidates = AllCandidatesResolver(analysisSession.useSiteSession)
+        val candidates = AllCandidatesResolver(analysisSession.firSession)
             .getAllCandidatesForDelegatedConstructor(analysisSession.firResolveSession, this, derivedClass.toLookupTag(), psi)
 
         return candidates.mapNotNull {
-            convertToKtCallCandidateInfo(
-                this,
-                psi,
-                it.candidate,
-                it.isInBestCandidates,
-                resolveFragmentOfCall
+            convertToKaCallCandidateInfo(
+                resolvable = this,
+                element = psi,
+                candidate = it.candidate,
+                isInBestCandidates = it.isInBestCandidates,
+                resolveFragmentOfCall = resolveFragmentOfCall,
+                isUnwrappedImplicitInvokeCall = false,
             )
         }
     }
@@ -1169,24 +1158,33 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         }
     }
 
-    private fun convertToKtCallCandidateInfo(
+    private fun convertToKaCallCandidateInfo(
         resolvable: FirResolvable,
         element: KtElement,
         candidate: Candidate,
         isInBestCandidates: Boolean,
         resolveFragmentOfCall: Boolean,
+        isUnwrappedImplicitInvokeCall: Boolean,
     ): KaCallCandidateInfo? {
         val call = createKtCall(element, resolvable, candidate, resolveFragmentOfCall)
             ?: error("expect `createKtCall` to succeed for candidate")
+
         if (candidate.isSuccessful) {
-            return KaApplicableCallCandidateInfo(call, isInBestCandidates)
+            return KaApplicableCallCandidateInfo(
+                candidate = call,
+                isInBestCandidates = if (isUnwrappedImplicitInvokeCall) {
+                    (call as? KaSimpleFunctionCall)?.isImplicitInvoke == true
+                } else {
+                    isInBestCandidates
+                }
+            )
         }
 
         val diagnostic = createConeDiagnosticForCandidateWithError(candidate.lowestApplicability, candidate)
         if (diagnostic is ConeHiddenCandidateError) return null
         val ktDiagnostic =
             resolvable.source?.let { diagnostic.asKtDiagnostic(it, element.toKtPsiSourceElement()) }
-                ?: KaNonBoundToPsiErrorDiagnostic(factoryName = null, diagnostic.reason, token)
+                ?: KaNonBoundToPsiErrorDiagnostic(factoryName = FirErrors.OTHER_ERROR.name, diagnostic.reason, token)
         return KaInapplicableCallCandidateInfo(call, isInBestCandidates, ktDiagnostic)
     }
 
@@ -1228,7 +1226,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                     val defaultArrayOfSymbol = arrayOfSymbol(arrayOf) ?: return null
                     val substitutor = createSubstitutorFromTypeArguments(defaultArrayOfSymbol)
                     val partiallyAppliedSymbol = KaPartiallyAppliedSymbol(
-                        with(analysisSession) { defaultArrayOfSymbol.substitute(substitutor) },
+                        with(useSiteSession) { defaultArrayOfSymbol.substitute(substitutor) },
                         null,
                         null,
                     )
@@ -1241,7 +1239,11 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                                 false,
                             )
                         ),
-                        KaNonBoundToPsiErrorDiagnostic(factoryName = null, "type of arrayOf call is not resolved", token),
+                        KaNonBoundToPsiErrorDiagnostic(
+                            factoryName = FirErrors.OTHER_ERROR.name,
+                            defaultMessage = "type of arrayOf call is not resolved",
+                            token = token
+                        ),
                         token
                     )
                 }
@@ -1264,7 +1266,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         )
     }
 
-    private fun FirArrayLiteral.createSubstitutorFromTypeArguments(arrayOfSymbol: KaFirFunctionSymbol): KaSubstitutor {
+    private fun FirArrayLiteral.createSubstitutorFromTypeArguments(arrayOfSymbol: KaFirNamedFunctionSymbol): KaSubstitutor {
         val firSymbol = arrayOfSymbol.firSymbol
         // No type parameter means this is an arrayOf call of primitives, in which case there is no type arguments
         val typeParameter = firSymbol.fir.typeParameters.singleOrNull() ?: return KaSubstitutor.Empty(token)
@@ -1283,16 +1285,16 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                 val leftOperand = arguments.firstOrNull() ?: return null
 
                 val equalsSymbol = getEqualsSymbol() ?: return null
-                val ktSignature = equalsSymbol.toKtSignature()
+                val kaSignature = equalsSymbol.toKaSignature()
                 KaSuccessCallInfo(
                     KaSimpleFunctionCall(
                         KaPartiallyAppliedSymbol(
-                            ktSignature,
+                            kaSignature,
                             KaExplicitReceiverValue(leftPsi, leftOperand.resolvedType.asKtType(), false, token),
                             null
                         ),
-                        LinkedHashMap<KtExpression, KaVariableLikeSignature<KaValueParameterSymbol>>().apply {
-                            put(rightPsi, ktSignature.valueParameters.first())
+                        LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>>().apply {
+                            put(rightPsi, kaSignature.valueParameters.first())
                         },
                         emptyMap(),
                         false
@@ -1305,7 +1307,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
 
     private fun FirEqualityOperatorCall.getEqualsSymbol(): FirNamedFunctionSymbol? {
         var equalsSymbol: FirNamedFunctionSymbol? = null
-        processEqualsFunctions(analysisSession.useSiteSession, analysisSession) {
+        processEqualsFunctions(analysisSession.firSession, analysisSession) {
             if (equalsSymbol != null) return@processEqualsFunctions
             equalsSymbol = it
         }
@@ -1313,19 +1315,19 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         return equalsSymbol ?: equalsSymbolInAny
     }
 
-    private fun FirCall.createArgumentMapping(signatureOfCallee: KaFunctionLikeSignature<*>): LinkedHashMap<KtExpression, KaVariableLikeSignature<KaValueParameterSymbol>> {
+    private fun FirCall.createArgumentMapping(signatureOfCallee: KaFunctionSignature<*>): LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>> {
         return resolvedArgumentMapping?.entries.createArgumentMapping(signatureOfCallee)
     }
 
     private fun Iterable<MutableMap.MutableEntry<FirExpression, FirValueParameter>>?.createArgumentMapping(
-        signatureOfCallee: KaFunctionLikeSignature<*>,
-    ): LinkedHashMap<KtExpression, KaVariableLikeSignature<KaValueParameterSymbol>> {
+        signatureOfCallee: KaFunctionSignature<*>,
+    ): LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>> {
         val paramSignatureByName = signatureOfCallee.valueParameters.associateBy {
             // We intentionally use `symbol.name` instead of `name` here, since
             // `FirValueParameter.name` is not affected by the `@ParameterName`
             it.symbol.name
         }
-        val ktArgumentMapping = LinkedHashMap<KtExpression, KaVariableLikeSignature<KaValueParameterSymbol>>()
+        val ktArgumentMapping = LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>>()
         this?.forEach { (firExpression, firValueParameter) ->
             val parameterSymbol = paramSignatureByName[firValueParameter.name] ?: return@forEach
             mapArgumentExpressionToParameter(firExpression, parameterSymbol, ktArgumentMapping)
@@ -1334,10 +1336,10 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
     }
 
     private fun FirArrayLiteral.createArgumentMapping(
-        arrayOfSymbol: KaFirFunctionSymbol,
+        arrayOfSymbol: KaFirNamedFunctionSymbol,
         substitutor: KaSubstitutor,
-    ): LinkedHashMap<KtExpression, KaVariableLikeSignature<KaValueParameterSymbol>> {
-        val ktArgumentMapping = LinkedHashMap<KtExpression, KaVariableLikeSignature<KaValueParameterSymbol>>()
+    ): LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>> {
+        val ktArgumentMapping = LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>>()
         val parameterSymbol = arrayOfSymbol.valueParameters.single()
 
         for (firExpression in argumentList.arguments) {
@@ -1352,8 +1354,8 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
 
     private fun mapArgumentExpressionToParameter(
         argumentExpression: FirExpression,
-        parameterSymbol: KaVariableLikeSignature<KaValueParameterSymbol>,
-        argumentMapping: LinkedHashMap<KtExpression, KaVariableLikeSignature<KaValueParameterSymbol>>,
+        parameterSymbol: KaVariableSignature<KaValueParameterSymbol>,
+        argumentMapping: LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
     ) {
         if (argumentExpression is FirVarargArgumentsExpression) {
             for (varargArgument in argumentExpression.arguments) {
@@ -1406,6 +1408,6 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
 
     private fun FirDiagnosticHolder.createKtDiagnostic(psi: KtElement?): KaDiagnostic {
         return (source?.let { diagnostic.asKtDiagnostic(it, psi?.toKtPsiSourceElement()) }
-            ?: KaNonBoundToPsiErrorDiagnostic(factoryName = null, diagnostic.reason, token))
+            ?: KaNonBoundToPsiErrorDiagnostic(factoryName = FirErrors.OTHER_ERROR.name, diagnostic.reason, token))
     }
 }

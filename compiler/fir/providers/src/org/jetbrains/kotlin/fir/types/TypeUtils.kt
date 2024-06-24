@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
 import org.jetbrains.kotlin.fir.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.fir.utils.exceptions.withConeTypeEntry
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.model.*
@@ -190,7 +191,7 @@ fun <T : ConeKotlinType> T.withAttributes(attributes: ConeAttributes): T {
  */
 fun ConeKotlinType.withAbbreviation(attribute: AbbreviatedTypeAttribute): ConeKotlinType {
     val clearedAttributes = attributes.abbreviatedType?.let(attributes::remove) ?: attributes
-    return withAttributes(clearedAttributes + attribute)
+    return withAttributes(clearedAttributes.add(attribute))
 }
 
 fun <T : ConeKotlinType> T.withNullability(
@@ -847,3 +848,15 @@ fun FirIntersectionTypeRef.isLeftValidForDefinitelyNotNullable(session: FirSessi
     leftType.coneType.let { it is ConeTypeParameterType && it.canBeNull(session) && !it.isMarkedNullable }
 
 val FirIntersectionTypeRef.isRightValidForDefinitelyNotNullable: Boolean get() = rightType.coneType.isAny
+
+fun ConeKotlinType.isKCallableType(): Boolean {
+    return this.classId == StandardClassIds.KCallable
+}
+
+val ConeKotlinType.isUnitOrFlexibleUnit: Boolean
+    get() {
+        val type = this.lowerBoundIfFlexible()
+        if (type.isNullable) return false
+        val classId = type.classId ?: return false
+        return classId == StandardClassIds.Unit
+    }

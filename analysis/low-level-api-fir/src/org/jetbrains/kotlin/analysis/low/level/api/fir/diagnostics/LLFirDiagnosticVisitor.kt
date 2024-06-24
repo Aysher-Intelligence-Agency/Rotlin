@@ -10,21 +10,17 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbol
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkCanceled
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.forEachDeclaration
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.utils.printer.parentsOfType
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContextForProvider
 import org.jetbrains.kotlin.fir.analysis.collectors.CheckerRunningDiagnosticCollectorVisitor
 import org.jetbrains.kotlin.fir.analysis.collectors.DiagnosticCollectorComponents
-import org.jetbrains.kotlin.fir.declarations.FirCodeFragment
-import org.jetbrains.kotlin.fir.declarations.FirDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirFile
-import org.jetbrains.kotlin.fir.declarations.FirRegularClass
-import org.jetbrains.kotlin.fir.declarations.FirScript
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.utils.exceptions.shouldIjPlatformExceptionBeRethrown
+import org.jetbrains.kotlin.utils.exceptions.rethrowIntellijPlatformExceptionIfNeeded
 
 internal open class LLFirDiagnosticVisitor(
     context: CheckerContextForProvider,
@@ -73,7 +69,7 @@ internal open class LLFirDiagnosticVisitor(
             }
 
             val project = contextElement.project
-            val module = ProjectStructureProvider.getModule(project, contextElement, contextualModule = null)
+            val module = KotlinProjectStructureProvider.getModule(project, contextElement, useSiteModule = null)
             val resolveSession = module.getFirResolveSession(project)
 
             // Register containing declarations of a context element
@@ -140,7 +136,7 @@ private inline fun suppressAndLogExceptions(block: () -> Unit) {
     try {
         block()
     } catch (e: Throwable) {
-        if (shouldIjPlatformExceptionBeRethrown(e)) throw e
+        rethrowIntellijPlatformExceptionIfNeeded(e)
 
         logger.error(e)
     }

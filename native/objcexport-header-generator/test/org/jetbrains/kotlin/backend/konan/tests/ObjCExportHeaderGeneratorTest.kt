@@ -5,13 +5,12 @@
 
 package org.jetbrains.kotlin.backend.konan.tests
 
-import org.jetbrains.kotlin.backend.konan.testUtils.HeaderGenerator
+import org.jetbrains.kotlin.backend.konan.testUtils.*
 import org.jetbrains.kotlin.backend.konan.testUtils.HeaderGenerator.Configuration
-import org.jetbrains.kotlin.backend.konan.testUtils.TodoAnalysisApi
-import org.jetbrains.kotlin.backend.konan.testUtils.headersTestDataDir
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.junit.jupiter.api.Test
 import java.io.File
+import kotlin.reflect.KTypeProjection
 import kotlin.test.fail
 
 /**
@@ -419,6 +418,40 @@ class ObjCExportHeaderGeneratorTest(private val generator: HeaderGenerator) {
     @Test
     fun `test - objectWithReservedName`() {
         doTest(headersTestDataDir.resolve("objectWithReservedName"))
+    }
+
+    /**
+     * Depends on unimplemented AA deprecation message: KT-67823
+     */
+    @Test
+    @TodoAnalysisApi
+    fun `test - deprecatedHidden`() {
+        doTest(headersTestDataDir.resolve("deprecatedHidden"))
+    }
+
+    @Test
+    fun `test - inlineClassWithNestedClass`() {
+        doTest(headersTestDataDir.resolve("inlineClassWithNestedClass"))
+    }
+
+    @Test
+    fun `test - privateTopLevelClassProperty`() {
+        doTest(headersTestDataDir.resolve("privateTopLevelClassProperty"))
+    }
+
+    /**
+     * Depends on unimplemented AA deprecation message: KT-67823
+     */
+    @Test
+    @TodoAnalysisApi
+    fun `test - deprecatedWarningAndError`() {
+        doTest(headersTestDataDir.resolve("deprecatedWarningAndError"))
+    }
+
+    @Test
+    fun `test - internalPublicApi`() {
+        KTypeProjection.Companion
+        doTest(headersTestDataDir.resolve("internalPublicApi"))
     }
 
     private fun doTest(root: File, configuration: Configuration = Configuration()) {

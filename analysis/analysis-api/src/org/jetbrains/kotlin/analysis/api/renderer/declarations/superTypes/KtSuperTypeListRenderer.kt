@@ -1,19 +1,21 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
+@KaExperimentalApi
 public interface KaSuperTypeListRenderer {
     public fun renderSuperTypes(
         analysisSession: KaSession,
-        symbol: KaClassOrObjectSymbol,
+        symbol: KaClassSymbol,
         declarationRenderer: KaDeclarationRenderer,
         printer: PrettyPrinter,
     )
@@ -21,7 +23,7 @@ public interface KaSuperTypeListRenderer {
     public object AS_LIST : KaSuperTypeListRenderer {
         override fun renderSuperTypes(
             analysisSession: KaSession,
-            symbol: KaClassOrObjectSymbol,
+            symbol: KaClassSymbol,
             declarationRenderer: KaDeclarationRenderer,
             printer: PrettyPrinter,
         ) {
@@ -39,4 +41,6 @@ public interface KaSuperTypeListRenderer {
     }
 }
 
+@KaExperimentalApi
+@Deprecated("Use 'KaSuperTypeListRenderer' instead", ReplaceWith("KaSuperTypeListRenderer"))
 public typealias KtSuperTypeListRenderer = KaSuperTypeListRenderer

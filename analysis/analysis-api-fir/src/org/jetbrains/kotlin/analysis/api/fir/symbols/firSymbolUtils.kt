@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8,15 +8,20 @@
 package org.jetbrains.kotlin.analysis.api.fir.symbols
 
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaInitializerValue
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.fir.KaSymbolByFirBuilder
 import org.jetbrains.kotlin.analysis.api.fir.utils.asKaInitializerValue
 import org.jetbrains.kotlin.analysis.api.impl.base.KaContextReceiverImpl
+import org.jetbrains.kotlin.analysis.api.impl.base.symbols.asKaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
 import org.jetbrains.kotlin.fir.references.impl.FirPropertyFromParameterResolvedNamedReference
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -38,7 +43,7 @@ internal fun FirCallableSymbol<*>.invalidModalityError(): Nothing {
 
 internal fun FirFunctionSymbol<*>.createKtValueParameters(builder: KaSymbolByFirBuilder): List<KaValueParameterSymbol> {
     return fir.valueParameters.map { valueParameter ->
-        builder.variableLikeBuilder.buildValueParameterSymbol(valueParameter.symbol)
+        builder.variableBuilder.buildValueParameterSymbol(valueParameter.symbol)
     }
 }
 
@@ -104,6 +109,7 @@ internal fun FirCallableSymbol<*>.dispatchReceiverType(
     return type?.let { builder.typeBuilder.buildKtType(it) }
 }
 
+@KaExperimentalApi
 internal fun FirVariableSymbol<*>.getKtConstantInitializer(builder: KaSymbolByFirBuilder): KaInitializerValue? {
     // to avoid lazy resolve
     if (fir.initializer == null) return null
@@ -125,3 +131,10 @@ internal fun FirVariableSymbol<*>.getKtConstantInitializer(builder: KaSymbolByFi
 
     return firInitializer.asKaInitializerValue(builder, parentIsAnnotation)
 }
+
+internal val FirBasedSymbol<*>.kaSymbolModality: KaSymbolModality
+    get() = when (this) {
+        is FirCallableSymbol<*> -> modality
+        is FirClassLikeSymbol<*> -> modality
+        else -> Modality.FINAL
+    }.asKaSymbolModality

@@ -5,13 +5,14 @@
 
 package org.jetbrains.kotlin.analysis.api.resolution
 
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.validityAsserted
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KaVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 
 /**
@@ -19,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
  * properties, the missing information is the type of access (read, write, or compound access) to this property. For functions, the missing
  * information is the value arguments for the call.
  */
-public class KaPartiallyAppliedSymbol<out S : KaCallableSymbol, out C : KaCallableSignature<S>>(
+public class KaPartiallyAppliedSymbol<out S : KaCallableSymbol, out C : KaCallableSignature<S>> @KaImplementationDetail constructor(
     signature: C,
     dispatchReceiver: KaReceiverValue?,
     extensionReceiver: KaReceiverValue?,
@@ -46,6 +47,6 @@ public class KaPartiallyAppliedSymbol<out S : KaCallableSymbol, out C : KaCallab
 
 public val <S : KaCallableSymbol, C : KaCallableSignature<S>> KaPartiallyAppliedSymbol<S, C>.symbol: S get() = signature.symbol
 
-public typealias KaPartiallyAppliedFunctionSymbol<S> = KaPartiallyAppliedSymbol<S, KaFunctionLikeSignature<S>>
+public typealias KaPartiallyAppliedFunctionSymbol<S> = KaPartiallyAppliedSymbol<S, KaFunctionSignature<S>>
 
-public typealias KaPartiallyAppliedVariableSymbol<S> = KaPartiallyAppliedSymbol<S, KaVariableLikeSignature<S>>
+public typealias KaPartiallyAppliedVariableSymbol<S> = KaPartiallyAppliedSymbol<S, KaVariableSignature<S>>

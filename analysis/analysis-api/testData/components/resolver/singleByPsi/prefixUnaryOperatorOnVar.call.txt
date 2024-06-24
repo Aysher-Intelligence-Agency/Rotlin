@@ -1,6 +1,6 @@
 KtPrefixExpression(31,34): '++i'
   KaSuccessCallInfo:
-    call = KaCompoundVariableAccessCall:
+    call = KaCompoundVariableAccessCallImpl:
       compoundAccess = IncOrDecOperation:
         kind = INC
         precedence = PREFIX
@@ -10,19 +10,18 @@ KtPrefixExpression(31,34): '++i'
             isSafeNavigation = false
             type = kotlin.Int
           extensionReceiver = null
-          signature = KaFunctionLikeSignature:
+          signature = KaFunctionSignature:
             receiverType = null
             returnType = kotlin.Int
             symbol = kotlin/Int.inc(<dispatch receiver>: kotlin.Int): kotlin.Int
             valueParameters = []
             callableId = kotlin/Int.inc
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+      variablePartiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaVariableLikeSignature:
+        signature = KaVariableSignature:
           name = i
           receiverType = null
           returnType = kotlin.Int
           symbol = var i: kotlin.Int
           callableId = null
-      typeArgumentsMapping = {}

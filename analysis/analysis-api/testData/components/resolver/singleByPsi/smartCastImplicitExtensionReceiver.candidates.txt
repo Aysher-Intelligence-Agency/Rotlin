@@ -6,15 +6,16 @@ KtCallExpression(51,56): 'foo()'
         dispatchReceiver = null
         extensionReceiver = KaImplicitReceiverValue:
           symbol = KaReceiverParameterSymbol:
-            annotationsList: []
+            annotations: []
+            location: LOCAL
             origin: SOURCE
-            owningCallableSymbol: KaFunctionSymbol(/test)
+            owningCallableSymbol: KaNamedFunctionSymbol(/test)
             type: KaUsualClassType:
-              annotationsList: []
+              annotations: []
               typeArguments: []
               type: kotlin/Any
           type = kotlin.String
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = kotlin.String
           returnType = kotlin.Unit
           symbol = /foo(<extension receiver>: kotlin.String): kotlin.Unit

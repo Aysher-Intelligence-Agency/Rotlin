@@ -256,7 +256,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.INVISIBLE_SETTER) { firDiagnostic ->
         InvisibleSetterImpl(
-            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a),
+            firSymbolBuilder.variableBuilder.buildVariableSymbol(firDiagnostic.a),
             firDiagnostic.b,
             firDiagnostic.c,
             firDiagnostic as KtPsiDiagnostic,
@@ -288,8 +288,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.SINGLE_DOLLAR_INTERPOLATION_PREFIX) { firDiagnostic ->
-        SingleDollarInterpolationPrefixImpl(
+    add(FirErrors.REDUNDANT_INTERPOLATION_PREFIX) { firDiagnostic ->
+        RedundantInterpolationPrefixImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -313,6 +313,18 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.UNRESOLVED_LABEL) { firDiagnostic ->
         UnresolvedLabelImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.AMBIGUOUS_LABEL) { firDiagnostic ->
+        AmbiguousLabelImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.LABEL_NAME_CLASH) { firDiagnostic ->
+        LabelNameClashImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -1720,7 +1732,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.OPERATOR_MODIFIER_REQUIRED) { firDiagnostic ->
         OperatorModifierRequiredImpl(
-            firSymbolBuilder.functionLikeBuilder.buildFunctionSymbol(firDiagnostic.a),
+            firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.a),
             firDiagnostic.b,
             firDiagnostic as KtPsiDiagnostic,
             token,
@@ -1735,7 +1747,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.INFIX_MODIFIER_REQUIRED) { firDiagnostic ->
         InfixModifierRequiredImpl(
-            firSymbolBuilder.functionLikeBuilder.buildFunctionSymbol(firDiagnostic.a),
+            firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -2227,6 +2239,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.CONTEXT_RECEIVERS_DEPRECATED) { firDiagnostic ->
+        ContextReceiversDeprecatedImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.RECURSION_IN_IMPLICIT_TYPES) { firDiagnostic ->
         RecursionInImplicitTypesImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -2649,6 +2667,14 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             firDiagnostic.b.source!!.psi as KtExpression,
             firDiagnostic.c,
             firDiagnostic.d,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.DEPRECATED_SMARTCAST_ON_DELEGATED_PROPERTY) { firDiagnostic ->
+        DeprecatedSmartcastOnDelegatedPropertyImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.b),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -3301,8 +3327,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.VALUE_PARAMETER_WITH_NO_TYPE_ANNOTATION) { firDiagnostic ->
-        ValueParameterWithNoTypeAnnotationImpl(
+    add(FirErrors.VALUE_PARAMETER_WITHOUT_EXPLICIT_TYPE) { firDiagnostic ->
+        ValueParameterWithoutExplicitTypeImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -3905,7 +3931,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
         DefaultArgumentsInExpectActualizedByFakeOverrideImpl(
             firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.a),
             firDiagnostic.b.map { firNamedFunctionSymbol ->
-                firSymbolBuilder.functionLikeBuilder.buildFunctionSymbol(firNamedFunctionSymbol)
+                firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firNamedFunctionSymbol)
             },
             firDiagnostic as KtPsiDiagnostic,
             token,
@@ -4058,7 +4084,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.UNINITIALIZED_VARIABLE) { firDiagnostic ->
         UninitializedVariableImpl(
-            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a),
+            firSymbolBuilder.variableBuilder.buildVariableSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -4086,49 +4112,49 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.VAL_REASSIGNMENT) { firDiagnostic ->
         ValReassignmentImpl(
-            firSymbolBuilder.variableLikeBuilder.buildVariableLikeSymbol(firDiagnostic.a),
+            firSymbolBuilder.variableBuilder.buildVariableSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
     add(FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD.errorFactory) { firDiagnostic ->
         ValReassignmentViaBackingFieldErrorImpl(
-            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a.fir.propertySymbol),
+            firSymbolBuilder.variableBuilder.buildVariableSymbol(firDiagnostic.a.fir.propertySymbol),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
     add(FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD.warningFactory) { firDiagnostic ->
         ValReassignmentViaBackingFieldWarningImpl(
-            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a.fir.propertySymbol),
+            firSymbolBuilder.variableBuilder.buildVariableSymbol(firDiagnostic.a.fir.propertySymbol),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
     add(FirErrors.CAPTURED_VAL_INITIALIZATION) { firDiagnostic ->
         CapturedValInitializationImpl(
-            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a),
+            firSymbolBuilder.variableBuilder.buildVariableSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
     add(FirErrors.CAPTURED_MEMBER_VAL_INITIALIZATION) { firDiagnostic ->
         CapturedMemberValInitializationImpl(
-            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a),
+            firSymbolBuilder.variableBuilder.buildVariableSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
     add(FirErrors.NON_INLINE_MEMBER_VAL_INITIALIZATION) { firDiagnostic ->
         NonInlineMemberValInitializationImpl(
-            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a),
+            firSymbolBuilder.variableBuilder.buildVariableSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
     add(FirErrors.SETTER_PROJECTED_OUT) { firDiagnostic ->
         SetterProjectedOutImpl(
-            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a),
+            firSymbolBuilder.variableBuilder.buildVariableSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -4657,7 +4683,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.ASSIGNMENT_OPERATOR_SHOULD_RETURN_UNIT) { firDiagnostic ->
         AssignmentOperatorShouldReturnUnitImpl(
-            firSymbolBuilder.functionLikeBuilder.buildFunctionSymbol(firDiagnostic.a),
+            firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.a),
             firDiagnostic.b,
             firDiagnostic as KtPsiDiagnostic,
             token,
@@ -4904,6 +4930,18 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
         NonPublicCallFromPublicInlineDeprecationImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
             firSymbolBuilder.buildSymbol(firDiagnostic.b),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.NON_PUBLIC_DATA_COPY_CALL_FROM_PUBLIC_INLINE.errorFactory) { firDiagnostic ->
+        NonPublicDataCopyCallFromPublicInlineErrorImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.NON_PUBLIC_DATA_COPY_CALL_FROM_PUBLIC_INLINE.warningFactory) { firDiagnostic ->
+        NonPublicDataCopyCallFromPublicInlineWarningImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -5330,9 +5368,9 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirJvmErrors.ACCIDENTAL_OVERRIDE_CLASH_BY_JVM_SIGNATURE) { firDiagnostic ->
         AccidentalOverrideClashByJvmSignatureImpl(
-            firSymbolBuilder.functionLikeBuilder.buildFunctionSymbol(firDiagnostic.a),
+            firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.a),
             firDiagnostic.b,
-            firSymbolBuilder.functionLikeBuilder.buildFunctionSymbol(firDiagnostic.c),
+            firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.c),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -5812,7 +5850,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirJvmErrors.SYNTHETIC_PROPERTY_WITHOUT_JAVA_ORIGIN) { firDiagnostic ->
         SyntheticPropertyWithoutJavaOriginImpl(
-            firSymbolBuilder.functionLikeBuilder.buildFunctionSymbol(firDiagnostic.a),
+            firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.a),
             firDiagnostic.b,
             firDiagnostic as KtPsiDiagnostic,
             token,
@@ -5820,7 +5858,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirJvmErrors.JAVA_FIELD_SHADOWED_BY_KOTLIN_PROPERTY) { firDiagnostic ->
         JavaFieldShadowedByKotlinPropertyImpl(
-            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a),
+            firSymbolBuilder.variableBuilder.buildVariableSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -5839,7 +5877,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirJsErrors.OVERRIDING_EXTERNAL_FUN_WITH_OPTIONAL_PARAMS_WITH_FAKE) { firDiagnostic ->
         OverridingExternalFunWithOptionalParamsWithFakeImpl(
-            firSymbolBuilder.functionLikeBuilder.buildFunctionSymbol(firDiagnostic.a),
+            firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

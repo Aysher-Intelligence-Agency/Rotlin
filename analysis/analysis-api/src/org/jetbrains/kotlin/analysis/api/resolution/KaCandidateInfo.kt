@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.analysis.api.resolution
 
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
@@ -30,24 +31,26 @@ public sealed class KaCallCandidateInfo(
     public val isInBestCandidates: Boolean by validityAsserted(isInBestCandidates)
 }
 
+@Deprecated("Use 'KaCallCandidateInfo' instead", ReplaceWith("KaCallCandidateInfo"))
 public typealias KtCallCandidateInfo = KaCallCandidateInfo
 
 /**
  * A candidate that is applicable for a call. A candidate is applicable if the call's arguments are complete and are assignable to the
  * candidate's parameters, AND the call's type arguments are complete and fit all the constraints of the candidate's type parameters.
  */
-public class KaApplicableCallCandidateInfo(
+public class KaApplicableCallCandidateInfo @KaImplementationDetail constructor(
     candidate: KaCall,
     isInBestCandidates: Boolean,
 ) : KaCallCandidateInfo(candidate, isInBestCandidates)
 
+@Deprecated("Use 'KaApplicableCallCandidateInfo' instead", ReplaceWith("KaApplicableCallCandidateInfo"))
 public typealias KtApplicableCallCandidateInfo = KaApplicableCallCandidateInfo
 
 /**
  * A candidate that is NOT applicable for a call. A candidate is inapplicable if a call argument is missing or is not assignable to the
  * candidate's parameters, OR a call type argument is missing or does not fit the constraints of the candidate's type parameters.
  */
-public class KaInapplicableCallCandidateInfo(
+public class KaInapplicableCallCandidateInfo @KaImplementationDetail constructor(
     candidate: KaCall,
     isInBestCandidates: Boolean,
     diagnostic: KaDiagnostic,

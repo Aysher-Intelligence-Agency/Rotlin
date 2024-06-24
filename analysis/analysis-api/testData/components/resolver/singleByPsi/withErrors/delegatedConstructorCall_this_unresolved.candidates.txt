@@ -1,23 +1,23 @@
 KtConstructorDelegationCall(115,132): 'this(i, j, i * j)'
   KaInapplicableCallCandidateInfo:
-    diagnostic = ERROR<TOO_MANY_ARGUMENTS: Too many arguments for 'public constructor(i: kotlin/Int, j: kotlin/Int): Sub'.>
+    diagnostic = ERROR<TOO_MANY_ARGUMENTS: Too many arguments for 'constructor(i: Int, j: Int): Sub'.>
     candidate = KaDelegatedConstructorCall:
       kind = THIS_CALL
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = Sub
           symbol = <constructor>(i: kotlin.Int, j: kotlin.Int): Sub
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = i
               receiverType = null
               returnType = kotlin.Int
               symbol = i: kotlin.Int
               callableId = null,
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = j
               receiverType = null
               returnType = kotlin.Int
@@ -30,18 +30,18 @@ KtConstructorDelegationCall(115,132): 'this(i, j, i * j)'
     isInBestCandidates = true
   
   KaInapplicableCallCandidateInfo:
-    diagnostic = ERROR<TOO_MANY_ARGUMENTS: Too many arguments for 'public constructor(p: kotlin/Int): Sub'.>
+    diagnostic = ERROR<TOO_MANY_ARGUMENTS: Too many arguments for 'constructor(p: Int): Sub'.>
     candidate = KaDelegatedConstructorCall:
       kind = THIS_CALL
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = Sub
           symbol = <constructor>(p: kotlin.Int): Sub
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = p
               receiverType = null
               returnType = kotlin.Int

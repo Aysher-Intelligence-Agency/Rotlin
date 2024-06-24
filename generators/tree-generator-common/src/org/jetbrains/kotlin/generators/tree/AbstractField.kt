@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.generators.tree
 import org.jetbrains.kotlin.generators.tree.imports.Importable
 
 abstract class AbstractField<Field : AbstractField<Field>> {
-    abstract val origin: Field
 
     abstract val name: String
 
@@ -92,6 +91,7 @@ abstract class AbstractField<Field : AbstractField<Field>> {
 
     open fun updatePropertiesFromOverriddenFields(parentFields: List<Field>) {
         overriddenFields += parentFields
+        isMutable = isMutable || parentFields.any { it.isMutable }
     }
 
     override fun toString(): String {

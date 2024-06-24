@@ -6,8 +6,8 @@
 package org.jetbrains.kotlin.analysis.api.fir.types
 
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
-import org.jetbrains.kotlin.analysis.api.KaTypeProjection
-import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationsList
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationList
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.fir.KaSymbolByFirBuilder
 import org.jetbrains.kotlin.analysis.api.fir.annotations.KaFirAnnotationListForType
@@ -17,11 +17,7 @@ import org.jetbrains.kotlin.analysis.api.impl.base.KaContextReceiverImpl
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
@@ -30,7 +26,7 @@ import org.jetbrains.kotlin.name.ClassId
 internal class KaFirFunctionalType(
     override val coneType: ConeClassLikeTypeImpl,
     private val builder: KaSymbolByFirBuilder,
-) : KaFunctionalType(), KaFirType {
+) : KaFunctionType(), KaFirType {
     override val token: KaLifetimeToken get() = builder.token
 
     override val classId: ClassId get() = withValidityAssertion { coneType.lookupTag.classId }
@@ -41,11 +37,11 @@ internal class KaFirFunctionalType(
     }
     override val typeArguments: List<KaTypeProjection> get() = withValidityAssertion { qualifiers.last().typeArguments }
 
-    override val qualifiers: List<KaClassTypeQualifier.KaResolvedClassTypeQualifier> by cached {
+    override val qualifiers: List<KaResolvedClassTypeQualifier> by cached {
         UsualClassTypeQualifierBuilder.buildQualifiers(coneType, builder)
     }
 
-    override val annotationsList: KaAnnotationsList by cached {
+    override val annotations: KaAnnotationList by cached {
         KaFirAnnotationListForType.create(coneType, builder)
     }
 
@@ -61,6 +57,7 @@ internal class KaFirFunctionalType(
 
     override val arity: Int get() = withValidityAssertion { parameterTypes.size }
 
+    @KaExperimentalApi
     @OptIn(KaAnalysisApiInternals::class)
     override val contextReceivers: List<KaContextReceiver> by cached {
         coneType.contextReceiversTypes(builder.rootSession)
@@ -70,6 +67,7 @@ internal class KaFirFunctionalType(
             }
     }
 
+    @KaExperimentalApi
     override val hasContextReceivers: Boolean get() = withValidityAssertion { contextReceivers.isNotEmpty() }
 
     override val receiverType: KaType? by cached {

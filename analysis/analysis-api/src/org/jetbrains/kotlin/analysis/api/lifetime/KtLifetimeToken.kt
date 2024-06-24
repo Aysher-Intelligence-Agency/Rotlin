@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.analysis.api.lifetime
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import kotlin.reflect.KClass
 
 public abstract class KaLifetimeToken {
@@ -19,6 +20,7 @@ public abstract class KaLifetimeToken {
     public abstract fun getInaccessibilityReason(): String
 }
 
+@Deprecated("Use 'KaLifetimeToken' instead", ReplaceWith("KaLifetimeToken"))
 public typealias KtLifetimeToken = KaLifetimeToken
 
 public abstract class KaLifetimeTokenFactory {
@@ -27,8 +29,10 @@ public abstract class KaLifetimeTokenFactory {
     public abstract fun create(project: Project, modificationTracker: ModificationTracker): KaLifetimeToken
 }
 
+@Deprecated("Use 'KaLifetimeTokenFactory' instead", ReplaceWith("KaLifetimeTokenFactory"))
 public typealias KtLifetimeTokenFactory = KaLifetimeTokenFactory
 
+@OptIn(KaImplementationDetail::class)
 @Suppress("NOTHING_TO_INLINE")
 public inline fun KaLifetimeToken.assertIsValidAndAccessible() {
     if (!isValid()) {
@@ -39,14 +43,23 @@ public inline fun KaLifetimeToken.assertIsValidAndAccessible() {
     }
 }
 
+@KaImplementationDetail
 public abstract class KaIllegalLifetimeOwnerAccessException : IllegalStateException()
 
+@Deprecated("Use 'KaIllegalLifetimeOwnerAccessException' instead", ReplaceWith("KaIllegalLifetimeOwnerAccessException"))
+@KaImplementationDetail
 public typealias KtIllegalLifetimeOwnerAccessException = KaIllegalLifetimeOwnerAccessException
 
+@KaImplementationDetail
 public class KaInvalidLifetimeOwnerAccessException(override val message: String) : KaIllegalLifetimeOwnerAccessException()
 
+@Deprecated("Use 'KaInvalidLifetimeOwnerAccessException' instead", ReplaceWith("KaInvalidLifetimeOwnerAccessException"))
+@KaImplementationDetail
 public typealias KtInvalidLifetimeOwnerAccessException = KaInvalidLifetimeOwnerAccessException
 
+@KaImplementationDetail
 public class KaInaccessibleLifetimeOwnerAccessException(override val message: String) : KaIllegalLifetimeOwnerAccessException()
 
+@Deprecated("Use 'KaInaccessibleLifetimeOwnerAccessException' instead", ReplaceWith("KaInaccessibleLifetimeOwnerAccessException"))
+@KaImplementationDetail
 public typealias KtInaccessibleLifetimeOwnerAccessException = KaInaccessibleLifetimeOwnerAccessException

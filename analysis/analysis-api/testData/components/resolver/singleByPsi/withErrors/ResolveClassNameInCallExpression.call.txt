@@ -6,7 +6,7 @@ KtNameReferenceExpression(327,331): 'Test'
         partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
           dispatchReceiver = null
           extensionReceiver = null
-          signature = KaFunctionLikeSignature:
+          signature = KaFunctionSignature:
             receiverType = null
             returnType = Test<T>
             symbol = <constructor>(): Test<T>
@@ -17,4 +17,4 @@ KtNameReferenceExpression(327,331): 'Test'
         }
         argumentMapping = {}
     ]
-    diagnostic = ERROR<null: Inapplicable candidate>
+    diagnostic = ERROR<OTHER_ERROR: Inapplicable candidate>

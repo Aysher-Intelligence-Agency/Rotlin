@@ -13,23 +13,6 @@ sealed class Field(
     override val name: String,
     override var isMutable: Boolean,
 ) : AbstractField<Field>() {
-    sealed class UseFieldAsParameterInIrFactoryStrategy {
-
-        data object No : UseFieldAsParameterInIrFactoryStrategy()
-
-        data class Yes(val customType: TypeRef?, val defaultValue: String?) : UseFieldAsParameterInIrFactoryStrategy()
-    }
-
-    var customUseInIrFactoryStrategy: UseFieldAsParameterInIrFactoryStrategy? = null
-
-    val useInIrFactoryStrategy: UseFieldAsParameterInIrFactoryStrategy
-        get() = customUseInIrFactoryStrategy
-            ?: if (isChild && containsElement) {
-                UseFieldAsParameterInIrFactoryStrategy.No
-            } else {
-                UseFieldAsParameterInIrFactoryStrategy.Yes(null, null)
-            }
-
     abstract val symbolClass: Symbol?
 
     override var defaultValueInBuilder: String?
@@ -38,22 +21,18 @@ sealed class Field(
 
     override var customSetter: String? = null
 
-    override val origin: Field
-        get() = this
-
     override fun toString() = "$name: $typeRef"
 
     override var isFinal: Boolean = false
 
     override fun updateFieldsInCopy(copy: Field) {
         super.updateFieldsInCopy(copy)
-        copy.customUseInIrFactoryStrategy = customUseInIrFactoryStrategy
         copy.customSetter = customSetter
         copy.symbolFieldRole = symbolFieldRole
     }
 }
 
-class SingleField(
+class SimpleField(
     name: String,
     override var typeRef: TypeRefWithNullability,
     mutable: Boolean,
@@ -70,7 +49,7 @@ class SingleField(
         typeRef = typeRef.substitute(map) as TypeRefWithNullability
     }
 
-    override fun internalCopy() = SingleField(name, typeRef, isMutable, isChild)
+    override fun internalCopy() = SimpleField(name, typeRef, isMutable, isChild)
 }
 
 class ListField(

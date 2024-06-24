@@ -1,6 +1,6 @@
 KtNameReferenceExpression(93,99): 'action'
   KaInapplicableCallCandidateInfo:
-    diagnostic = ERROR<null: UNSAFE_CALL_ERROR with invoke>
+    diagnostic = ERROR<UNRESOLVED_REFERENCE: UNSAFE_CALL_ERROR with invoke>
     candidate = KaSimpleVariableAccessCall:
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = KaExplicitReceiverValue:
@@ -8,7 +8,7 @@ KtNameReferenceExpression(93,99): 'action'
           isSafeNavigation = true
           type = test.Foo?
         extensionReceiver = null
-        signature = KaVariableLikeSignature:
+        signature = KaVariableSignature:
           name = action
           receiverType = null
           returnType = kotlin.Function0<kotlin.Unit>

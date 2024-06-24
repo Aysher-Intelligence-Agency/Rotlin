@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -12,12 +12,16 @@ import org.jetbrains.kotlin.analysis.api.descriptors.KaFe10Session
 import org.jetbrains.kotlin.analysis.api.descriptors.components.base.KaFe10SessionComponent
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.getSymbolDescriptor
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.getResolutionScope
-import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KaSessionComponent
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFileSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilityUtils.isVisible
-import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilityUtils.isVisibleWithAnyReceiver
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiUtil
@@ -30,18 +34,15 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
 
 internal class KaFe10VisibilityChecker(
-    override val analysisSession: KaFe10Session
-) : KaVisibilityChecker(), KaFe10SessionComponent {
-    override val token: KaLifetimeToken
-        get() = analysisSession.token
-
+    override val analysisSessionProvider: () -> KaFe10Session
+) : KaSessionComponent<KaFe10Session>(), KaVisibilityChecker, KaFe10SessionComponent {
     override fun isVisible(
-        candidateSymbol: KaSymbolWithVisibility,
+        candidateSymbol: KaDeclarationSymbol,
         useSiteFile: KaFileSymbol,
-        position: PsiElement,
-        receiverExpression: KtExpression?
-    ): Boolean {
-        if (candidateSymbol.visibility == Visibilities.Public) {
+        receiverExpression: KtExpression?,
+        position: PsiElement
+    ): Boolean = withValidityAssertion {
+        if (candidateSymbol.visibility == KaSymbolVisibility.PUBLIC) {
             return true
         }
 
@@ -75,7 +76,13 @@ internal class KaFe10VisibilityChecker(
         return false
     }
 
-    override fun isPublicApi(symbol: KaSymbolWithVisibility): Boolean {
+    override fun KaCallableSymbol.isVisibleInClass(classSymbol: KaClassSymbol): Boolean = withValidityAssertion {
+        val memberDescriptor = getSymbolDescriptor(this) as? DeclarationDescriptorWithVisibility ?: return false
+        val classDescriptor = getSymbolDescriptor(classSymbol) ?: return false
+        return isVisibleWithAnyReceiver(memberDescriptor, classDescriptor, analysisSession.analysisContext.languageVersionSettings)
+    }
+
+    override fun isPublicApi(symbol: KaDeclarationSymbol): Boolean = withValidityAssertion {
         val descriptor = getSymbolDescriptor(symbol) as? DeclarationDescriptorWithVisibility ?: return false
         return descriptor.isEffectivelyPublicApi || descriptor.isPublishedApi()
     }

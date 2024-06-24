@@ -146,6 +146,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
   }
 
   @Test
+  @TestMetadata("delegationToExpectInterfacesWithClashingScopes.kt")
+  public void testDelegationToExpectInterfacesWithClashingScopes() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/delegationToExpectInterfacesWithClashingScopes.kt");
+  }
+
+  @Test
   @TestMetadata("expectAbstractToString.kt")
   public void testExpectAbstractToString() {
     runTest("compiler/testData/diagnostics/tests/multiplatform/expectAbstractToString.kt");
@@ -386,6 +392,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
   }
 
   @Test
+  @TestMetadata("overloadsWithPotentialRecursion.kt")
+  public void testOverloadsWithPotentialRecursion() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/overloadsWithPotentialRecursion.kt");
+  }
+
+  @Test
   @TestMetadata("packageConflictsWithClassifierInMultiplatform.kt")
   public void testPackageConflictsWithClassifierInMultiplatform() {
     runTest("compiler/testData/diagnostics/tests/multiplatform/packageConflictsWithClassifierInMultiplatform.kt");
@@ -461,6 +473,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
   @TestMetadata("typeResolutionOfNestedClassActualizedViaTypealias.kt")
   public void testTypeResolutionOfNestedClassActualizedViaTypealias() {
     runTest("compiler/testData/diagnostics/tests/multiplatform/typeResolutionOfNestedClassActualizedViaTypealias.kt");
+  }
+
+  @Test
+  @TestMetadata("valueClassWithPrivateConstructor.kt")
+  public void testValueClassWithPrivateConstructor() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/valueClassWithPrivateConstructor.kt");
   }
 
   @Test

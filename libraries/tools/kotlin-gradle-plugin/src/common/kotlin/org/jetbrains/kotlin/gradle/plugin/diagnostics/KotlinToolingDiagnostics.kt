@@ -944,14 +944,6 @@ object KotlinToolingDiagnostics {
         }
     }
 
-    object WasmStabilityWarning : ToolingDiagnosticFactory(WARNING) {
-        operator fun invoke(): ToolingDiagnostic =
-            build(
-                "New 'wasm' target is Work-in-Progress and is subject to change without notice. " +
-                        "Please report encountered issues to https://kotl.in/issue"
-            )
-    }
-
     object RedundantDependsOnEdgesFound : ToolingDiagnosticFactory(WARNING) {
         data class RedundantEdge(val from: String, val to: String)
 
@@ -976,6 +968,24 @@ object KotlinToolingDiagnostics {
             build(
                 "The Compose compiler plugin is now a part of Kotlin, please apply the 'org.jetbrains.kotlin.plugin.compose' Gradle plugin " +
                         "to enable it. Learn more about this at https://kotl.in/compose-plugin"
+            )
+    }
+
+    object DeprecatedKotlinAbiSnapshotDiagnostic : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(): ToolingDiagnostic =
+            build(
+                "'${PropertiesProvider.PropertyNames.KOTLIN_ABI_SNAPSHOT}' property is deprecated and will be removed soon.\n" +
+                        "By default this type of incremental compilation will not be supported.\n" +
+                        "Please remove '${PropertiesProvider.PropertyNames.KOTLIN_ABI_SNAPSHOT}' usages from 'gradle.properties' file.\n"
+            )
+    }
+
+    object DeprecatedJvmHistoryBasedIncrementalCompilationDiagnostic : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(): ToolingDiagnostic =
+            build(
+                "History based incremental compilation approach for JVM platform is deprecated and will be removed" +
+                        " soon in favor of approach based on ABI snapshots.\n" +
+                        "Please remove '${PropertiesProvider.PropertyNames.KOTLIN_INCREMENTAL_USE_CLASSPATH_SNAPSHOT}=false' from 'gradle.properties' file."
             )
     }
 }

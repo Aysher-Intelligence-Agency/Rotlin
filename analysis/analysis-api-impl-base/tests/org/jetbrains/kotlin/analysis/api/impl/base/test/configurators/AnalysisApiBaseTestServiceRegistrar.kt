@@ -27,15 +27,15 @@ import org.jetbrains.kotlin.analysis.api.standalone.base.modification.KotlinStan
 import org.jetbrains.kotlin.analysis.api.standalone.base.modification.KotlinStandaloneModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.standalone.base.packages.KotlinStandalonePackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.standalone.base.packages.KotlinStandalonePackageProviderMerger
-import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.StandaloneProjectFactory
+import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.StandaloneProjectFactory
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.ClsJavaStubByVirtualFileCache
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
 import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
-import org.jetbrains.kotlin.analysis.project.structure.KtBinaryModule
-import org.jetbrains.kotlin.analysis.test.framework.project.structure.ktTestModuleStructure
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.test.framework.projectStructure.ktTestModuleStructure
 import org.jetbrains.kotlin.analysis.test.framework.services.configuration.AnalysisApiBinaryLibraryIndexingMode
 import org.jetbrains.kotlin.analysis.test.framework.services.configuration.libraryIndexingConfiguration
 import org.jetbrains.kotlin.analysis.test.framework.services.environmentManager
@@ -91,22 +91,22 @@ object AnalysisApiBaseTestServiceRegistrar : AnalysisApiTestServiceRegistrar() {
         // additionally build and index stubs for the library.
         val mainBinaryModules = moduleStructure.mainModules
             .filter { it.moduleKind == TestModuleKind.LibraryBinary }
-            .map { it.ktModule as KtBinaryModule }
+            .map { it.ktModule as KaLibraryModule }
 
         val sharedBinaryDependencies = moduleStructure.binaryModules.toMutableSet()
         for (mainModule in moduleStructure.mainModules) {
             val ktModule = mainModule.ktModule
-            if (ktModule !is KtBinaryModule) continue
+            if (ktModule !is KaLibraryModule) continue
             sharedBinaryDependencies -= ktModule
         }
 
         val mainBinaryRoots = StandaloneProjectFactory.getVirtualFilesForLibraryRoots(
-            mainBinaryModules.flatMap { it.getBinaryRoots() },
+            mainBinaryModules.flatMap { it.binaryRoots },
             testServices.environmentManager.getProjectEnvironment(),
         ).distinct()
 
         val sharedBinaryRoots = StandaloneProjectFactory.getVirtualFilesForLibraryRoots(
-            sharedBinaryDependencies.flatMap { binary -> binary.getBinaryRoots() },
+            sharedBinaryDependencies.flatMap { binary -> binary.binaryRoots },
             testServices.environmentManager.getProjectEnvironment()
         ).distinct()
 

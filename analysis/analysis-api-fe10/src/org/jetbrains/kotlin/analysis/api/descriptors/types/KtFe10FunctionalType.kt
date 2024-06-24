@@ -6,10 +6,10 @@
 package org.jetbrains.kotlin.analysis.api.descriptors.types
 
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
-import org.jetbrains.kotlin.analysis.api.KaTypeProjection
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisContext
-import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.KaFe10DescNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.KaFe10DescNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.ktNullability
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.toKaClassSymbol
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.toKtType
@@ -18,13 +18,10 @@ import org.jetbrains.kotlin.analysis.api.descriptors.types.base.KaFe10Type
 import org.jetbrains.kotlin.analysis.api.descriptors.types.base.renderForDebugging
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.KaFe10JvmTypeMapperContext
 import org.jetbrains.kotlin.analysis.api.impl.base.KaContextReceiverImpl
+import org.jetbrains.kotlin.analysis.api.impl.base.types.KaBaseResolvedClassTypeQualifier
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.*
 import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
 import org.jetbrains.kotlin.builtins.functions.isSuspendOrKSuspendFunction
@@ -35,20 +32,19 @@ internal class KaFe10FunctionalType(
     override val fe10Type: SimpleType,
     private val descriptor: FunctionClassDescriptor,
     override val analysisContext: Fe10AnalysisContext
-) : KaFunctionalType(), KaFe10Type {
+) : KaFunctionType(), KaFe10Type {
     override val nullability: KaTypeNullability
         get() = withValidityAssertion { fe10Type.ktNullability }
 
     override val abbreviatedType: KaUsualClassType?
         get() = withValidityAssertion { null }
 
-    override val qualifiers: List<KaClassTypeQualifier.KaResolvedClassTypeQualifier>
+    override val qualifiers: List<KaResolvedClassTypeQualifier>
         get() = withValidityAssertion {
             KaFe10JvmTypeMapperContext.getNestedType(fe10Type).allInnerTypes.map { innerType ->
-                KaClassTypeQualifier.KaResolvedClassTypeQualifier(
+                KaBaseResolvedClassTypeQualifier(
                     innerType.classDescriptor.toKaClassSymbol(analysisContext),
                     innerType.arguments.map { it.toKtTypeProjection(analysisContext) },
-                    token
                 )
             }
         }
@@ -62,10 +58,12 @@ internal class KaFe10FunctionalType(
     override val arity: Int
         get() = withValidityAssertion { descriptor.arity }
 
+    @KaExperimentalApi
     override val hasContextReceivers: Boolean
         get() = withValidityAssertion { fe10Type.contextFunctionTypeParamsCount() > 0 }
 
     @OptIn(KaAnalysisApiInternals::class)
+    @KaExperimentalApi
     override val contextReceivers: List<KaContextReceiver>
         get() = withValidityAssertion {
             fe10Type.getContextReceiverTypesFromFunctionType().map { receiverType ->
@@ -115,7 +113,7 @@ internal class KaFe10FunctionalType(
         }
 
     override val symbol: KaClassLikeSymbol
-        get() = withValidityAssertion { KaFe10DescNamedClassOrObjectSymbol(descriptor, analysisContext) }
+        get() = withValidityAssertion { KaFe10DescNamedClassSymbol(descriptor, analysisContext) }
 
     override val typeArguments: List<KaTypeProjection>
         get() = withValidityAssertion { fe10Type.arguments.map { it.toKtTypeProjection(analysisContext) } }

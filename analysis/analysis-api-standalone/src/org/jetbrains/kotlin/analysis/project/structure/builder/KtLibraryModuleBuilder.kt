@@ -5,26 +5,28 @@
 
 package org.jetbrains.kotlin.analysis.project.structure.builder
 
-import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.StandaloneProjectFactory
-import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
-import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
-import org.jetbrains.kotlin.analysis.project.structure.impl.KtLibraryModuleImpl
+import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.StandaloneProjectFactory
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.project.structure.impl.KaLibraryModuleImpl
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreProjectEnvironment
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
 @KtModuleBuilderDsl
-public class KtLibraryModuleBuilder(
+public open class KtLibraryModuleBuilder(
     private val kotlinCoreProjectEnvironment: KotlinCoreProjectEnvironment
 ) : KtBinaryModuleBuilder() {
     public lateinit var libraryName: String
-    public var librarySources: KtLibrarySourceModule? = null
+    public var librarySources: KaLibrarySourceModule? = null
 
-    override fun build(): KtLibraryModule {
+    override fun build(): KaLibraryModule = build(isSdk = false)
+
+    protected fun build(isSdk: Boolean): KaLibraryModule {
         val binaryRoots = getBinaryRoots()
         val contentScope = StandaloneProjectFactory.createSearchScopeByLibraryRoots(binaryRoots, kotlinCoreProjectEnvironment)
-        return KtLibraryModuleImpl(
+        return KaLibraryModuleImpl(
             directRegularDependencies,
             directDependsOnDependencies,
             directFriendDependencies,
@@ -34,12 +36,13 @@ public class KtLibraryModuleBuilder(
             binaryRoots,
             libraryName,
             librarySources,
+            isSdk,
         )
     }
 }
 
 @OptIn(ExperimentalContracts::class)
-public inline fun KtModuleProviderBuilder.buildKtLibraryModule(init: KtLibraryModuleBuilder.() -> Unit): KtLibraryModule {
+public inline fun KtModuleProviderBuilder.buildKtLibraryModule(init: KtLibraryModuleBuilder.() -> Unit): KaLibraryModule {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }

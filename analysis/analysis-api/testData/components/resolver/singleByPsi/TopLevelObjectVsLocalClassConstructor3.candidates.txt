@@ -1,12 +1,12 @@
 KtNameReferenceExpression(109,117): 'Conflict'
   KaInapplicableCallCandidateInfo:
-    diagnostic = ERROR<null: Inapplicable candidate>
+    diagnostic = ERROR<OTHER_ERROR: Inapplicable candidate>
     candidate = KaSimpleFunctionCall:
       isImplicitInvoke = false
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = test.Conflict
           symbol = <constructor>(): test.Conflict

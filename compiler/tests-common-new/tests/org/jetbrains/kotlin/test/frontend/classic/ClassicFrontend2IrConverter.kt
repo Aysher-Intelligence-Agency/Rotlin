@@ -119,7 +119,7 @@ class ClassicFrontend2IrConverter(
         )
 
         @OptIn(ObsoleteDescriptorBasedAPI::class)
-        return IrBackendInput.JsIrBackendInput(
+        return IrBackendInput.JsIrAfterFrontendBackendInput(
             moduleFragment,
             pluginContext,
             icData,
@@ -167,7 +167,7 @@ class ClassicFrontend2IrConverter(
         )
 
         @OptIn(ObsoleteDescriptorBasedAPI::class)
-        return IrBackendInput.WasmBackendInput(
+        return IrBackendInput.WasmAfterFrontendBackendInput(
             moduleFragment,
             pluginContext,
             icData,

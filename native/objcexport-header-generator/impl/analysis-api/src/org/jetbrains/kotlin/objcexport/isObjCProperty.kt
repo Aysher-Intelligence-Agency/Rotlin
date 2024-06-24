@@ -1,6 +1,11 @@
+/*
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
 package org.jetbrains.kotlin.objcexport
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.tooling.core.linearClosure
 
@@ -12,8 +17,9 @@ import org.jetbrains.kotlin.tooling.core.linearClosure
  *
  * See K1 [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportMapperKt.isObjCProperty]
  */
-context(KtAnalysisSession)
-internal val KtPropertySymbol.isObjCProperty: Boolean
+context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+internal val KaPropertySymbol.isObjCProperty: Boolean
     get() {
         val isMappedReceiver = receiverParameter?.type?.isMappedObjCType == true
         val hasReceiver = receiverParameter != null && !isExtension
@@ -21,7 +27,8 @@ internal val KtPropertySymbol.isObjCProperty: Boolean
         return !hasReceiver && !isPropertyInInnerClass
     }
 
-context(KtAnalysisSession)
-private val KtPropertySymbol.isPropertyInInnerClass: Boolean
-    get() = linearClosure<KtSymbol> { symbol -> symbol.getContainingSymbol() }
-        .any { it is KtNamedClassOrObjectSymbol && it.isInner }
+context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+private val KaPropertySymbol.isPropertyInInnerClass: Boolean
+    get() = linearClosure<KaSymbol> { symbol -> symbol.containingSymbol }
+        .any { it is KaNamedClassSymbol && it.isInner }

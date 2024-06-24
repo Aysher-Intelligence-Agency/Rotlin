@@ -6,21 +6,22 @@ KtNameReferenceExpression(183,194): 'suspendHere'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = KaImplicitReceiverValue:
           symbol = KaReceiverParameterSymbol:
-            annotationsList: []
+            annotations: []
+            location: LOCAL
             origin: SOURCE
             owningCallableSymbol: KaAnonymousFunctionSymbol(<local>/<no name provided>)
             type: KaUsualClassType:
-              annotationsList: []
+              annotations: []
               typeArguments: []
               type: Controller
           type = Controller
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = kotlin.Unit
           symbol = /Controller.suspendHere(<dispatch receiver>: Controller, x: ERROR CLASS: Symbol not found for Continuation): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = x
               receiverType = null
               returnType = ERROR CLASS: Symbol not found for Continuation

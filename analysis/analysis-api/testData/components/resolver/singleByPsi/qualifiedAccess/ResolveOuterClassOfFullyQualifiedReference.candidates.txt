@@ -1,12 +1,12 @@
 KtNameReferenceExpression(118,120): 'AA'
   KaInapplicableCallCandidateInfo:
-    diagnostic = ERROR<null: Inapplicable candidate>
+    diagnostic = ERROR<OTHER_ERROR: Inapplicable candidate>
     candidate = KaSimpleFunctionCall:
       isImplicitInvoke = false
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = foo.bar.baz.AA.BB
           symbol = <constructor>(): foo.bar.baz.AA.BB

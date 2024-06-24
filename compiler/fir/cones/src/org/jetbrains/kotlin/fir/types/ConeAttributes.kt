@@ -117,6 +117,10 @@ class ConeAttributes private constructor(attributes: List<ConeAttribute<*>>) : A
         return perform(other) { this.add(it) }
     }
 
+    fun add(attribute: ConeAttribute<*>): ConeAttributes {
+        return add(create(listOf(attribute)))
+    }
+
     operator fun contains(attribute: ConeAttribute<*>): Boolean {
         return contains(attribute.key)
     }
@@ -129,17 +133,6 @@ class ConeAttributes private constructor(attributes: List<ConeAttribute<*>>) : A
         val index = getId(attributeKey)
         @Suppress("UNCHECKED_CAST")
         return arrayMap[index] as T?
-    }
-
-    operator fun plus(attribute: ConeAttribute<*>): ConeAttributes {
-        if (attribute in this) return this
-        if (isEmpty()) return predefinedAttributes[attribute] ?: ConeAttributes(attribute)
-        val newAttributes = buildList {
-            addAll(arrayMap)
-            add(attribute)
-        }
-
-        return ConeAttributes(newAttributes)
     }
 
     fun remove(attribute: ConeAttribute<*>): ConeAttributes {
