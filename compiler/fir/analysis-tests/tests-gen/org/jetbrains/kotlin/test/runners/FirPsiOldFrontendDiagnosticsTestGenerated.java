@@ -1768,6 +1768,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     }
 
     @Test
+    @TestMetadata("typealiasAnnotationWithFixedTypeArgument.kt")
+    public void testTypealiasAnnotationWithFixedTypeArgument() {
+      runTest("compiler/testData/diagnostics/tests/typealiasAnnotationWithFixedTypeArgument.kt");
+    }
+
+    @Test
     @TestMetadata("typealiasInAnnotationPrimitiveVararg.kt")
     public void testTypealiasInAnnotationPrimitiveVararg() {
       runTest("compiler/testData/diagnostics/tests/typealiasInAnnotationPrimitiveVararg.kt");
@@ -8858,6 +8864,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("nonLocalJump.kt")
+        public void testNonLocalJump() {
+          runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/nonLocalJump.kt");
+        }
+
+        @Test
         @TestMetadata("reassignementInUnreachableCode.kt")
         public void testReassignementInUnreachableCode() {
           runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/reassignementInUnreachableCode.kt");
@@ -10802,6 +10814,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("mappedFunctionNotImplemented.kt")
       public void testMappedFunctionNotImplemented() {
         runTest("compiler/testData/diagnostics/tests/declarationChecks/mappedFunctionNotImplemented.kt");
+      }
+
+      @Test
+      @TestMetadata("memberPropertyInitialized.kt")
+      public void testMemberPropertyInitialized() {
+        runTest("compiler/testData/diagnostics/tests/declarationChecks/memberPropertyInitialized.kt");
       }
 
       @Test
@@ -13404,6 +13422,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("transformErrorTypeChildrenWhileTransformingPartiallyResolvedType.kt")
       public void testTransformErrorTypeChildrenWhileTransformingPartiallyResolvedType() {
         runTest("compiler/testData/diagnostics/tests/exceptions/transformErrorTypeChildrenWhileTransformingPartiallyResolvedType.kt");
+      }
+
+      @Test
+      @TestMetadata("unresolvedReferenceDuringProjectionRelationChecking.kt")
+      public void testUnresolvedReferenceDuringProjectionRelationChecking() {
+        runTest("compiler/testData/diagnostics/tests/exceptions/unresolvedReferenceDuringProjectionRelationChecking.kt");
       }
     }
 
@@ -17400,6 +17424,24 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("kt68570.kt")
       public void testKt68570() {
         runTest("compiler/testData/diagnostics/tests/inference/kt68570.kt");
+      }
+
+      @Test
+      @TestMetadata("kt69159Simplified.kt")
+      public void testKt69159Simplified() {
+        runTest("compiler/testData/diagnostics/tests/inference/kt69159Simplified.kt");
+      }
+
+      @Test
+      @TestMetadata("kt69159WithComparable.kt")
+      public void testKt69159WithComparable() {
+        runTest("compiler/testData/diagnostics/tests/inference/kt69159WithComparable.kt");
+      }
+
+      @Test
+      @TestMetadata("kt69326.kt")
+      public void testKt69326() {
+        runTest("compiler/testData/diagnostics/tests/inference/kt69326.kt");
       }
 
       @Test
@@ -22739,6 +22781,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("fileJvmNameSameAsClass.kt")
+      public void testFileJvmNameSameAsClass() {
+        runTest("compiler/testData/diagnostics/tests/j+k/fileJvmNameSameAsClass.kt");
+      }
+
+      @Test
       @TestMetadata("finalCollectionSize.kt")
       public void testFinalCollectionSize() {
         runTest("compiler/testData/diagnostics/tests/j+k/finalCollectionSize.kt");
@@ -25667,6 +25715,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("SupertypesWithInaccessibleTypeArguments.kt")
+      public void testSupertypesWithInaccessibleTypeArguments() {
+        runTest("compiler/testData/diagnostics/tests/multimodule/SupertypesWithInaccessibleTypeArguments.kt");
+      }
+
+      @Test
       @TestMetadata("varargConflict.kt")
       public void testVarargConflict() {
         runTest("compiler/testData/diagnostics/tests/multimodule/varargConflict.kt");
@@ -27940,6 +27994,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("NonGenerics.kt")
       public void testNonGenerics() {
         runTest("compiler/testData/diagnostics/tests/override/NonGenerics.kt");
+      }
+
+      @Test
+      @TestMetadata("nothingToOverrideMessage.kt")
+      public void testNothingToOverrideMessage() {
+        runTest("compiler/testData/diagnostics/tests/override/nothingToOverrideMessage.kt");
       }
 
       @Test
@@ -34961,6 +35021,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("qualifiedObjectAfterSmartCast.kt")
+      public void testQualifiedObjectAfterSmartCast() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/qualifiedObjectAfterSmartCast.kt");
+      }
+
+      @Test
       @TestMetadata("safeAs.kt")
       public void testSafeAs() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/safeAs.kt");
@@ -37471,6 +37537,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("conversionInLastStatementOfWhenBranch.kt")
+      public void testConversionInLastStatementOfWhenBranch() {
+        runTest("compiler/testData/diagnostics/tests/suspendConversion/conversionInLastStatementOfWhenBranch.kt");
+      }
+
+      @Test
       @TestMetadata("implicitInvoke.kt")
       public void testImplicitInvoke() {
         runTest("compiler/testData/diagnostics/tests/suspendConversion/implicitInvoke.kt");
@@ -39262,6 +39334,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("kt67628.kt")
       public void testKt67628() {
         runTest("compiler/testData/diagnostics/tests/typealias/kt67628.kt");
+      }
+
+      @Test
+      @TestMetadata("kt69227.kt")
+      public void testKt69227() {
+        runTest("compiler/testData/diagnostics/tests/typealias/kt69227.kt");
       }
 
       @Test

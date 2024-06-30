@@ -455,6 +455,12 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
     }
 
     @Test
+    @TestMetadata("typealiasAnnotationWithNonTrivialTypeArguments.kt")
+    public void testTypealiasAnnotationWithNonTrivialTypeArguments() {
+      runTest("compiler/testData/codegen/box/annotations/typealiasAnnotationWithNonTrivialTypeArguments.kt");
+    }
+
+    @Test
     @TestMetadata("useTypeParameterAnnotationFromJava.kt")
     public void testUseTypeParameterAnnotationFromJava() {
       runTest("compiler/testData/codegen/box/annotations/useTypeParameterAnnotationFromJava.kt");
@@ -7409,6 +7415,12 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
     }
 
     @Test
+    @TestMetadata("delegationAndJavaInterfaceWithDefault.kt")
+    public void testDelegationAndJavaInterfaceWithDefault() {
+      runTest("compiler/testData/codegen/box/classDelegation/delegationAndJavaInterfaceWithDefault.kt");
+    }
+
+    @Test
     @TestMetadata("generic.kt")
     public void testGeneric() {
       runTest("compiler/testData/codegen/box/classDelegation/generic.kt");
@@ -11478,6 +11490,12 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
         @Test
         public void testAllFilesPresentInInlinedBreakContinue() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue"), Pattern.compile("^(.+)\\.kt$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("continueInTryBlock.kt")
+        public void testContinueInTryBlock() {
+          runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/continueInTryBlock.kt");
         }
 
         @Test
@@ -26194,6 +26212,12 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
     @TestMetadata("equalityForBoxesOfNullableValuesOfInlineClassGeneric.kt")
     public void testEqualityForBoxesOfNullableValuesOfInlineClassGeneric() {
       runTest("compiler/testData/codegen/box/inlineClasses/equalityForBoxesOfNullableValuesOfInlineClassGeneric.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithUniversal());
+    }
+
+    @Test
+    @TestMetadata("equalityForIndyLambdaParameter.kt")
+    public void testEqualityForIndyLambdaParameter() {
+      runTest("compiler/testData/codegen/box/inlineClasses/equalityForIndyLambdaParameter.kt");
     }
 
     @Test
@@ -40919,6 +40943,12 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
     }
 
     @Test
+    @TestMetadata("BoundedGenericValueInRangeCheck.kt")
+    public void testBoundedGenericValueInRangeCheck() {
+      runTest("compiler/testData/codegen/box/operatorConventions/BoundedGenericValueInRangeCheck.kt");
+    }
+
+    @Test
     @TestMetadata("genericArrayAccessCall.kt")
     public void testGenericArrayAccessCall() {
       runTest("compiler/testData/codegen/box/operatorConventions/genericArrayAccessCall.kt");
@@ -44017,6 +44047,12 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
       @TestMetadata("smartCastOnBothEnds.kt")
       public void testSmartCastOnBothEnds() {
         runTest("compiler/testData/codegen/box/ranges/contains/smartCastOnBothEnds.kt");
+      }
+
+      @Test
+      @TestMetadata("smartCastOnBothEndsGeneric.kt")
+      public void testSmartCastOnBothEndsGeneric() {
+        runTest("compiler/testData/codegen/box/ranges/contains/smartCastOnBothEndsGeneric.kt");
       }
 
       @Test

@@ -450,6 +450,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     }
 
     @Test
+    @TestMetadata("typealiasAnnotationWithNonTrivialTypeArguments.kt")
+    public void testTypealiasAnnotationWithNonTrivialTypeArguments() {
+      runTest("compiler/testData/codegen/box/annotations/typealiasAnnotationWithNonTrivialTypeArguments.kt");
+    }
+
+    @Test
     @TestMetadata("useTypeParameterAnnotationFromJava.kt")
     public void testUseTypeParameterAnnotationFromJava() {
       runTest("compiler/testData/codegen/box/annotations/useTypeParameterAnnotationFromJava.kt");
@@ -7344,6 +7350,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     }
 
     @Test
+    @TestMetadata("delegationAndJavaInterfaceWithDefault.kt")
+    public void testDelegationAndJavaInterfaceWithDefault() {
+      runTest("compiler/testData/codegen/box/classDelegation/delegationAndJavaInterfaceWithDefault.kt");
+    }
+
+    @Test
     @TestMetadata("generic.kt")
     public void testGeneric() {
       runTest("compiler/testData/codegen/box/classDelegation/generic.kt");
@@ -11413,6 +11425,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         @Test
         public void testAllFilesPresentInInlinedBreakContinue() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("continueInTryBlock.kt")
+        public void testContinueInTryBlock() {
+          runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/continueInTryBlock.kt");
         }
 
         @Test
@@ -26114,6 +26132,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     }
 
     @Test
+    @TestMetadata("equalityForIndyLambdaParameter.kt")
+    public void testEqualityForIndyLambdaParameter() {
+      runTest("compiler/testData/codegen/box/inlineClasses/equalityForIndyLambdaParameter.kt");
+    }
+
+    @Test
     @TestMetadata("equalsCallsLeftArgument.kt")
     public void testEqualsCallsLeftArgument() {
       runTest("compiler/testData/codegen/box/inlineClasses/equalsCallsLeftArgument.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
@@ -40740,6 +40764,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     }
 
     @Test
+    @TestMetadata("BoundedGenericValueInRangeCheck.kt")
+    public void testBoundedGenericValueInRangeCheck() {
+      runTest("compiler/testData/codegen/box/operatorConventions/BoundedGenericValueInRangeCheck.kt");
+    }
+
+    @Test
     @TestMetadata("genericArrayAccessCall.kt")
     public void testGenericArrayAccessCall() {
       runTest("compiler/testData/codegen/box/operatorConventions/genericArrayAccessCall.kt");
@@ -43784,6 +43814,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
       @TestMetadata("smartCastOnBothEnds.kt")
       public void testSmartCastOnBothEnds() {
         runTest("compiler/testData/codegen/box/ranges/contains/smartCastOnBothEnds.kt");
+      }
+
+      @Test
+      @TestMetadata("smartCastOnBothEndsGeneric.kt")
+      public void testSmartCastOnBothEndsGeneric() {
+        runTest("compiler/testData/codegen/box/ranges/contains/smartCastOnBothEndsGeneric.kt");
       }
 
       @Test

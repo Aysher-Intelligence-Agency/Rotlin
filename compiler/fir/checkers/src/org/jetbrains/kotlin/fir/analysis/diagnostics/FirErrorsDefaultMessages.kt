@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.REQU
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOLS_ON_NEWLINE_WITH_INDENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOLS_ON_NEXT_LINES
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOL_KIND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOL_WITH_CONTAINING_DECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.VARIABLE_NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.WHEN_MISSING_CASES
@@ -405,6 +406,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_DEPENDENC
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_DEPENDENCY_CLASS_IN_LAMBDA_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_DEPENDENCY_CLASS_IN_LAMBDA_RECEIVER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_DEPENDENCY_SUPERCLASS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_DEPENDENCY_SUPERCLASS_IN_TYPE_ARGUMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_STDLIB_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_VAL_ON_ANNOTATION_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MIXING_FUNCTIONAL_KINDS_IN_SUPERTYPES
@@ -518,6 +520,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPT_IN_USAGE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPT_IN_USAGE_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPT_IN_WITHOUT_ARGUMENTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OTHER_ERROR
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OTHER_ERROR_WITH_REASON
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OUTER_CLASS_ARGUMENTS_REQUIRED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OVERLOAD_RESOLUTION_AMBIGUITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OVERRIDE_BY_INLINE
@@ -751,6 +754,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_MODIFIER_TA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_SETTER_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_SETTER_RETURN_TYPE
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.serialization.deserialization.IncompatibleVersionErrorData
 
 /**
@@ -780,6 +784,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
 
         // Miscellaneous
         map.put(OTHER_ERROR, "Unknown error.")
+        map.put(OTHER_ERROR_WITH_REASON, "Unknown error: {0}.", STRING)
 
         // General syntax
         map.put(ILLEGAL_CONST_EXPRESSION, "Incorrect const expression.")
@@ -827,6 +832,12 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             MISSING_DEPENDENCY_SUPERCLASS,
             "Cannot access ''{0}'' which is a supertype of ''{1}''. Check your module classpath for missing or conflicting dependencies.",
+            RENDER_TYPE,
+            RENDER_TYPE,
+        )
+        map.put(
+            MISSING_DEPENDENCY_SUPERCLASS_IN_TYPE_ARGUMENT,
+            "Cannot access ''{0}'' which is a supertype of ''{1}'' or one of its type/supertype arguments. While it may work, this case indicates a configuration mistake and can lead to avoidable compilation errors, so it may be forbidden soon. Check your module classpath for missing or conflicting dependencies.",
             RENDER_TYPE,
             RENDER_TYPE,
         )
@@ -1709,7 +1720,14 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(INLINE_PROPERTY_WITH_BACKING_FIELD_DEPRECATION, "Inline property cannot have a backing field.")
 
         // Overrides
-        map.put(NOTHING_TO_OVERRIDE, "''{0}'' overrides nothing.", DECLARATION_NAME)
+        map.put(
+            NOTHING_TO_OVERRIDE,
+            "''{0}'' overrides nothing.{1}",
+            DECLARATION_NAME,
+            Renderer { symbols: List<FirCallableSymbol<*>> ->
+                if (symbols.isEmpty()) return@Renderer ""
+                " Potential signatures for overriding:" + SYMBOLS_ON_NEXT_LINES.render(symbols)
+            })
 
         map.put(
             CANNOT_OVERRIDE_INVISIBLE_MEMBER,
@@ -2593,44 +2611,49 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             SYMBOL
         )
         map.put(RECURSION_IN_INLINE, "Inline function ''{0}'' cannot be recursive.", SYMBOL)
-        map.put(NON_PUBLIC_CALL_FROM_PUBLIC_INLINE, "Public-API inline declaration cannot access non-public-API ''{0}''.", SYMBOL, SYMBOL)
         map.put(
-            NON_PUBLIC_INLINE_CALL_FROM_PUBLIC_INLINE,
-            "Public-API inline declaration cannot access non-public-API inline declaration ''{0}'' as it could transitively access non-public-API declarations.",
-            SYMBOL,
-            SYMBOL
+            NON_PUBLIC_CALL_FROM_PUBLIC_INLINE, "Public-API inline {1} cannot access non-public-API {0}.",
+            SYMBOL_KIND,
+            SYMBOL_KIND,
         )
         map.put(
             NON_PUBLIC_CALL_FROM_PUBLIC_INLINE_DEPRECATION,
-            "Public-API inline declaration cannot access non-public-API ''{0}''. " +
+            "Public-API inline {1} cannot access non-public-API {0}. " +
                     "This will become an error in ${LanguageFeature.ProhibitPrivateOperatorCallInInline.formatKotlinWithVersion()}.",
-            SYMBOL,
-            SYMBOL
+            SYMBOL_KIND,
+            SYMBOL_KIND
+        )
+        map.put(
+            NON_PUBLIC_INLINE_CALL_FROM_PUBLIC_INLINE,
+            "Public-API inline {1} cannot access non-public-API inline {0} as it could transitively access non-public-API declarations.",
+            SYMBOL_KIND,
+            SYMBOL_KIND,
         )
         map.put(
             NON_PUBLIC_DATA_COPY_CALL_FROM_PUBLIC_INLINE,
-            "This 'copy' usage exposes the non-public primary constructor of a 'data class'. " +
-                    "The 'copy' will change its visibility in future versions of Kotlin. " +
-                    "Public-API inline function won't be able to access non-public-API 'copy'. " +
-                    "See https://youtrack.jetbrains.com/issue/KT-11914"
+            "This ''copy'' usage exposes the non-public primary constructor of a ''data class''. " +
+                    "The ''copy'' will change its visibility in future versions of Kotlin. " +
+                    "The public-API inline {0} won''t be able to access non-public-API ''copy''. " +
+                    "See https://youtrack.jetbrains.com/issue/KT-11914",
+            SYMBOL_KIND,
         )
         map.put(
             PROTECTED_CONSTRUCTOR_CALL_FROM_PUBLIC_INLINE,
-            "Protected constructor call from public-API inline function is deprecated.",
-            SYMBOL,
-            SYMBOL
+            "Protected constructor call from public-API inline {0} is deprecated.",
+            SYMBOL_KIND,
+            NOT_RENDERED,
         )
         map.put(
             PROTECTED_CALL_FROM_PUBLIC_INLINE,
-            "Protected function call from public-API inline function is deprecated.",
-            SYMBOL,
-            SYMBOL
+            "Protected function call from public-API inline {0} is deprecated.",
+            SYMBOL_KIND,
+            NOT_RENDERED,
         )
         map.put(
             PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR,
-            "Protected function call from public-API inline function is prohibited.",
-            SYMBOL,
-            SYMBOL
+            "Protected function call from public-API inline {0} is prohibited.",
+            SYMBOL_KIND,
+            NOT_RENDERED,
         )
         map.put(
             PRIVATE_CLASS_MEMBER_FROM_INLINE,
@@ -2650,7 +2673,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             SYMBOL
         )
 
-        map.put(SUPER_CALL_FROM_PUBLIC_INLINE, "Accessing super members from public-API inline function is deprecated.", SYMBOL)
+        map.put(SUPER_CALL_FROM_PUBLIC_INLINE, "Accessing super members from public-API inline {0} is deprecated.", SYMBOL_KIND)
 
         map.put(ILLEGAL_INLINE_PARAMETER_MODIFIER, "Modifier is only allowed for function parameters of an inline function.")
 

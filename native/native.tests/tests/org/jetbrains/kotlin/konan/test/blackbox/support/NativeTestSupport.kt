@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.test.directives.model.RegisteredDirectives
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertEquals
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.fail
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -99,8 +100,14 @@ class KlibSyntheticAccessorTestSupport : BeforeEachCallback {
             +CodegenTestDirectives.ENABLE_IR_VISIBILITY_CHECKS_AFTER_INLINING
 
             // Don't run LLVM, stop after the last IR lowering.
-            TestDirectives.FREE_COMPILER_ARGS with listOf("-Xdisable-phases=LinkBitcodeDependencies,WriteBitcodeFile,ObjectFiles,Linker")
+            TestDirectives.FREE_COMPILER_ARGS with listOf(
+                "-Xdisable-phases=LinkBitcodeDependencies,WriteBitcodeFile,ObjectFiles,Linker",
+                "-Xklib-double-inlining"
+            )
         }
+
+        Assumptions.assumeTrue(settings.get<CacheMode>() == CacheMode.WithoutCache)
+        Assumptions.assumeTrue(settings.get<ThreadStateChecker>() == ThreadStateChecker.DISABLED)
 
         // Inject the required properties to test instance.
         with(settings.get<NativeTestInstances<AbstractNativeKlibSyntheticAccessorTest>>().enclosingTestInstance) {
@@ -482,7 +489,13 @@ object NativeTestSupport {
     private fun computeTestConfiguration(enclosingTestClass: Class<*>): ComputedTestConfiguration {
         val findTestConfiguration: Class<*>.() -> ComputedTestConfiguration? = {
             annotations.asSequence().mapNotNull { annotation ->
-                val testConfiguration = annotation.annotationClass.findAnnotation<TestConfiguration>() ?: return@mapNotNull null
+                val testConfiguration = try {
+                    annotation.annotationClass.findAnnotation<TestConfiguration>() ?: return@mapNotNull null
+                } catch (e: UnsupportedOperationException) {
+                    // For repeatable annotations we can't get the annotations of the annotation class,
+                    // this class is actually a synthetic container.
+                    return@mapNotNull null
+                }
                 ComputedTestConfiguration(testConfiguration, annotation)
             }.firstOrNull()
         }

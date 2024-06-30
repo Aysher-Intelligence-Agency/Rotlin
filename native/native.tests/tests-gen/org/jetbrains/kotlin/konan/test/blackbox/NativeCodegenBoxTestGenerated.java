@@ -8781,6 +8781,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
           }
 
           @Test
+          @TestMetadata("continueInTryBlock.kt")
+          public void testContinueInTryBlock() {
+            runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/continueInTryBlock.kt");
+          }
+
+          @Test
           @TestMetadata("initializerBlock.kt")
           public void testInitializerBlock() {
             runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/initializerBlock.kt");
@@ -21355,6 +21361,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       }
 
       @Test
+      @TestMetadata("equalityForIndyLambdaParameter.kt")
+      public void testEqualityForIndyLambdaParameter() {
+        runTest("compiler/testData/codegen/box/inlineClasses/equalityForIndyLambdaParameter.kt");
+      }
+
+      @Test
       @TestMetadata("equalsCallsLeftArgument.kt")
       public void testEqualsCallsLeftArgument() {
         // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
@@ -31234,6 +31246,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       }
 
       @Test
+      @TestMetadata("BoundedGenericValueInRangeCheck.kt")
+      public void testBoundedGenericValueInRangeCheck() {
+        runTest("compiler/testData/codegen/box/operatorConventions/BoundedGenericValueInRangeCheck.kt");
+      }
+
+      @Test
       @TestMetadata("genericArrayAccessCall.kt")
       public void testGenericArrayAccessCall() {
         runTest("compiler/testData/codegen/box/operatorConventions/genericArrayAccessCall.kt");
@@ -33726,6 +33744,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
         @TestMetadata("smartCastOnBothEnds.kt")
         public void testSmartCastOnBothEnds() {
           runTest("compiler/testData/codegen/box/ranges/contains/smartCastOnBothEnds.kt");
+        }
+
+        @Test
+        @TestMetadata("smartCastOnBothEndsGeneric.kt")
+        public void testSmartCastOnBothEndsGeneric() {
+          runTest("compiler/testData/codegen/box/ranges/contains/smartCastOnBothEndsGeneric.kt");
         }
 
         @Test
@@ -45506,6 +45530,18 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       @TestMetadata("kt35101.kt")
       public void testKt35101() {
         runTest("compiler/testData/codegen/boxInline/callableReference/kt35101.kt");
+      }
+
+      @Test
+      @TestMetadata("kt69457.kt")
+      public void testKt69457() {
+        runTest("compiler/testData/codegen/boxInline/callableReference/kt69457.kt");
+      }
+
+      @Test
+      @TestMetadata("kt69470.kt")
+      public void testKt69470() {
+        runTest("compiler/testData/codegen/boxInline/callableReference/kt69470.kt");
       }
 
       @Test

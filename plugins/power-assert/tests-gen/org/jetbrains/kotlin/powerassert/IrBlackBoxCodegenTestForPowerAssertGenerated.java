@@ -205,6 +205,12 @@ public class IrBlackBoxCodegenTestForPowerAssertGenerated extends AbstractIrBlac
     }
 
     @Test
+    @TestMetadata("SafeCast.kt")
+    public void testSafeCast() {
+      runTest("plugins/power-assert/testData/codegen/cast/SafeCast.kt");
+    }
+
+    @Test
     @TestMetadata("SmartCast.kt")
     public void testSmartCast() {
       runTest("plugins/power-assert/testData/codegen/cast/SmartCast.kt");
@@ -640,6 +646,12 @@ public class IrBlackBoxCodegenTestForPowerAssertGenerated extends AbstractIrBlac
     @Test
     public void testAllFilesPresentInParameters() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("plugins/power-assert/testData/codegen/parameters"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), TargetBackend.JVM_IR, true);
+    }
+
+    @Test
+    @TestMetadata("implicitReceiver.kt")
+    public void testImplicitReceiver() {
+      runTest("plugins/power-assert/testData/codegen/parameters/implicitReceiver.kt");
     }
 
     @Test

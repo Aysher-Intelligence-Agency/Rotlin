@@ -1,4 +1,5 @@
 import ReferenceTypes
+import second_main
 import KotlinRuntime
 
 func initProducesNewObject() throws {
@@ -183,6 +184,20 @@ func anyPersistsAsProperty() throws {
     try assertTrue(foo.storage === baz)
 }
 
+func depsObjectsTravelBridgeAsAny() throws {
+    let obj: KotlinBase = deps_instance
+    try assertTrue((obj as Any) is KotlinBase)
+    try assertTrue(isDepsObject(obj: obj))
+    try assertTrue(isSavedDepsObject(obj: obj))
+}
+
+func depsObjectsTravelBridgeAsAny2() throws {
+    let obj: KotlinBase = deps_instance_2
+    try assertTrue((obj as Any) is KotlinBase)
+    try assertTrue(isDepsObject_2(obj: obj))
+    try assertTrue(isSavedDepsObject_2(obj: obj))
+}
+
 class ReferenceTypesTests : TestProvider {
     var tests: [TestCase] = []
 
@@ -214,6 +229,8 @@ class ReferenceTypesTests : TestProvider {
             TestCase(name: "objectsTravelBridgeAsAny", method: withAutorelease(objectsTravelBridgeAsAny)),
             TestCase(name: "permanentObjectsTravelBridgeAsAny", method: withAutorelease(permanentObjectsTravelBridgeAsAny)),
             TestCase(name: "anyPersistsAsProperty", method: withAutorelease(anyPersistsAsProperty)),
+            TestCase(name: "depsObjectsTravelBridgeAsAny", method: withAutorelease(depsObjectsTravelBridgeAsAny)),
+            TestCase(name: "depsObjectsTravelBridgeAsAny2", method: withAutorelease(depsObjectsTravelBridgeAsAny2)),
         ]
     }
 }

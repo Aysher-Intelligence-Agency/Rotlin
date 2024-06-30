@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.PackageIndex
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
 import com.intellij.psi.*
 import com.intellij.psi.impl.file.impl.JavaFileManager
 import com.intellij.psi.impl.smartPointers.PsiClassReferenceTypePointerFactory
@@ -31,6 +30,8 @@ import com.intellij.psi.search.ProjectScope
 import com.intellij.util.io.URLUtil.JAR_PROTOCOL
 import com.intellij.util.io.URLUtil.JAR_SEPARATOR
 import com.intellij.util.messages.ListenerDescriptor
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.impl.base.util.LibraryUtils
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
@@ -41,8 +42,8 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider
 import org.jetbrains.kotlin.analysis.api.standalone.base.declarations.KotlinFakeClsStubsCache
 import org.jetbrains.kotlin.analysis.api.symbols.AdditionalKDocResolutionProvider
-import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInsVirtualFileProvider
-import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInsVirtualFileProviderCliImpl
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProviderCliImpl
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.DummyFileAttributeService
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.FileAttributeService
@@ -124,14 +125,15 @@ object StandaloneProjectFactory {
                 registerService(KotlinFakeClsStubsCache::class.java, KotlinFakeClsStubsCache::class.java)
                 registerService(ClsKotlinBinaryClassCache::class.java)
                 registerService(
-                    BuiltInsVirtualFileProvider::class.java,
-                    BuiltInsVirtualFileProviderCliImpl(applicationEnvironment.jarFileSystem as CoreJarFileSystem)
+                    BuiltinsVirtualFileProvider::class.java,
+                    BuiltinsVirtualFileProviderCliImpl()
                 )
                 registerService(FileAttributeService::class.java, DummyFileAttributeService::class.java)
             }
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun registerProjectServices(project: MockProject) {
         // TODO: rewrite KtResolveExtensionProviderForTest to avoid KtResolveExtensionProvider access before initialized project
         @Suppress("UnstableApiUsage")
@@ -356,6 +358,7 @@ object StandaloneProjectFactory {
         }
     }
 
+    @OptIn(KaImplementationDetail::class)
     private fun getVirtualFileUrlsForLibraryRootsRecursively(
         roots: Collection<Path>,
         environment: KotlinCoreProjectEnvironment,

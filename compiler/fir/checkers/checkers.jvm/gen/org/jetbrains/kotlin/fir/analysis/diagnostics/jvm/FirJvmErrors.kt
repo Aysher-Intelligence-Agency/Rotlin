@@ -40,14 +40,15 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 /**
  * Generated from: [org.jetbrains.kotlin.fir.checkers.generator.diagnostics.JVM_DIAGNOSTICS_LIST]
  */
+@Suppress("IncorrectFormatting")
 object FirJvmErrors {
     // Declarations
     val OVERRIDE_CANNOT_BE_STATIC: KtDiagnosticFactory0 = KtDiagnosticFactory0("OVERRIDE_CANNOT_BE_STATIC", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
-    val JVM_STATIC_NOT_IN_OBJECT_OR_CLASS_COMPANION: KtDiagnosticFactory0 = KtDiagnosticFactory0("JVM_STATIC_NOT_IN_OBJECT_OR_CLASS_COMPANION", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, PsiElement::class)
-    val JVM_STATIC_NOT_IN_OBJECT_OR_COMPANION: KtDiagnosticFactory0 = KtDiagnosticFactory0("JVM_STATIC_NOT_IN_OBJECT_OR_COMPANION", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, PsiElement::class)
-    val JVM_STATIC_ON_NON_PUBLIC_MEMBER: KtDiagnosticFactory0 = KtDiagnosticFactory0("JVM_STATIC_ON_NON_PUBLIC_MEMBER", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, PsiElement::class)
-    val JVM_STATIC_ON_CONST_OR_JVM_FIELD: KtDiagnosticFactory0 = KtDiagnosticFactory0("JVM_STATIC_ON_CONST_OR_JVM_FIELD", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, PsiElement::class)
-    val JVM_STATIC_ON_EXTERNAL_IN_INTERFACE: KtDiagnosticFactory0 = KtDiagnosticFactory0("JVM_STATIC_ON_EXTERNAL_IN_INTERFACE", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, PsiElement::class)
+    val JVM_STATIC_NOT_IN_OBJECT_OR_CLASS_COMPANION: KtDiagnosticFactory0 = KtDiagnosticFactory0("JVM_STATIC_NOT_IN_OBJECT_OR_CLASS_COMPANION", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
+    val JVM_STATIC_NOT_IN_OBJECT_OR_COMPANION: KtDiagnosticFactory0 = KtDiagnosticFactory0("JVM_STATIC_NOT_IN_OBJECT_OR_COMPANION", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
+    val JVM_STATIC_ON_NON_PUBLIC_MEMBER: KtDiagnosticFactory0 = KtDiagnosticFactory0("JVM_STATIC_ON_NON_PUBLIC_MEMBER", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
+    val JVM_STATIC_ON_CONST_OR_JVM_FIELD: KtDiagnosticFactory0 = KtDiagnosticFactory0("JVM_STATIC_ON_CONST_OR_JVM_FIELD", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
+    val JVM_STATIC_ON_EXTERNAL_IN_INTERFACE: KtDiagnosticFactory0 = KtDiagnosticFactory0("JVM_STATIC_ON_EXTERNAL_IN_INTERFACE", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val INAPPLICABLE_JVM_NAME: KtDiagnosticFactory0 = KtDiagnosticFactory0("INAPPLICABLE_JVM_NAME", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val ILLEGAL_JVM_NAME: KtDiagnosticFactory0 = KtDiagnosticFactory0("ILLEGAL_JVM_NAME", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val FUNCTION_DELEGATE_MEMBER_NAME_CLASH: KtDiagnosticFactory0 = KtDiagnosticFactory0("FUNCTION_DELEGATE_MEMBER_NAME_CLASH", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, PsiElement::class)
@@ -55,6 +56,7 @@ object FirJvmErrors {
     val JVM_INLINE_WITHOUT_VALUE_CLASS: KtDiagnosticFactory0 = KtDiagnosticFactory0("JVM_INLINE_WITHOUT_VALUE_CLASS", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val WRONG_NULLABILITY_FOR_JAVA_OVERRIDE: KtDiagnosticFactory2<FirCallableSymbol<*>, FirCallableSymbol<*>> = KtDiagnosticFactory2("WRONG_NULLABILITY_FOR_JAVA_OVERRIDE", WARNING, SourceElementPositioningStrategies.OVERRIDE_MODIFIER, PsiElement::class)
     val ACCIDENTAL_OVERRIDE_CLASH_BY_JVM_SIGNATURE: KtDiagnosticFactory3<FirNamedFunctionSymbol, String, FirNamedFunctionSymbol> = KtDiagnosticFactory3("ACCIDENTAL_OVERRIDE_CLASH_BY_JVM_SIGNATURE", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtNamedFunction::class)
+    val NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: KtDiagnosticFactory0 = KtDiagnosticFactory0("NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION", ERROR, SourceElementPositioningStrategies.NOT_SUPPORTED_IN_INLINE_MOST_RELEVANT, KtDeclaration::class)
 
     // Types
     val JAVA_TYPE_MISMATCH: KtDiagnosticFactory2<ConeKotlinType, ConeKotlinType> = KtDiagnosticFactory2("JAVA_TYPE_MISMATCH", ERROR, SourceElementPositioningStrategies.DEFAULT, KtExpression::class)
