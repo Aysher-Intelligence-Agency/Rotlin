@@ -12,8 +12,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
 
-        <moshi.version>1.12.0</moshi.version>
-        <lombok.version>1.18.20</lombok.version>
+        <moshi.version>1.15.1</moshi.version>
+        <lombok.version>1.18.32</lombok.version>
     </properties>
 
     <repositories>

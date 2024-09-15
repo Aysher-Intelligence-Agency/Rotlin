@@ -1,8 +1,5 @@
 # Local build with no caches:
 # docker build --no-cache -t local/kotlin-build-env:v7 -f kotlin-build-env.dockerfile .
-
-FROM debian:11.8-slim
-
 RUN apt-get update \
     && apt-get install -y locales \
     && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
